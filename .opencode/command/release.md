@@ -17,7 +17,7 @@ To ensure releases are built, tested, and deployed reliably, coordinating multip
 
 ## Dependencies
 - Cargo toolchain.
-- Agents: CI Agent, Storage Agent, Docs Agent, Git Handler, Hive Mind Orchestrator.
+- Agents: CI Agent, Storage Agent, Docs Agent, Git Handler, GitHub, Hive Mind Orchestrator.
 
 ## Usage Examples
 - Standard release: `/release`
@@ -38,8 +38,8 @@ To ensure releases are built, tested, and deployed reliably, coordinating multip
 - **Network/Permission Issues**: For pushing tags, ensure auth and connectivity.
 
 ## Integration Notes
-- **Handoff Protocols**: Sequential handoffs: checks -> version bump -> CI -> storage update -> docs -> git. Confirm each step before proceeding.
-- **Collaboration**: Uses CI Agent for pipelines, Storage for versions, Docs for updates, Git for commits/tags. For complex releases, hand off to Hive Mind Orchestrator.
+- **Handoff Protocols**: Sequential handoffs: checks -> version bump -> CI -> storage update -> docs -> git -> github (PR creation and merge). Confirm each step before proceeding.
+- **Collaboration**: Uses CI Agent for pipelines, Storage for versions, Docs for updates, Git for commits/tags, GitHub for PR creation and merging. For complex releases, hand off to Hive Mind Orchestrator.
 - **Best Practices**: Always run checks first; log all actions. Confirm completion with user.
 - **Edge Cases**: Handle pre-releases differently; for hotfixes, skip some checks if urgent (with caution).
 
@@ -65,6 +65,11 @@ If all checks pass:
 3. Update version in Cargo.toml using @storage-agent.
 4. @docs-agent to update changelog/docs.
 5. @git-handler for tagging and pushing.
-6. If needed, @hive-mind-orchestrator for complex releases.
+6. @github agent to create a pull request from the current branch (e.g., develop) to main.
+7. @github agent to merge the pull request.
+8. Switch to develop branch and merge main back into it to sync changes.
+9. If needed, @hive-mind-orchestrator for complex releases.
+
+10. @github agent to monitor the GitHub Actions workflows (especially the release workflow) to ensure they complete successfully.
 
 Confirm release completion.
