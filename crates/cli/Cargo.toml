@@ -1,0 +1,31 @@
+[package]
+name = "code-guardian-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+colored = { workspace = true }
+comfy-table = { workspace = true }
+indicatif = { workspace = true }
+config = { workspace = true }
+git2 = { workspace = true, optional = true }
+
+code-guardian-core = { path = "../core" }
+code-guardian-storage = { path = "../storage" }
+code-guardian-output = { path = "../output" }
+
+[dev-dependencies]
+assert_cmd = "2.0"
+predicates = "3.0"
+tempfile = "3.0"
+
+[features]
+default = []
+git = ["git2"]

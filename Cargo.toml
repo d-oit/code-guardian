@@ -1,0 +1,53 @@
+[workspace]
+members = [
+    "crates/core",
+    "crates/storage", 
+    "crates/output",
+    "crates/cli"
+]
+resolver = "2"
+
+[workspace.dependencies]
+# CLI
+clap = { version = "4.5", features = ["derive", "cargo", "env"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled", "chrono"] }
+
+# Pattern Matching
+regex = "1.10"
+lazy_static = "1.4"
+
+# File System
+walkdir = "2.5"
+ignore = "0.4"
+
+# Concurrency
+rayon = "1.10"
+
+# Error Handling
+thiserror = "1.0"
+anyhow = "1.0"
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Terminal Output
+colored = "2.1"
+comfy-table = "7.1"
+indicatif = "0.17"
+
+# Configuration
+config = "0.14"
+
+# Git Integration (optional)
+git2 = "0.19"
+
+# Testing
+proptest = "1.5"
+tempfile = "3.10"
