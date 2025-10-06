@@ -30,5 +30,3 @@ Guidelines:
 - Update docs with code changes
 
 Ensure documentation is accurate, accessible, and comprehensive.
-
-After completing tasks, run cargo clippy, cargo test, cargo build, and address all warnings and errors.

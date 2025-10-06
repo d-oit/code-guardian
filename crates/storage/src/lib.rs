@@ -238,3 +238,41 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod proptest_tests {
+    use super::*;
+    use proptest::prelude::*;
+    use chrono::Utc;
+
+    fn arb_match() -> impl Strategy<Value = Match> {
+        ("[a-zA-Z0-9_.]+", 1..10000usize, 1..10000usize, "[A-Z]+", ".*").prop_map(|(fp, ln, col, pat, msg)| Match {
+            file_path: fp.to_string(),
+            line_number: ln,
+            column: col,
+            pattern: pat.to_string(),
+            message: msg.to_string(),
+        })
+    }
+
+    proptest! {
+        #[test]
+        fn test_save_get_arbitrary_scan(matches in proptest::collection::vec(arb_match(), 0..10)) {
+            let mut repo = SqliteScanRepository::new_in_memory().unwrap();
+            let scan = Scan {
+                id: None,
+                timestamp: Utc::now().timestamp(),
+                root_path: "test_path".to_string(),
+                matches: matches.clone(),
+            };
+            let id = repo.save_scan(&scan).unwrap();
+            let retrieved = repo.get_scan(id).unwrap().unwrap();
+            assert_eq!(retrieved.matches.len(), scan.matches.len());
+            // Since order might not be preserved, check sets
+            use std::collections::HashSet;
+            let set1: HashSet<_> = scan.matches.into_iter().collect();
+            let set2: HashSet<_> = retrieved.matches.into_iter().collect();
+            prop_assert_eq!(set1, set2);
+        }
+    }
+}

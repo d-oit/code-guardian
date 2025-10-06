@@ -2,6 +2,47 @@
 description: Prepare and execute a release
 agent: ci-agent
 ---
+
+# Release Command
+
+## Overview
+The Release Command automates the preparation and execution of software releases, including quality checks, versioning, and deployment.
+
+## Purpose
+To ensure releases are built, tested, and deployed reliably, coordinating multiple agents for a seamless process.
+
+## Inputs/Outputs
+- **Inputs**: Optional arguments like "alpha" for pre-releases.
+- **Outputs**: Release confirmation, version updates, or error reports.
+
+## Dependencies
+- Cargo toolchain.
+- Agents: CI Agent, Storage Agent, Docs Agent, Git Handler, Hive Mind Orchestrator.
+
+## Usage Examples
+- Standard release: `/release`
+- Pre-release: `/release alpha`
+- Patch release: `/release patch`
+
+## Changelog
+- v1.0: Basic release with checks.
+- v1.1: Added agent coordination.
+
+## Error Scenarios
+- **Build Failures**: Stop and report errors; suggest fixes before retrying.
+- **Test Failures**: Halt release; run diagnostics on failing tests.
+- **Lint Issues**: Report warnings/errors; require resolution for release.
+- **Format Errors**: Stop and suggest running `cargo fmt`.
+- **Version Conflicts**: If version bump fails, check existing tags.
+- **Agent Handoff Failures**: If an agent fails (e.g., CI pipeline), retry or escalate.
+- **Network/Permission Issues**: For pushing tags, ensure auth and connectivity.
+
+## Integration Notes
+- **Handoff Protocols**: Sequential handoffs: checks -> version bump -> CI -> storage update -> docs -> git. Confirm each step before proceeding.
+- **Collaboration**: Uses CI Agent for pipelines, Storage for versions, Docs for updates, Git for commits/tags. For complex releases, hand off to Hive Mind Orchestrator.
+- **Best Practices**: Always run checks first; log all actions. Confirm completion with user.
+- **Edge Cases**: Handle pre-releases differently; for hotfixes, skip some checks if urgent (with caution).
+
 Prepare for release. Optional: $ARGUMENTS (e.g., "alpha" for pre-release)
 
 First, run quality checks. Stop on any errors or warnings.

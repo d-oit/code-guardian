@@ -102,3 +102,33 @@ mod tests {
         assert!(output.contains("FIXME"));
     }
 }
+
+#[cfg(test)]
+mod proptest_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn arb_match() -> impl Strategy<Value = Match> {
+        ("[a-zA-Z0-9_.]+", 1..10000usize, 1..10000usize, "[A-Z]+", ".*").prop_map(|(fp, ln, col, pat, msg)| Match {
+            file_path: fp.to_string(),
+            line_number: ln,
+            column: col,
+            pattern: pat.to_string(),
+            message: msg.to_string(),
+        })
+    }
+
+    proptest! {
+        #[test]
+        fn test_markdown_formatter_arbitrary_matches(matches in proptest::collection::vec(arb_match(), 0..10)) {
+            let formatter = MarkdownFormatter;
+            let output = formatter.format(&matches);
+            if matches.is_empty() {
+                prop_assert_eq!(output, "No matches found.");
+            } else {
+                prop_assert!(output.contains("|"));
+                prop_assert!(output.contains("File"));
+            }
+        }
+    }
+}

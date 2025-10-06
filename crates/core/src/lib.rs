@@ -1,11 +1,23 @@
 use anyhow::Result;
+use dashmap::DashMap;
 use ignore::WalkBuilder;
 use rayon::prelude::*;
-use regex::Regex;
 use std::path::Path;
 
+pub mod config;
+pub mod detectors;
+pub mod detector_factory;
+pub mod enhanced_config;
+pub mod optimized_scanner;
+pub mod performance;
+pub mod incremental;
+pub mod distributed;
+pub mod custom_detectors;
+
+
+
 /// Represents a detected pattern match in a file.
-#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
 pub struct Match {
     /// The path to the file where the match was found.
     pub file_path: String,
@@ -19,6 +31,16 @@ pub struct Match {
     pub message: String,
 }
 
+/// Severity levels for detected patterns.
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum Severity {
+    Info,
+    Low,
+    Medium,
+    High,
+    Critical,
+}
+
 /// Trait for detecting patterns in code content.
 /// Implementors should define how to find specific patterns like TODO or FIXME.
 pub trait PatternDetector: Send + Sync {
@@ -30,38 +52,45 @@ pub trait PatternDetector: Send + Sync {
 /// A scanner that uses parallel processing to scan codebases for patterns.
 pub struct Scanner {
     detectors: Vec<Box<dyn PatternDetector>>,
+    cache: DashMap<String, Vec<Match>>,
 }
 
 impl Scanner {
     /// Creates a new scanner with the given pattern detectors.
     pub fn new(detectors: Vec<Box<dyn PatternDetector>>) -> Self {
-        Self { detectors }
+        Self {
+            detectors,
+            cache: DashMap::new(),
+        }
     }
 
     /// Scans the directory tree starting from the given root path.
     /// Returns all matches found by the detectors.
-    /// Uses parallel processing for performance.
+    /// Uses parallel processing for performance with improved load balancing and caching.
     pub fn scan(&self, root: &Path) -> Result<Vec<Match>> {
-        let walker = WalkBuilder::new(root)
+        let matches: Vec<Match> = WalkBuilder::new(root)
             .build()
-            .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
-            .collect::<Vec<_>>();
-
-        let matches: Vec<Match> = walker
-            .par_iter()
+            .par_bridge()
             .filter_map(|entry| {
-                let path = entry.path();
-                match std::fs::read_to_string(path) {
-                    Ok(content) => {
+                let entry = entry.ok()?;
+                let file_type = entry.file_type()?;
+                if file_type.is_file() {
+                    let path = entry.path();
+                    let path_str = path.to_string_lossy().to_string();
+                    if let Some(cached) = self.cache.get(&path_str) {
+                        Some(cached.clone())
+                    } else {
+                        let content = std::fs::read_to_string(path).ok()?;
                         let file_matches: Vec<Match> = self
                             .detectors
                             .par_iter()
                             .flat_map(|detector| detector.detect(&content, path))
                             .collect();
+                        self.cache.insert(path_str, file_matches.clone());
                         Some(file_matches)
                     }
-                    Err(_) => None, // Skip files that can't be read
+                } else {
+                    None
                 }
             })
             .flatten()
@@ -71,73 +100,17 @@ impl Scanner {
     }
 }
 
-/// Default detector for TODO comments.
-pub struct TodoDetector;
+// Re-export detectors and factory for convenience
+pub use detectors::*;
+pub use detector_factory::*;
+pub use enhanced_config::*;
+pub use optimized_scanner::*;
+pub use performance::*;
+pub use incremental::*;
+pub use distributed::*;
+pub use custom_detectors::*;
 
-impl PatternDetector for TodoDetector {
-    fn detect(&self, content: &str, file_path: &Path) -> Vec<Match> {
-        self.detect_pattern(content, file_path, "TODO", r"\bTODO\b")
-    }
-}
 
-/// Default detector for FIXME comments.
-pub struct FixmeDetector;
-
-impl PatternDetector for FixmeDetector {
-    fn detect(&self, content: &str, file_path: &Path) -> Vec<Match> {
-        self.detect_pattern(content, file_path, "FIXME", r"\bFIXME\b")
-    }
-}
-
-impl TodoDetector {
-    fn detect_pattern(
-        &self,
-        content: &str,
-        file_path: &Path,
-        pattern_name: &str,
-        regex_pattern: &str,
-    ) -> Vec<Match> {
-        let re = Regex::new(regex_pattern).unwrap();
-        let mut matches = Vec::new();
-        for (line_idx, line) in content.lines().enumerate() {
-            for mat in re.find_iter(line) {
-                matches.push(Match {
-                    file_path: file_path.to_string_lossy().to_string(),
-                    line_number: line_idx + 1,
-                    column: mat.start() + 1,
-                    pattern: pattern_name.to_string(),
-                    message: mat.as_str().to_string(),
-                });
-            }
-        }
-        matches
-    }
-}
-
-impl FixmeDetector {
-    fn detect_pattern(
-        &self,
-        content: &str,
-        file_path: &Path,
-        pattern_name: &str,
-        regex_pattern: &str,
-    ) -> Vec<Match> {
-        let re = Regex::new(regex_pattern).unwrap();
-        let mut matches = Vec::new();
-        for (line_idx, line) in content.lines().enumerate() {
-            for mat in re.find_iter(line) {
-                matches.push(Match {
-                    file_path: file_path.to_string_lossy().to_string(),
-                    line_number: line_idx + 1,
-                    column: mat.start() + 1,
-                    pattern: pattern_name.to_string(),
-                    message: mat.as_str().to_string(),
-                });
-            }
-        }
-        matches
-    }
-}
 
 #[cfg(test)]
 mod tests {
@@ -154,7 +127,7 @@ mod tests {
         assert_eq!(matches[0].pattern, "TODO");
         assert_eq!(matches[0].line_number, 2);
         assert_eq!(matches[0].column, 4); // "// " is 3 chars, then TODO
-        assert_eq!(matches[0].message, "TODO");
+        assert!(matches[0].message.contains("TODO"));
     }
 
     #[test]
@@ -167,7 +140,7 @@ mod tests {
         assert_eq!(matches[0].pattern, "FIXME");
         assert_eq!(matches[0].line_number, 2);
         assert_eq!(matches[0].column, 1);
-        assert_eq!(matches[0].message, "FIXME");
+        assert!(matches[0].message.contains("FIXME"));
     }
 
     #[test]

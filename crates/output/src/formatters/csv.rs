@@ -99,3 +99,40 @@ mod tests {
         assert!(lines[1].contains("\"TODO, with comma\""));
     }
 }
+
+#[cfg(test)]
+mod proptest_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn arb_match() -> impl Strategy<Value = Match> {
+        ("[a-zA-Z0-9_.]+", 1..10000usize, 1..10000usize, "[A-Z]+", ".*").prop_map(|(fp, ln, col, pat, msg)| Match {
+            file_path: fp.to_string(),
+            line_number: ln,
+            column: col,
+            pattern: pat.to_string(),
+            message: msg.to_string(),
+        })
+    }
+
+    proptest! {
+        #[test]
+        fn test_csv_formatter_arbitrary_matches(matches in proptest::collection::vec(arb_match(), 0..10)) {
+            let formatter = CsvFormatter;
+            let output = formatter.format(&matches);
+            // Check that it's valid CSV
+            let mut rdr = csv::Reader::from_reader(output.as_bytes());
+            let records: Vec<_> = rdr.records().collect();
+            prop_assert_eq!(records.len(), matches.len());
+            for (i, record) in records.into_iter().enumerate() {
+                let record = record.unwrap();
+                prop_assert_eq!(record.len(), 5);
+                prop_assert_eq!(record[0].to_string(), matches[i].file_path.clone());
+                prop_assert_eq!(record[1].to_string(), matches[i].line_number.to_string());
+                prop_assert_eq!(record[2].to_string(), matches[i].column.to_string());
+                prop_assert_eq!(record[3].to_string(), matches[i].pattern.clone());
+                prop_assert_eq!(record[4].to_string(), matches[i].message.clone());
+            }
+        }
+    }
+}

@@ -28,3 +28,6 @@ debug
 
 # node.js
 node_modules
+
+# Archived plans
+/plans/archive

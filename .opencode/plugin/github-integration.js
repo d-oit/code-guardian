@@ -1,18 +1,37 @@
-export const GitHubIntegrationPlugin = async ({ project, client, $, directory, worktree }) => {
+/**
+ * GitHub Integration Plugin for opencode.
+ * Handles posting session summaries to PR comments and notifying on cargo-test failures.
+ */
+export const GitHubIntegrationPlugin = async ({ client, $, worktree }) => {
+  let currentPrNumber = null;
+
   return {
     event: async ({ event }) => {
-      // On session completion, check for PR and comment with summary
-      if (event.type === "session.idle" && event.properties?.prNumber) {
-        const summary = await client.session.summarize({ path: { id: event.properties.sessionId } });
-        // Assume GitHub API integration here, e.g., post comment
-        console.log(`Posting summary to PR #${event.properties.prNumber}: ${summary}`);
-        // In real implementation, use GitHub API or webhook
+      // On session idle, store PR number and post summary as PR comment if available
+      if (event.type === "session.idle") {
+        currentPrNumber = event.properties?.prNumber;
+        if (currentPrNumber) {
+          try {
+            const summary = await client.session.summarize({ path: { id: event.properties.sessionId } });
+            await $`gh pr comment ${currentPrNumber} --body "${summary}"`;
+          } catch (error) {
+            console.error("Failed to post PR comment:", error.message);
+          }
+        }
       }
     },
     "tool.execute.after": async (input, output) => {
-      // After cargo-test, if failures, notify
-      if (input.tool === "cargo-runner" && input.args.command === "test" && output.includes("FAILED")) {
-        await $`echo "Test failures detected - notify team"`;
+      // After cargo-test, if failures detected, notify via issue or PR comment
+      if (input.tool === "cargo-runner" && input.args?.command === "test" && output.includes("FAILED")) {
+        try {
+          if (currentPrNumber) {
+            await $`gh pr comment ${currentPrNumber} --body "Cargo test failures detected. Please review the test output."`;
+          } else {
+            await $`gh issue create --title "Cargo test failure" --body "Test failures detected in cargo test. Please check the CI logs."`;
+          }
+        } catch (error) {
+          console.error("Failed to notify on test failure:", error.message);
+        }
       }
     },
   };

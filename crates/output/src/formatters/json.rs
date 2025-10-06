@@ -72,3 +72,30 @@ mod tests {
         assert_eq!(parsed, matches);
     }
 }
+
+#[cfg(test)]
+mod proptest_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    fn arb_match() -> impl Strategy<Value = Match> {
+        ("[a-zA-Z0-9_.]+", 1..10000usize, 1..10000usize, "[A-Z]+", ".*").prop_map(|(fp, ln, col, pat, msg)| Match {
+            file_path: fp.to_string(),
+            line_number: ln,
+            column: col,
+            pattern: pat.to_string(),
+            message: msg.to_string(),
+        })
+    }
+
+    proptest! {
+        #[test]
+        fn test_json_formatter_arbitrary_matches(matches in proptest::collection::vec(arb_match(), 0..10)) {
+            let formatter = JsonFormatter;
+            let output = formatter.format(&matches);
+            // Check that it's valid JSON
+            let parsed: Vec<Match> = serde_json::from_str(&output).unwrap();
+            prop_assert_eq!(parsed, matches);
+        }
+    }
+}
