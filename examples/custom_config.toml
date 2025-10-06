@@ -1,0 +1,14 @@
+# Example configuration file with custom patterns
+scan_patterns = ["*.rs", "*.py", "*.js", "*.ts"]
+output_formats = ["json", "html"]
+database_path = "custom_scans.db"
+max_threads = 4
+cache_size = 50000
+batch_size = 100
+max_file_size = 1048576
+
+# Custom regex patterns (simple format)
+[custom_patterns]
+SQL_INJECTION = "(?i)SELECT.*\\+.*FROM"
+HARDCODED_SECRET = "(?i)(password|secret|key)\\s*=\\s*['\"][^'\"]{8,}['\"]"
+DEPRECATED_API = "old_api_call\\([^)]*\\)"

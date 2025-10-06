@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "module": "ESNext",
+    "target": "ES2020",
+    "moduleResolution": "node",
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true
+  },
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules"]
+}

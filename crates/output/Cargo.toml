@@ -1,0 +1,19 @@
+[package]
+name = "code-guardian-output"
+version = "0.1.0-alpha"
+edition = "2021"
+
+[dependencies]
+code-guardian-core = { path = "../core" }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+chrono = { workspace = true }
+colored = { workspace = true }
+comfy-table = { workspace = true }
+csv = "1.1"
+
+[dev-dependencies]
+proptest = { workspace = true }
