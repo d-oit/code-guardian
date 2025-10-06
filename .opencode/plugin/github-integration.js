@@ -2,7 +2,7 @@
  * GitHub Integration Plugin for opencode.
  * Handles posting session summaries to PR comments and notifying on cargo-test failures.
  */
-export const GitHubIntegrationPlugin = async ({ client, $, worktree }) => {
+export const GitHubIntegrationPlugin = async ({ client, $ }) => {
   let currentPrNumber = null;
 
   return {
@@ -13,7 +13,7 @@ export const GitHubIntegrationPlugin = async ({ client, $, worktree }) => {
         if (currentPrNumber) {
           try {
             const summary = await client.session.summarize({ path: { id: event.properties.sessionId } });
-            await $`gh pr comment ${currentPrNumber} --body "${summary}"`;
+             await $`gh pr comment ${currentPrNumber} --body "${JSON.stringify(summary)}"`;
           } catch (error) {
             console.error("Failed to post PR comment:", error.message);
           }

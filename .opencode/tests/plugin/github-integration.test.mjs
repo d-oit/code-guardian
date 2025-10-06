@@ -7,7 +7,7 @@ describe('GitHubIntegrationPlugin', () => {
     mockProject = {};
     mockClient = {
       session: {
-        summarize: jest.fn().mockResolvedValue('Test summary'),
+        summarize: jest.fn().mockResolvedValue({ summary: 'Test summary' }),
       },
     };
     mock$ = jest.fn();
@@ -50,7 +50,7 @@ describe('GitHubIntegrationPlugin', () => {
     expect(mockClient.session.summarize).toHaveBeenCalledWith({
       path: { id: 'session-456' },
     });
-    expect(mock$).toHaveBeenCalledWith(["gh pr comment ", " --body \"", "\""], 123, "Test summary");
+    expect(mock$).toHaveBeenCalledWith(["gh pr comment ", " --body \"", "\""], 123, JSON.stringify({ summary: 'Test summary' }));
   });
 
   test('event handler should do nothing if not session.idle or no prNumber', async () => {
