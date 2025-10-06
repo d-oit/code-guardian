@@ -1,6 +1,6 @@
 [package]
 name = "code-guardian-output"
-version = "0.1.0"
+version = "0.1.0-alpha"
 edition = "2021"
 
 [dependencies]
@@ -14,3 +14,6 @@ chrono = { workspace = true }
 colored = { workspace = true }
 comfy-table = { workspace = true }
 csv = "1.1"
+
+[dev-dependencies]
+proptest = { workspace = true }
