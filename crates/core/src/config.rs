@@ -50,7 +50,12 @@ pub fn load_config<P: AsRef<Path>>(path: Option<P>) -> anyhow::Result<Config> {
                 "json" => {
                     builder = builder.add_source(config::File::with_name(path.to_str().unwrap()));
                 }
-                _ => return Err(anyhow::anyhow!("Unsupported config file format: {}", extension)),
+                _ => {
+                    return Err(anyhow::anyhow!(
+                        "Unsupported config file format: {}",
+                        extension
+                    ))
+                }
             }
         }
     }

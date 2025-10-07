@@ -59,6 +59,15 @@ If clippy finds issues, stop and report warnings/errors.
 Format check: !`cargo fmt --check`
 If formatting issues, stop and report.
 
+Doc tests: !`cargo test --doc`
+If doc tests fail, stop and report failures.
+
+Coverage generation: !`cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info`
+If coverage generation fails, stop and report errors.
+
+Security audit: !`cargo audit`
+If security vulnerabilities are found, stop and report.
+
 If all checks pass:
 1. Determine new version: /version-bump $ARGUMENTS
 2. @ci-agent to handle CI/CD pipeline.
@@ -70,6 +79,6 @@ If all checks pass:
 8. Switch to develop branch and merge main back into it to sync changes.
 9. If needed, @hive-mind-orchestrator for complex releases.
 
-10. @github agent to monitor the GitHub Actions workflows (especially the release workflow) to ensure they complete successfully.
+10. @github agent to monitor the GitHub Actions workflows (CI, Deploy Docs, Release) to ensure they complete successfully.
 
 Confirm release completion.

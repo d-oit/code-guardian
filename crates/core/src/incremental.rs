@@ -18,8 +18,7 @@ pub struct FileMetadata {
 }
 
 /// Incremental scan state persistence
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[derive(Default)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct IncrementalState {
     pub last_full_scan: u64,
     pub file_metadata: HashMap<PathBuf, FileMetadata>,
@@ -49,10 +48,7 @@ pub struct IncrementalScanner {
 
 impl IncrementalScanner {
     /// Create a new incremental scanner
-    pub fn new(
-        detectors: Vec<Box<dyn PatternDetector>>,
-        state_file: PathBuf,
-    ) -> Result<Self> {
+    pub fn new(detectors: Vec<Box<dyn PatternDetector>>, state_file: PathBuf) -> Result<Self> {
         let state = if state_file.exists() {
             let content = std::fs::read_to_string(&state_file)?;
             serde_json::from_str(&content).unwrap_or_default()
@@ -71,9 +67,7 @@ impl IncrementalScanner {
     /// Perform incremental scan
     pub fn scan_incremental(&mut self, root: &Path) -> Result<(Vec<Match>, IncrementalScanResult)> {
         let start_time = std::time::Instant::now();
-        let scan_timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)?
-            .as_secs();
+        let scan_timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs();
 
         let mut all_matches = Vec::new();
         let mut files_scanned = 0;
@@ -87,7 +81,10 @@ impl IncrementalScanner {
         let force_full_scan = days_since_full_scan > self.force_rescan_threshold;
 
         if force_full_scan {
-            println!("🔄 Performing full rescan (last full scan: {} days ago)", days_since_full_scan);
+            println!(
+                "🔄 Performing full rescan (last full scan: {} days ago)",
+                days_since_full_scan
+            );
             self.state.last_full_scan = scan_timestamp;
             self.state.file_metadata.clear();
         }
@@ -98,16 +95,16 @@ impl IncrementalScanner {
 
         for file_path in current_files {
             current_file_set.insert(file_path.clone());
-            
+
             if let Some(metadata) = self.get_file_metadata(&file_path)? {
                 let existing_metadata = self.state.file_metadata.get(&file_path);
-                
+
                 let needs_scan = match existing_metadata {
                     Some(existing) => {
                         // Check if file has been modified
-                        existing.modified_time != metadata.modified_time ||
-                        existing.size != metadata.size ||
-                        force_full_scan
+                        existing.modified_time != metadata.modified_time
+                            || existing.size != metadata.size
+                            || force_full_scan
                     }
                     None => {
                         // New file
@@ -120,7 +117,7 @@ impl IncrementalScanner {
                     if existing_metadata.is_some() {
                         files_modified += 1;
                     }
-                    
+
                     // Scan the file
                     let content = std::fs::read_to_string(&file_path)?;
                     let file_matches: Vec<Match> = self
@@ -144,7 +141,7 @@ impl IncrementalScanner {
                 } else {
                     // File unchanged, use cached results
                     files_skipped += 1;
-                    
+
                     // For complete results, we'd need to store and retrieve cached matches
                     // For now, we'll just note that the file was skipped
                 }
@@ -174,7 +171,7 @@ impl IncrementalScanner {
 
         // Save state
         self.save_state()?;
-        
+
         // Update scan history
         self.state.scan_history.push(result.clone());
         if self.state.scan_history.len() > 100 {
@@ -182,10 +179,14 @@ impl IncrementalScanner {
         }
 
         println!("📊 Incremental scan completed:");
-        println!("   Files scanned: {} | Skipped: {} | Modified: {} | Added: {} | Removed: {}", 
-                 files_scanned, files_skipped, files_modified, files_added, files_removed);
-        println!("   Speed improvement: {:.1}x faster than full scan", 
-                 self.calculate_speedup(files_scanned, files_skipped));
+        println!(
+            "   Files scanned: {} | Skipped: {} | Modified: {} | Added: {} | Removed: {}",
+            files_scanned, files_skipped, files_modified, files_added, files_removed
+        );
+        println!(
+            "   Speed improvement: {:.1}x faster than full scan",
+            self.calculate_speedup(files_scanned, files_skipped)
+        );
 
         Ok((all_matches, result))
     }
@@ -198,12 +199,20 @@ impl IncrementalScanner {
 
     /// Get incremental scan statistics
     pub fn get_statistics(&self) -> IncrementalStats {
-        let recent_scans = self.state.scan_history.iter().rev().take(10).collect::<Vec<_>>();
-        
+        let recent_scans = self
+            .state
+            .scan_history
+            .iter()
+            .rev()
+            .take(10)
+            .collect::<Vec<_>>();
+
         let avg_speedup = if !recent_scans.is_empty() {
-            recent_scans.iter()
+            recent_scans
+                .iter()
                 .map(|scan| self.calculate_speedup(scan.files_scanned, scan.files_skipped))
-                .sum::<f64>() / recent_scans.len() as f64
+                .sum::<f64>()
+                / recent_scans.len() as f64
         } else {
             1.0
         };
@@ -213,7 +222,10 @@ impl IncrementalScanner {
             last_scan_time: recent_scans.first().map(|s| s.timestamp),
             average_speedup: avg_speedup,
             cache_hit_rate: if !recent_scans.is_empty() {
-                let total_files = recent_scans.iter().map(|s| s.files_scanned + s.files_skipped).sum::<usize>();
+                let total_files = recent_scans
+                    .iter()
+                    .map(|s| s.files_scanned + s.files_skipped)
+                    .sum::<usize>();
                 let total_skipped = recent_scans.iter().map(|s| s.files_skipped).sum::<usize>();
                 if total_files > 0 {
                     total_skipped as f64 / total_files as f64
@@ -229,7 +241,7 @@ impl IncrementalScanner {
 
     fn collect_files(&self, root: &Path) -> Result<Vec<PathBuf>> {
         use ignore::WalkBuilder;
-        
+
         let mut files = Vec::new();
         for entry in WalkBuilder::new(root).build() {
             let entry = entry?;
@@ -242,13 +254,11 @@ impl IncrementalScanner {
 
     fn get_file_metadata(&self, path: &Path) -> Result<Option<FileMetadata>> {
         if let Ok(metadata) = std::fs::metadata(path) {
-            let modified_time = metadata
-                .modified()?
-                .duration_since(UNIX_EPOCH)?
-                .as_secs();
-            
+            let modified_time = metadata.modified()?.duration_since(UNIX_EPOCH)?.as_secs();
+
             // Optional: Calculate file hash for more accurate change detection
-            let hash = if metadata.len() < 1024 * 1024 { // Only hash files < 1MB
+            let hash = if metadata.len() < 1024 * 1024 {
+                // Only hash files < 1MB
                 self.calculate_file_hash(path).ok()
             } else {
                 None
@@ -270,7 +280,7 @@ impl IncrementalScanner {
     fn calculate_file_hash(&self, path: &Path) -> Result<String> {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
-        
+
         let content = std::fs::read(path)?;
         let mut hasher = DefaultHasher::new();
         content.hash(&mut hasher);
@@ -293,7 +303,6 @@ impl IncrementalScanner {
     }
 }
 
-
 /// Statistics for incremental scanning
 #[derive(Debug, Clone)]
 pub struct IncrementalStats {
@@ -308,13 +317,13 @@ pub struct IncrementalStats {
 mod tests {
     use super::*;
     use crate::detectors::TodoDetector;
-    use tempfile::{TempDir, NamedTempFile};
+    use tempfile::{NamedTempFile, TempDir};
 
     #[test]
     fn test_incremental_scanner_creation() {
         let temp_file = NamedTempFile::new().unwrap();
         let detectors: Vec<Box<dyn PatternDetector>> = vec![Box::new(TodoDetector)];
-        
+
         let scanner = IncrementalScanner::new(detectors, temp_file.path().to_path_buf());
         assert!(scanner.is_ok());
     }
@@ -324,17 +333,18 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let test_file = temp_dir.path().join("test.rs");
         std::fs::write(&test_file, "// TODO: test").unwrap();
-        
+
         let temp_state = NamedTempFile::new().unwrap();
         let detectors: Vec<Box<dyn PatternDetector>> = vec![Box::new(TodoDetector)];
-        let mut scanner = IncrementalScanner::new(detectors, temp_state.path().to_path_buf()).unwrap();
-        
+        let mut scanner =
+            IncrementalScanner::new(detectors, temp_state.path().to_path_buf()).unwrap();
+
         // First scan
         let (matches1, result1) = scanner.scan_incremental(temp_dir.path()).unwrap();
         assert_eq!(result1.files_added, 1);
         assert_eq!(result1.files_scanned, 1);
         assert_eq!(matches1.len(), 1);
-        
+
         // Second scan without changes - should skip file
         let (_matches2, result2) = scanner.scan_incremental(temp_dir.path()).unwrap();
         assert_eq!(result2.files_skipped, 1);

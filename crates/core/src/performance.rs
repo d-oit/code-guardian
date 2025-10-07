@@ -15,12 +15,13 @@ impl PerformanceProfiler {
             start_times: HashMap::new(),
         }
     }
-    
+
     /// Start timing an operation
     pub fn start(&mut self, operation: &str) {
-        self.start_times.insert(operation.to_string(), Instant::now());
+        self.start_times
+            .insert(operation.to_string(), Instant::now());
     }
-    
+
     /// End timing an operation
     pub fn end(&mut self, operation: &str) {
         if let Some(start_time) = self.start_times.remove(operation) {
@@ -31,44 +32,44 @@ impl PerformanceProfiler {
                 .push(duration);
         }
     }
-    
+
     /// Get average duration for an operation
     pub fn average_duration(&self, operation: &str) -> Option<Duration> {
         let durations = self.timings.get(operation)?;
         if durations.is_empty() {
             return None;
         }
-        
+
         let total: Duration = durations.iter().sum();
         Some(total / durations.len() as u32)
     }
-    
+
     /// Get total duration for an operation
     pub fn total_duration(&self, operation: &str) -> Option<Duration> {
         let durations = self.timings.get(operation)?;
         Some(durations.iter().sum())
     }
-    
+
     /// Get operation count
     pub fn operation_count(&self, operation: &str) -> usize {
         self.timings.get(operation).map_or(0, |d| d.len())
     }
-    
+
     /// Generate performance report
     pub fn report(&self) -> String {
         let mut report = String::from("Performance Report:\n");
         report.push_str("==================\n\n");
-        
+
         for (operation, durations) in &self.timings {
             if durations.is_empty() {
                 continue;
             }
-            
+
             let total: Duration = durations.iter().sum();
             let average = total / durations.len() as u32;
             let min = *durations.iter().min().unwrap();
             let max = *durations.iter().max().unwrap();
-            
+
             report.push_str(&format!(
                 "{}: {} calls\n  Total: {:?}\n  Average: {:?}\n  Min: {:?}\n  Max: {:?}\n\n",
                 operation,
@@ -79,10 +80,10 @@ impl PerformanceProfiler {
                 max
             ));
         }
-        
+
         report
     }
-    
+
     /// Clear all timings
     pub fn clear(&mut self) {
         self.timings.clear();
@@ -110,7 +111,7 @@ impl MemoryTracker {
             current_memory: 0,
         }
     }
-    
+
     /// Track memory allocation
     pub fn allocate(&mut self, size: usize) {
         self.current_memory += size;
@@ -118,22 +119,22 @@ impl MemoryTracker {
             self.peak_memory = self.current_memory;
         }
     }
-    
+
     /// Track memory deallocation
     pub fn deallocate(&mut self, size: usize) {
         self.current_memory = self.current_memory.saturating_sub(size);
     }
-    
+
     /// Get current memory usage
     pub fn current_usage(&self) -> usize {
         self.current_memory
     }
-    
+
     /// Get peak memory usage
     pub fn peak_usage(&self) -> usize {
         self.peak_memory
     }
-    
+
     /// Reset tracking
     pub fn reset(&mut self) {
         self.current_memory = 0;
@@ -220,7 +221,7 @@ impl PerformanceMetrics {
             parallelism_efficiency,
         }
     }
-    
+
     pub fn report(&self) -> String {
         format!(
             "Performance Metrics:\n\
@@ -247,36 +248,36 @@ impl PerformanceMetrics {
 mod tests {
     use super::*;
     use std::thread;
-    
+
     #[test]
     fn test_performance_profiler() {
         let mut profiler = PerformanceProfiler::new();
-        
+
         profiler.start("test_operation");
         thread::sleep(Duration::from_millis(10));
         profiler.end("test_operation");
-        
+
         assert!(profiler.average_duration("test_operation").is_some());
         assert_eq!(profiler.operation_count("test_operation"), 1);
     }
-    
+
     #[test]
     fn test_memory_tracker() {
         let mut tracker = MemoryTracker::new();
-        
+
         tracker.allocate(1024);
         assert_eq!(tracker.current_usage(), 1024);
         assert_eq!(tracker.peak_usage(), 1024);
-        
+
         tracker.allocate(512);
         assert_eq!(tracker.current_usage(), 1536);
         assert_eq!(tracker.peak_usage(), 1536);
-        
+
         tracker.deallocate(1024);
         assert_eq!(tracker.current_usage(), 512);
         assert_eq!(tracker.peak_usage(), 1536); // Peak should remain
     }
-    
+
     #[test]
     fn test_performance_metrics() {
         let stats = ScanStats {
@@ -290,7 +291,7 @@ mod tests {
             thread_count: 4,
         };
         let metrics = PerformanceMetrics::calculate(stats);
-        
+
         assert_eq!(metrics.files_per_second, 50.0);
         assert_eq!(metrics.lines_per_second, 5000.0);
         assert_eq!(metrics.matches_per_second, 25.0);

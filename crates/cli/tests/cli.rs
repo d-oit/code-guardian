@@ -12,7 +12,7 @@ fn test_scan_command() {
     fs::write(&test_file, "// TODO: fix this\n// FIXME: another").unwrap();
     let db_path = temp_dir.path().join("test.db");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -44,7 +44,7 @@ fn test_history_command() {
         repo.save_scan(&scan).unwrap();
     }
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("history")
         .arg("--db")
         .arg(&db_path)
@@ -72,7 +72,7 @@ fn test_report_command() {
     };
     let id = repo.save_scan(&scan).unwrap();
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("report")
         .arg(id.to_string())
         .arg("--db")
@@ -123,7 +123,7 @@ fn test_compare_command() {
     };
     let id2 = repo.save_scan(&scan2).unwrap();
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("compare")
         .arg(id1.to_string())
         .arg(id2.to_string())
@@ -148,7 +148,7 @@ fn test_invalid_format() {
     let id = repo.save_scan(&scan).unwrap();
     drop(repo); // Ensure data is written
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("report")
         .arg(id.to_string())
         .arg("--format")
@@ -164,7 +164,7 @@ fn test_invalid_format() {
 fn test_report_non_existent_scan() {
     let temp_dir = TempDir::new().unwrap();
     let db_path = temp_dir.path().join("test.db");
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("report")
         .arg("999")
         .arg("--db")
@@ -178,7 +178,7 @@ fn test_report_non_existent_scan() {
 fn test_scan_non_existent_path() {
     let temp_dir = TempDir::new().unwrap();
     let db_path = temp_dir.path().join("test.db");
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg("/non/existent/path")
         .arg("--db")
@@ -191,11 +191,15 @@ fn test_scan_non_existent_path() {
 fn test_scan_with_different_profiles() {
     let temp_dir = TempDir::new().unwrap();
     let test_file = temp_dir.path().join("test.rs");
-    fs::write(&test_file, "// TODO: fix this\n// FIXME: another\n// HACK: temp fix").unwrap();
+    fs::write(
+        &test_file,
+        "// TODO: fix this\n// FIXME: another\n// HACK: temp fix",
+    )
+    .unwrap();
     let db_path = temp_dir.path().join("test.db");
 
     // Test comprehensive profile
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -220,7 +224,7 @@ fn test_scan_with_progress() {
     fs::write(&test_file, "// TODO: fix this").unwrap();
     let db_path = temp_dir.path().join("test.db");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -238,7 +242,7 @@ fn test_scan_with_metrics() {
     fs::write(&test_file, "// TODO: fix this\n// FIXME: another").unwrap();
     let db_path = temp_dir.path().join("test.db");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -257,7 +261,7 @@ fn test_scan_optimized() {
     fs::write(&test_file, "// TODO: fix this").unwrap();
     let db_path = temp_dir.path().join("test.db");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -275,19 +279,20 @@ fn test_scan_incremental() {
     let db_path = temp_dir.path().join("test.db");
 
     // First scan
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
-    let result = cmd.arg("scan")
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
+    let result = cmd
+        .arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
         .arg(&db_path)
         .arg("--incremental")
         .output()
         .unwrap();
-    
+
     // Allow it to succeed or fail due to UTF-8 issues in test environment
     if result.status.success() {
         // Second incremental scan
-        let mut cmd2 = Command::cargo_bin("code-guardian-cli").unwrap();
+        let mut cmd2 = Command::cargo_bin("code_guardian_cli").unwrap();
         cmd2.arg("scan")
             .arg(temp_dir.path())
             .arg("--db")
@@ -305,7 +310,7 @@ fn test_scan_distributed() {
     fs::write(&test_file, "// TODO: fix this").unwrap();
     let db_path = temp_dir.path().join("test.db");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")
@@ -335,7 +340,7 @@ fn test_report_formats() {
     let id = repo.save_scan(&scan).unwrap();
 
     // Test JSON format
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("report")
         .arg(id.to_string())
         .arg("--format")
@@ -347,7 +352,7 @@ fn test_report_formats() {
         .stdout(predicate::str::contains("\"pattern\": \"TODO\""));
 
     // Test CSV format
-    let mut cmd2 = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd2 = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd2.arg("report")
         .arg(id.to_string())
         .arg("--format")
@@ -359,7 +364,7 @@ fn test_report_formats() {
         .stdout(predicate::str::contains("TODO"));
 
     // Test Markdown format
-    let mut cmd3 = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd3 = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd3.arg("report")
         .arg(id.to_string())
         .arg("--format")
@@ -371,7 +376,7 @@ fn test_report_formats() {
         .stdout(predicate::str::contains("|"));
 
     // Test HTML format
-    let mut cmd4 = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd4 = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd4.arg("report")
         .arg(id.to_string())
         .arg("--format")
@@ -425,7 +430,7 @@ fn test_compare_formats() {
     let id2 = repo.save_scan(&scan2).unwrap();
 
     // Test JSON format for compare
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("compare")
         .arg(id1.to_string())
         .arg(id2.to_string())
@@ -443,7 +448,7 @@ fn test_custom_detectors_create_examples() {
     let temp_dir = TempDir::new().unwrap();
     let output_file = temp_dir.path().join("custom_detectors.json");
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("custom-detectors")
         .arg("create-examples")
         .arg("--output")
@@ -461,7 +466,7 @@ fn test_custom_detectors_load() {
     let output_file = temp_dir.path().join("custom_detectors.json");
 
     // First create examples
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("custom-detectors")
         .arg("create-examples")
         .arg("--output")
@@ -470,7 +475,7 @@ fn test_custom_detectors_load() {
         .success();
 
     // Then load them
-    let mut cmd2 = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd2 = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd2.arg("custom-detectors")
         .arg("load")
         .arg(&output_file)
@@ -487,7 +492,7 @@ fn test_custom_detectors_test() {
     fs::write(&test_file, "This is a test file with some content").unwrap();
 
     // Create examples
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("custom-detectors")
         .arg("create-examples")
         .arg("--output")
@@ -496,7 +501,7 @@ fn test_custom_detectors_test() {
         .success();
 
     // Test on file
-    let mut cmd2 = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd2 = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd2.arg("custom-detectors")
         .arg("test")
         .arg(&detectors_file)
@@ -508,7 +513,7 @@ fn test_custom_detectors_test() {
 
 #[test]
 fn test_incremental_status() {
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("incremental")
         .arg("status")
         .assert()
@@ -518,7 +523,7 @@ fn test_incremental_status() {
 
 #[test]
 fn test_incremental_reset() {
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("incremental")
         .arg("reset")
         .assert()
@@ -528,7 +533,7 @@ fn test_incremental_reset() {
 
 #[test]
 fn test_distributed_setup() {
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("distributed")
         .arg("setup")
         .arg("--workers")
@@ -544,7 +549,7 @@ fn test_distributed_scan() {
     let test_file = temp_dir.path().join("test.rs");
     fs::write(&test_file, "// TODO: fix this").unwrap();
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("distributed")
         .arg("scan")
         .arg(temp_dir.path())
@@ -563,7 +568,7 @@ fn test_benchmark() {
     let test_file = temp_dir.path().join("test.rs");
     fs::write(&test_file, "// TODO: fix this").unwrap();
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("benchmark")
         .arg(temp_dir.path())
         .arg("--quick")
@@ -573,11 +578,8 @@ fn test_benchmark() {
 
 #[test]
 fn test_completion() {
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
-    cmd.arg("completion")
-        .arg("bash")
-        .assert()
-        .success();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
+    cmd.arg("completion").arg("bash").assert().success();
 }
 
 #[test]
@@ -606,7 +608,7 @@ fn test_scan_with_custom_detectors() {
     ]"#;
     fs::write(&custom_detectors_file, custom_detectors).unwrap();
 
-    let mut cmd = Command::cargo_bin("code-guardian-cli").unwrap();
+    let mut cmd = Command::cargo_bin("code_guardian_cli").unwrap();
     cmd.arg("scan")
         .arg(temp_dir.path())
         .arg("--db")

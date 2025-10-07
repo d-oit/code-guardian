@@ -1,0 +1,130 @@
+# Code-Guardian Production Readiness Configuration
+# This configuration focuses on finding non-production code that shouldn't be in production releases
+
+[scan]
+# Enable comprehensive multi-language support
+include_extensions = [
+    # Web technologies
+    "js", "ts", "jsx", "tsx", "vue", "svelte", "html",
+    # Backend languages
+    "py", "java", "cs", "go", "php", "rb", "kt", "swift",
+    # Systems languages
+    "rs", "cpp", "cxx", "c", "h", "hpp",
+    # Other languages
+    "dart", "scala", "sh", "ps1", "sql",
+    # Configuration and documentation
+    "yml", "yaml", "json", "toml", "md", "txt"
+]
+
+# Exclude binary and build artifacts
+exclude_extensions = [
+    "exe", "dll", "so", "bin", "obj", "o",
+    "png", "jpg", "jpeg", "gif", "svg", "ico",
+    "pdf", "zip", "tar", "gz", "rar",
+    "mp4", "mp3", "wav", "avi"
+]
+
+# Exclude common build and dependency directories
+exclude_paths = [
+    "target/*",           # Rust build directory
+    "node_modules/*",     # Node.js dependencies
+    ".git/*",             # Git internal files
+    "build/*",            # Common build directory
+    "dist/*",             # Distribution directory
+    "vendor/*",           # Vendor dependencies
+    ".vscode/*",          # VS Code settings
+    ".idea/*",            # IntelliJ settings
+    "__pycache__/*",      # Python cache
+    "*.lock",             # Lock files
+    "coverage/*",         # Coverage reports
+    ".nyc_output/*"       # NYC coverage
+]
+
+# Maximum file size to scan (1MB)
+max_file_size = 1048576
+
+# Enabled detectors for production readiness scanning
+enabled_detectors = [
+    # Development/Phase patterns - HIGH PRIORITY
+    "Dev",
+    "Debug", 
+    "Test",
+    "Phase",
+    "Staging",
+    
+    # Non-production code patterns - CRITICAL
+    "ConsoleLog",         # JavaScript/TypeScript console statements
+    "Print",              # Print statements in various languages
+    "Alert",              # JavaScript alert/prompt/confirm
+    "Debugger",           # Debugger statements and breakpoints
+    "UnusedVar",          # Explicitly marked unused variables
+    "DeadCode",           # Dead code comments
+    "Experimental",       # Experimental/prototype code
+    
+    # Standard comment patterns - MEDIUM PRIORITY
+    "Todo",
+    "Fixme", 
+    "Hack",
+    "Bug",
+    
+    # Rust-specific production issues - HIGH PRIORITY
+    "Panic",              # panic! macros
+    "Unwrap",             # .unwrap() calls
+    "Unsafe",             # unsafe blocks
+    "Unimplemented"       # unimplemented! macros
+]
+
+# Severity levels for different patterns
+[severity_levels]
+# Development/Phase patterns
+DEV = "High"
+DEBUG = "Medium"
+TEST = "Medium"
+PHASE = "Medium"
+STAGING = "High"
+
+# Non-production code patterns
+CONSOLE_LOG = "High"
+PRINT = "Medium"
+ALERT = "High"
+DEBUGGER = "Critical"
+UNUSED_VAR = "Low"
+DEAD_CODE = "Medium"
+EXPERIMENTAL = "Medium"
+
+# Standard patterns
+TODO = "Low"
+FIXME = "Medium"
+HACK = "High"
+BUG = "High"
+
+# Rust-specific
+PANIC = "High"
+UNWRAP = "Medium"
+UNSAFE = "High"
+UNIMPLEMENTED = "Critical"
+
+# Custom patterns for specific non-production code detection
+[custom_patterns]
+
+# Environment-specific patterns
+LOCALHOST = "(?i)localhost|127\\.0\\.0\\.1|0\\.0\\.0\\.0"
+DEV_SERVER = "(?i)(dev|development|staging)\\.(server|host|url|endpoint)"
+
+# Temporary code patterns  
+TEMP_CODE = "(?i)(temp|temporary|tmp)\\s+(code|fix|solution|hack)"
+QUICK_FIX = "(?i)(quick|dirty)\\s+(fix|hack|solution)"
+
+# Testing artifacts in production code
+TEST_DATA = "(?i)(test|mock|fake)\\s+(data|user|account|password)"
+SAMPLE_DATA = "(?i)(sample|dummy|placeholder)\\s+(data|content|text)"
+
+# Language-specific debug patterns
+PYTHON_DEBUG = "import\\s+pdb|pdb\\.set_trace|breakpoint\\(\\)"
+JS_DEBUG = "console\\.(time|timeEnd|trace|count|group)"
+CSHARP_DEBUG = "System\\.Diagnostics\\.Debug|Console\\.WriteLine"
+JAVA_DEBUG = "System\\.out\\.(print|println)|System\\.err\\.(print|println)"
+
+# Version/build patterns that shouldn't be hardcoded
+VERSION_TODO = "(?i)version\\s*(=|:)\\s*[\"']?(0\\.0\\.1|1\\.0\\.0|TODO|TBD)[\"']?"
+BUILD_TODO = "(?i)build\\s*(=|:)\\s*[\"']?(debug|local|dev|TODO)[\"']?"

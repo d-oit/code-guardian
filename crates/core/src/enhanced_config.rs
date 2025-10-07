@@ -33,26 +33,40 @@ pub enum DetectorType {
     Xxx,
     Note,
     Warning,
-    
+
     // Rust-specific patterns
     Panic,
     Unwrap,
     Expect,
     Unimplemented,
     Unreachable,
-    
+
     // Performance patterns
     Clone,
     ToString,
-    
+
     // Security patterns
     Unsafe,
-    
+
+    // Development/Phase patterns
+    Dev,
+    Debug,
+    Test,
+    Phase,
+    Staging,
+
+    // Non-production code patterns
+    ConsoleLog,
+    Print,
+    Alert,
+    Debugger,
+    UnusedVar,
+    DeadCode,
+    Experimental,
+
     // Custom pattern with name
     Custom(String),
 }
-
-
 
 impl Default for EnhancedScanConfig {
     fn default() -> Self {
@@ -65,24 +79,58 @@ impl Default for EnhancedScanConfig {
         severity_levels.insert("PANIC".to_string(), Severity::High);
         severity_levels.insert("UNWRAP".to_string(), Severity::Medium);
         severity_levels.insert("UNSAFE".to_string(), Severity::High);
-        
+
+        // Development/Phase patterns
+        severity_levels.insert("DEV".to_string(), Severity::High);
+        severity_levels.insert("DEBUG".to_string(), Severity::Medium);
+        severity_levels.insert("TEST".to_string(), Severity::Medium);
+        severity_levels.insert("PHASE".to_string(), Severity::Medium);
+        severity_levels.insert("STAGING".to_string(), Severity::High);
+
+        // Non-production code patterns
+        severity_levels.insert("CONSOLE_LOG".to_string(), Severity::High);
+        severity_levels.insert("PRINT".to_string(), Severity::Medium);
+        severity_levels.insert("ALERT".to_string(), Severity::High);
+        severity_levels.insert("DEBUGGER".to_string(), Severity::Critical);
+        severity_levels.insert("UNUSED_VAR".to_string(), Severity::Low);
+        severity_levels.insert("DEAD_CODE".to_string(), Severity::Medium);
+        severity_levels.insert("EXPERIMENTAL".to_string(), Severity::Medium);
+
         Self {
-            enabled_detectors: vec![
-                DetectorType::Todo,
-                DetectorType::Fixme,
-            ],
+            enabled_detectors: vec![DetectorType::Todo, DetectorType::Fixme],
             include_extensions: vec![
                 "rs".to_string(),
                 "py".to_string(),
                 "js".to_string(),
                 "ts".to_string(),
+                "tsx".to_string(),
+                "jsx".to_string(),
                 "java".to_string(),
+                "cs".to_string(),
                 "cpp".to_string(),
+                "cxx".to_string(),
                 "c".to_string(),
                 "h".to_string(),
+                "hpp".to_string(),
                 "go".to_string(),
+                "php".to_string(),
+                "rb".to_string(),
+                "kt".to_string(),
+                "swift".to_string(),
+                "dart".to_string(),
+                "scala".to_string(),
+                "sh".to_string(),
+                "ps1".to_string(),
+                "sql".to_string(),
+                "html".to_string(),
+                "vue".to_string(),
+                "svelte".to_string(),
                 "md".to_string(),
                 "txt".to_string(),
+                "yml".to_string(),
+                "yaml".to_string(),
+                "json".to_string(),
+                "toml".to_string(),
             ],
             exclude_extensions: vec![
                 "exe".to_string(),

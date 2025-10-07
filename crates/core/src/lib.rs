@@ -5,16 +5,14 @@ use rayon::prelude::*;
 use std::path::Path;
 
 pub mod config;
-pub mod detectors;
+pub mod custom_detectors;
 pub mod detector_factory;
+pub mod detectors;
+pub mod distributed;
 pub mod enhanced_config;
+pub mod incremental;
 pub mod optimized_scanner;
 pub mod performance;
-pub mod incremental;
-pub mod distributed;
-pub mod custom_detectors;
-
-
 
 /// Represents a detected pattern match in a file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -101,16 +99,14 @@ impl Scanner {
 }
 
 // Re-export detectors and factory for convenience
-pub use detectors::*;
+pub use custom_detectors::*;
 pub use detector_factory::*;
+pub use detectors::*;
+pub use distributed::*;
 pub use enhanced_config::*;
+pub use incremental::*;
 pub use optimized_scanner::*;
 pub use performance::*;
-pub use incremental::*;
-pub use distributed::*;
-pub use custom_detectors::*;
-
-
 
 #[cfg(test)]
 mod tests {
@@ -182,5 +178,92 @@ mod tests {
         sorted.sort_by(|a, b| a.pattern.cmp(&b.pattern));
         assert_eq!(sorted[0].pattern, "FIXME");
         assert_eq!(sorted[1].pattern, "TODO");
+    }
+
+    #[test]
+    fn test_production_readiness_multi_language_scan() {
+        use tempfile::TempDir;
+
+        let temp_dir = TempDir::new().unwrap();
+
+        // Create test files with non-production code in different languages
+
+        // JavaScript with console.log and debugger
+        std::fs::write(temp_dir.path().join("app.js"), 
+            "function login(user) {\n    console.log('User:', user);\n    debugger;\n    return true;\n}")
+            .unwrap();
+
+        // TypeScript with alert
+        std::fs::write(
+            temp_dir.path().join("utils.ts"),
+            "export function debug() {\n    alert('Debug mode');\n    // Phase 1 implementation\n}",
+        )
+        .unwrap();
+
+        // Python with print and experimental code
+        std::fs::write(temp_dir.path().join("main.py"), 
+            "def process_data():\n    print('Processing...')  # dev output\n    # experimental algorithm\n    pass")
+            .unwrap();
+
+        // Rust with println! and unwrap
+        std::fs::write(temp_dir.path().join("lib.rs"), 
+            "fn main() {\n    println!(\"Debug info\");\n    // TODO: remove debug\n    let value = result.unwrap();\n}")
+            .unwrap();
+
+        // Create production-ready detectors
+        let detectors = crate::DetectorFactory::create_production_ready_detectors();
+        let scanner = Scanner::new(detectors);
+
+        // Scan the test directory
+        let matches = scanner.scan(temp_dir.path()).unwrap();
+
+        // Verify we found issues across languages
+        assert!(
+            matches.len() >= 6,
+            "Should find multiple non-production patterns, found: {}",
+            matches.len()
+        );
+
+        // Verify specific patterns were detected across languages
+        let patterns: Vec<&str> = matches.iter().map(|m| m.pattern.as_str()).collect();
+
+        // Verify critical non-production patterns are detected
+        assert!(
+            patterns.contains(&"CONSOLE_LOG"),
+            "Should detect console.log in JavaScript"
+        );
+        assert!(
+            patterns.contains(&"DEBUGGER"),
+            "Should detect debugger statements"
+        );
+        assert!(
+            patterns.contains(&"ALERT"),
+            "Should detect alert in TypeScript"
+        );
+        assert!(
+            patterns.contains(&"PRINT"),
+            "Should detect print statements"
+        );
+        assert!(
+            patterns.contains(&"DEV"),
+            "Should detect dev environment references"
+        );
+        assert!(
+            patterns.contains(&"EXPERIMENTAL"),
+            "Should detect experimental code"
+        );
+        assert!(patterns.contains(&"PHASE"), "Should detect phase markers");
+        assert!(
+            patterns.contains(&"UNWRAP"),
+            "Should detect Rust unwrap calls"
+        );
+
+        println!(
+            "✅ Production readiness scan found {} issues across multiple languages",
+            matches.len()
+        );
+        for m in &matches {
+            println!("  {} [{}] {}", m.file_path, m.pattern, m.message);
+        }
     }
 }
