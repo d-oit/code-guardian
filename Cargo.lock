@@ -348,7 +348,6 @@ dependencies = [
  "colored",
  "comfy-table",
  "csv",
- "insta",
  "proptest",
  "serde",
  "serde_json",
