@@ -20,18 +20,6 @@ jobs:
       with:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Update CHANGELOG.md
-      uses: orhun/git-cliff-action@v4
-      with:
-        args: --latest --prepend CHANGELOG.md
-        version: ${{ github.ref_name }}
-        git-commit: true
-        git-push: true
-        git-commit-message: "chore: update changelog for ${{ github.ref_name }}"
-        git-user-name: "github-actions[bot]"
-        git-user-email: "github-actions[bot]@users.noreply.github.com"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     - name: Determine if prerelease
       run: |
         if [[ "${{ github.ref_name }}" == *"-"* ]]; then
