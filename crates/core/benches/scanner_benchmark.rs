@@ -35,7 +35,7 @@ fn bench_scanner_basic(c: &mut Criterion) {
 
     for &num_files in &[10, 50, 100] {
         for &lines_per_file in &[100, 500, 1000] {
-            let files = create_test_files(&temp_dir, num_files, lines_per_file);
+            let _files = create_test_files(&temp_dir, num_files, lines_per_file);
             let scanner = Scanner::new(DetectorFactory::create_default_detectors());
 
             group.bench_with_input(

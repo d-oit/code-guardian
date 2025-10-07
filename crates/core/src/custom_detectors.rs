@@ -392,10 +392,10 @@ mod tests {
         assert_eq!(manager.list_detectors().len(), 0);
 
         manager.create_examples().unwrap();
-        assert!(manager.list_detectors().len() > 0);
+        assert!(!manager.list_detectors().is_empty());
 
         let detectors = manager.get_detectors();
-        assert!(detectors.len() > 0);
+        assert!(!detectors.is_empty());
     }
 
     #[test]

@@ -21,7 +21,7 @@ jobs:
         fetch-depth: 0
         token: ${{ secrets.GITHUB_TOKEN }}
     - name: Update CHANGELOG.md
-      uses: orhun/git-cliff-action@v2
+      uses: orhun/git-cliff-action@v4
       with:
         args: --latest --prepend CHANGELOG.md
         version: ${{ github.ref_name }}

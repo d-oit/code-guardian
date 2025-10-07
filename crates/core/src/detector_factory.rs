@@ -249,7 +249,7 @@ mod tests {
             .push(DetectorType::Custom("MY_PATTERN".to_string()));
 
         let detectors = DetectorFactory::create_detectors(&config);
-        assert!(detectors.len() >= 1);
+        assert!(!detectors.is_empty());
         // The default config has 2 detectors, plus our custom one
         assert!(detectors.len() >= 3);
     }

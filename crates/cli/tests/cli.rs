@@ -624,5 +624,5 @@ fn test_scan_with_custom_detectors() {
     assert_eq!(scans.len(), 1);
     let scan = repo.get_scan(scans[0].id.unwrap()).unwrap().unwrap();
     // Should find at least TODO
-    assert!(scan.matches.len() >= 1);
+    assert!(!scan.matches.is_empty());
 }
