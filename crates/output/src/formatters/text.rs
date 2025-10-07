@@ -49,13 +49,34 @@ mod tests {
             line_number: 1,
             column: 1,
             pattern: "TODO".to_string(),
-            message: "TODO: fix this".to_string(),
+            message: "TODO comment".to_string(),
         }];
         let output = formatter.format(&matches);
         assert!(output.contains("test.rs"));
-        assert!(output.contains("1"));
         assert!(output.contains("TODO"));
-        assert!(output.contains("TODO: fix this"));
+    }
+
+    #[test]
+    fn test_multiple_matches_snapshot() {
+        let formatter = TextFormatter;
+        let matches = vec![
+            Match {
+                file_path: "src/main.rs".to_string(),
+                line_number: 5,
+                column: 3,
+                pattern: "TODO".to_string(),
+                message: "TODO: implement feature".to_string(),
+            },
+            Match {
+                file_path: "src/lib.rs".to_string(),
+                line_number: 10,
+                column: 1,
+                pattern: "FIXME".to_string(),
+                message: "FIXME: temporary workaround".to_string(),
+            },
+        ];
+        let output = formatter.format(&matches);
+        insta::assert_snapshot!(output);
     }
 
     #[test]

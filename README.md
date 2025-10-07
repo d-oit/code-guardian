@@ -23,6 +23,14 @@ A fast, modular CLI tool for scanning codebases to detect non-productive code.
 - 💾 **Persistent Storage**: SQLite-based scan history and comparison
 - ⚡ **High Performance**: Parallel processing with Rust and Rayon
 - 🏗️ **Modular Architecture**: Clean separation of concerns across crates
+- 🌐 **Distributed Scanning**: Handle large codebases with distributed processing
+- 🔄 **Incremental Scanning**: Efficient rescanning of changed files only
+- 📈 **Performance Benchmarking**: Built-in benchmarks and optimization recommendations
+- 🚀 **Production Readiness**: Checks and CI/CD integration for production environments
+- 🛠️ **Custom Detectors**: JSON-configurable custom pattern detectors
+- ⚙️ **Advanced Scanning Options**: Streaming, optimized, and metrics-based scanning
+- 🏷️ **Technology Stack Presets**: Presets for web, backend, fullstack, mobile, and systems
+- 🌍 **Multi-Language Support**: Scanning for 30+ programming languages
 
 ## Installation
 
@@ -146,6 +154,38 @@ Add to your CI pipeline to fail builds with too many TODOs:
     fi
 ```
 
+### Benchmarking
+
+Run performance benchmarks to assess scanning speed and receive optimization recommendations:
+
+```bash
+code-guardian benchmark --quick
+```
+
+### Production Readiness Checks
+
+Perform production readiness checks with configurable severity levels:
+
+```bash
+code-guardian production-check --severity high
+```
+
+### Incremental Scanning
+
+Efficiently rescan only changed files for faster subsequent scans:
+
+```bash
+code-guardian scan /path --incremental
+```
+
+### Distributed Scanning
+
+Distribute scanning across multiple processes for large codebases:
+
+```bash
+code-guardian scan /path --distributed
+```
+
 ## Supported Patterns
 
 - **TODO**: Tasks that need to be completed
@@ -187,10 +227,10 @@ Custom detectors can detect security vulnerabilities, code quality issues, and m
 
 The project follows a modular architecture with separate crates:
 
-- **`core`**: Scanning logic and pattern detection
-- **`storage`**: SQLite database operations and scan persistence
-- **`output`**: Multiple output format support
-- **`cli`**: Command-line interface
+- **`core`**: Scanning logic, pattern detection, custom detectors, distributed scanning, incremental scanning, performance optimization, enhanced configuration
+- **`storage`**: SQLite database operations, scan persistence, and migrations
+- **`output`**: Multiple output format support (text, json, csv, markdown, html)
+- **`cli`**: Command-line interface with handlers for scanning, reporting, comparisons, benchmarks, production usage, advanced features
 
 ## Development
 

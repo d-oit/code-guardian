@@ -65,6 +65,33 @@ impl Scanner {
     /// Scans the directory tree starting from the given root path.
     /// Returns all matches found by the detectors.
     /// Uses parallel processing for performance with improved load balancing and caching.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use code_guardian_core::{Scanner, PatternDetector, Match};
+    /// use std::path::Path;
+    ///
+    /// struct MockDetector;
+    /// impl PatternDetector for MockDetector {
+    ///     fn detect(&self, content: &str, _file_path: &Path) -> Vec<Match> {
+    ///         if content.contains("TODO") {
+    ///             vec![Match {
+    ///                 file_path: "test.rs".to_string(),
+    ///                 line_number: 1,
+    ///                 column: 1,
+    ///                 pattern: "TODO".to_string(),
+    ///                 message: "TODO found".to_string(),
+    ///             }]
+    ///         } else {
+    ///             vec![]
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let scanner = Scanner::new(vec![Box::new(MockDetector)]);
+    /// // Note: This would scan actual files; in doctest, we can't create temp files easily
+    /// ```
     pub fn scan(&self, root: &Path) -> Result<Vec<Match>> {
         let matches: Vec<Match> = WalkBuilder::new(root)
             .build()
@@ -266,4 +293,7 @@ mod tests {
             println!("  {} [{}] {}", m.file_path, m.pattern, m.message);
         }
     }
+
+
+
 }
