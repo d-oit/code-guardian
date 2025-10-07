@@ -1,15 +1,15 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
-use code_guardian_core::{DetectorFactory, DetectorProfile, Scanner, PatternDetector};
+use code_guardian_core::{DetectorFactory, DetectorProfile, PatternDetector, Scanner};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::path::PathBuf;
 use tempfile::TempDir;
 
 fn create_test_files(dir: &TempDir, num_files: usize, lines_per_file: usize) -> Vec<PathBuf> {
     let mut files = Vec::new();
-    
+
     for i in 0..num_files {
         let file_path = dir.path().join(format!("test_{}.rs", i));
         let mut content = String::new();
-        
+
         for j in 0..lines_per_file {
             match j % 5 {
                 0 => content.push_str("// TODO: implement this function\n"),
@@ -20,24 +20,24 @@ fn create_test_files(dir: &TempDir, num_files: usize, lines_per_file: usize) -> 
                 _ => unreachable!(),
             }
         }
-        
+
         std::fs::write(&file_path, content).unwrap();
         files.push(file_path);
     }
-    
+
     files
 }
 
 fn bench_scanner_basic(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
-    
+
     let mut group = c.benchmark_group("scanner_basic");
-    
+
     for &num_files in &[10, 50, 100] {
         for &lines_per_file in &[100, 500, 1000] {
             let files = create_test_files(&temp_dir, num_files, lines_per_file);
             let scanner = Scanner::new(DetectorFactory::create_default_detectors());
-            
+
             group.bench_with_input(
                 BenchmarkId::new("files_lines", format!("{}_{}", num_files, lines_per_file)),
                 &(num_files, lines_per_file),
@@ -50,16 +50,16 @@ fn bench_scanner_basic(c: &mut Criterion) {
             );
         }
     }
-    
+
     group.finish();
 }
 
 fn bench_scanner_profiles(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
     let _files = create_test_files(&temp_dir, 50, 500);
-    
+
     let mut group = c.benchmark_group("scanner_profiles");
-    
+
     let profiles = vec![
         ("basic", DetectorProfile::Basic),
         ("comprehensive", DetectorProfile::Comprehensive),
@@ -67,10 +67,10 @@ fn bench_scanner_profiles(c: &mut Criterion) {
         ("performance", DetectorProfile::Performance),
         ("rust", DetectorProfile::Rust),
     ];
-    
+
     for (name, profile) in profiles {
         let scanner = Scanner::new(profile.get_detectors());
-        
+
         group.bench_function(name, |b| {
             b.iter(|| {
                 let matches = scanner.scan(black_box(temp_dir.path())).unwrap();
@@ -78,19 +78,19 @@ fn bench_scanner_profiles(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 
 fn bench_large_files(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
-    
+
     let mut group = c.benchmark_group("large_files");
-    
+
     for &file_size_kb in &[10, 100, 500, 1000] {
         let lines = file_size_kb * 10; // Rough approximation
         let file_path = temp_dir.path().join(format!("large_{}.rs", file_size_kb));
-        
+
         let mut content = String::new();
         for i in 0..lines {
             if i % 20 == 0 {
@@ -101,11 +101,11 @@ fn bench_large_files(c: &mut Criterion) {
                 content.push_str("fn regular_code_line() { let x = 42; }\n");
             }
         }
-        
+
         std::fs::write(&file_path, content).unwrap();
-        
+
         let scanner = Scanner::new(DetectorFactory::create_default_detectors());
-        
+
         group.bench_function(format!("{}kb", file_size_kb), |b| {
             b.iter(|| {
                 let matches = scanner.scan(black_box(temp_dir.path())).unwrap();
@@ -113,7 +113,7 @@ fn bench_large_files(c: &mut Criterion) {
             });
         });
     }
-    
+
     group.finish();
 }
 
@@ -121,7 +121,9 @@ fn bench_regex_performance(c: &mut Criterion) {
     use code_guardian_core::detectors::*;
     use std::path::Path;
 
-    let content = "// TODO: implement\n// FIXME: bug here\nlet x = val.unwrap();\nlet y = data.clone();\n".repeat(1000);
+    let content =
+        "// TODO: implement\n// FIXME: bug here\nlet x = val.unwrap();\nlet y = data.clone();\n"
+            .repeat(1000);
     let path = Path::new("test.rs");
 
     let mut group = c.benchmark_group("regex_performance");

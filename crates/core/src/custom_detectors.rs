@@ -21,8 +21,6 @@ pub struct CustomDetectorConfig {
     pub enabled: bool,
 }
 
-
-
 /// Categories for organizing custom detectors
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum DetectorCategory {
@@ -51,19 +49,17 @@ impl CustomDetector {
     /// Create a new custom detector from configuration
     pub fn new(config: CustomDetectorConfig) -> Result<Self> {
         let pattern = config.pattern.clone();
-        
+
         // Build regex flags
         let mut regex_flags = regex::RegexBuilder::new(&pattern);
         regex_flags.case_insensitive(!config.case_sensitive);
         regex_flags.multi_line(config.multiline);
-        
-        let regex = regex_flags.build()
+
+        let regex = regex_flags
+            .build()
             .map_err(|e| anyhow::anyhow!("Invalid regex pattern '{}': {}", pattern, e))?;
 
-        Ok(Self {
-            config,
-            regex,
-        })
+        Ok(Self { config, regex })
     }
 
     /// Get detector configuration
@@ -78,7 +74,9 @@ impl CustomDetector {
         }
 
         if let Some(ext) = file_path.extension().and_then(|s| s.to_str()) {
-            self.config.file_extensions.iter()
+            self.config
+                .file_extensions
+                .iter()
                 .any(|allowed_ext| allowed_ext.eq_ignore_ascii_case(ext))
         } else {
             false
@@ -93,12 +91,12 @@ impl PatternDetector for CustomDetector {
         }
 
         let mut matches = Vec::new();
-        
+
         for cap in self.regex.captures_iter(content) {
             if let Some(full_match) = cap.get(0) {
                 // Find line and column
                 let (line_number, column) = find_line_column(content, full_match.start());
-                
+
                 // Extract message from capture groups or use full match
                 let message = if !self.config.capture_groups.is_empty() {
                     self.extract_message_from_groups(&cap)
@@ -123,15 +121,16 @@ impl PatternDetector for CustomDetector {
 impl CustomDetector {
     fn extract_message_from_groups(&self, cap: &regex::Captures) -> String {
         let mut parts = Vec::new();
-        
+
         for group_name in &self.config.capture_groups {
             if let Some(group_match) = cap.name(group_name) {
                 parts.push(format!("{}={}", group_name, group_match.as_str()));
             }
         }
-        
+
         if parts.is_empty() {
-            cap.get(0).map_or("".to_string(), |m| m.as_str().to_string())
+            cap.get(0)
+                .map_or("".to_string(), |m| m.as_str().to_string())
         } else {
             parts.join(", ")
         }
@@ -156,13 +155,14 @@ impl CustomDetectorManager {
     pub fn load_from_file<P: AsRef<Path>>(&mut self, config_file: P) -> Result<()> {
         let config_file = config_file.as_ref();
         let content = std::fs::read_to_string(config_file)?;
-        
-        let configs: Vec<CustomDetectorConfig> = match config_file.extension().and_then(|s| s.to_str()) {
-            Some("json") => serde_json::from_str(&content)?,
-            Some("yaml") | Some("yml") => serde_yaml::from_str(&content)?,
-            Some("toml") => toml::from_str(&content)?,
-            _ => return Err(anyhow::anyhow!("Unsupported config file format")),
-        };
+
+        let configs: Vec<CustomDetectorConfig> =
+            match config_file.extension().and_then(|s| s.to_str()) {
+                Some("json") => serde_json::from_str(&content)?,
+                Some("yaml") | Some("yml") => serde_yaml::from_str(&content)?,
+                Some("toml") => toml::from_str(&content)?,
+                _ => return Err(anyhow::anyhow!("Unsupported config file format")),
+            };
 
         for config in configs {
             let detector = CustomDetector::new(config.clone())?;
@@ -170,15 +170,20 @@ impl CustomDetectorManager {
         }
 
         self.config_file = Some(config_file.to_path_buf());
-        println!("📁 Loaded {} custom detectors from {}", 
-                 self.detectors.len(), config_file.display());
-        
+        println!(
+            "📁 Loaded {} custom detectors from {}",
+            self.detectors.len(),
+            config_file.display()
+        );
+
         Ok(())
     }
 
     /// Save detectors to configuration file
     pub fn save_to_file<P: AsRef<Path>>(&self, config_file: P) -> Result<()> {
-        let configs: Vec<CustomDetectorConfig> = self.detectors.values()
+        let configs: Vec<CustomDetectorConfig> = self
+            .detectors
+            .values()
             .map(|d| d.config().clone())
             .collect();
 
@@ -191,9 +196,12 @@ impl CustomDetectorManager {
         };
 
         std::fs::write(config_file, content)?;
-        println!("💾 Saved {} custom detectors to {}", 
-                 configs.len(), config_file.display());
-        
+        println!(
+            "💾 Saved {} custom detectors to {}",
+            configs.len(),
+            config_file.display()
+        );
+
         Ok(())
     }
 
@@ -218,7 +226,8 @@ impl CustomDetectorManager {
 
     /// Get all custom detectors as PatternDetector trait objects
     pub fn get_detectors(&self) -> Vec<Box<dyn PatternDetector>> {
-        self.detectors.values()
+        self.detectors
+            .values()
             .filter(|d| d.config().enabled)
             .map(|d| Box::new(d.clone()) as Box<dyn PatternDetector>)
             .collect()
@@ -226,9 +235,7 @@ impl CustomDetectorManager {
 
     /// List all detector configurations
     pub fn list_detectors(&self) -> Vec<&CustomDetectorConfig> {
-        self.detectors.values()
-            .map(|d| d.config())
-            .collect()
+        self.detectors.values().map(|d| d.config()).collect()
     }
 
     /// Enable/disable a detector
@@ -240,7 +247,11 @@ impl CustomDetectorManager {
             config.enabled = enabled;
             let new_detector = CustomDetector::new(config)?;
             self.detectors.insert(name.to_string(), new_detector);
-            println!("🔄 {} detector: {}", if enabled { "Enabled" } else { "Disabled" }, name);
+            println!(
+                "🔄 {} detector: {}",
+                if enabled { "Enabled" } else { "Disabled" },
+                name
+            );
             Ok(())
         } else {
             Err(anyhow::anyhow!("Detector '{}' not found", name))
@@ -260,24 +271,21 @@ impl CustomDetectorManager {
                 capture_groups: vec![],
                 severity: Severity::Critical,
                 category: DetectorCategory::Security,
-                examples: vec![
-                    r#"query("SELECT * FROM users WHERE id = " + user_id)"#.to_string(),
-                ],
+                examples: vec![r#"query("SELECT * FROM users WHERE id = " + user_id)"#.to_string()],
                 enabled: true,
             },
             CustomDetectorConfig {
                 name: "HARDCODED_PASSWORD".to_string(),
                 description: "Detect hardcoded passwords and secrets".to_string(),
-                pattern: r#"(?i)(password|secret|key|token)\s*[=:]\s*["'][^"']{8,}["']"#.to_string(),
+                pattern: r#"(?i)(password|secret|key|token)\s*[=:]\s*["'][^"']{8,}["']"#
+                    .to_string(),
                 file_extensions: vec![],
                 case_sensitive: false,
                 multiline: false,
                 capture_groups: vec![],
                 severity: Severity::High,
                 category: DetectorCategory::Security,
-                examples: vec![
-                    r#"password = "secretpassword123""#.to_string(),
-                ],
+                examples: vec![r#"password = "secretpassword123""#.to_string()],
                 enabled: true,
             },
             CustomDetectorConfig {
@@ -290,9 +298,7 @@ impl CustomDetectorManager {
                 capture_groups: vec![],
                 severity: Severity::Medium,
                 category: DetectorCategory::CodeQuality,
-                examples: vec![
-                    "Functions with more than 500 characters in body".to_string(),
-                ],
+                examples: vec!["Functions with more than 500 characters in body".to_string()],
                 enabled: true,
             },
         ];
@@ -315,12 +321,12 @@ impl Default for CustomDetectorManager {
 fn find_line_column(content: &str, offset: usize) -> (usize, usize) {
     let mut line = 1;
     let mut column = 1;
-    
+
     for (i, ch) in content.char_indices() {
         if i >= offset {
             break;
         }
-        
+
         if ch == '\n' {
             line += 1;
             column = 1;
@@ -328,7 +334,7 @@ fn find_line_column(content: &str, offset: usize) -> (usize, usize) {
             column += 1;
         }
     }
-    
+
     (line, column)
 }
 
@@ -375,7 +381,7 @@ mod tests {
         let detector = CustomDetector::new(config).unwrap();
         let content = "// TODO: implement this\nsome code";
         let matches = detector.detect(content, Path::new("test.rs"));
-        
+
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].line_number, 1);
     }
@@ -452,7 +458,9 @@ mod tests {
         };
 
         let detector = CustomDetector::new(config).unwrap();
-        let large_content = "some code\n".repeat(10000) + "// TODO: large file test\n" + &"more code\n".repeat(10000);
+        let large_content = "some code\n".repeat(10000)
+            + "// TODO: large file test\n"
+            + &"more code\n".repeat(10000);
         let matches = detector.detect(&large_content, Path::new("large.rs"));
         assert_eq!(matches.len(), 1);
         assert_eq!(matches[0].line_number, 10001);

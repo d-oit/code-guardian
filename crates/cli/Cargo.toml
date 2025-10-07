@@ -1,5 +1,5 @@
 [package]
-name = "code-guardian-cli"
+name = "code_guardian_cli"
 version = "0.1.0-alpha"
 edition = "2021"
 

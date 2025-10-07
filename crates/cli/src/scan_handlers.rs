@@ -31,18 +31,34 @@ pub struct ScanOptions {
 
 pub fn handle_scan(options: ScanOptions) -> Result<()> {
     if !options.path.exists() {
-        return Err(anyhow::anyhow!("Path '{}' does not exist", options.path.display()));
+        return Err(anyhow::anyhow!(
+            "Path '{}' does not exist",
+            options.path.display()
+        ));
     }
     if !options.path.is_dir() {
-        return Err(anyhow::anyhow!("Path '{}' is not a directory", options.path.display()));
+        return Err(anyhow::anyhow!(
+            "Path '{}' is not a directory",
+            options.path.display()
+        ));
     }
     let mut config = load_config(options.config_path)?;
     // Override config with CLI args if provided
-    if let Some(val) = options.cache_size { config.cache_size = val; }
-    if let Some(val) = options.batch_size { config.batch_size = val; }
-    if let Some(val) = options.max_file_size { config.max_file_size = val; }
-    if let Some(val) = options.max_threads { config.max_threads = val; }
-    let db_path = options.db.unwrap_or_else(|| PathBuf::from(&config.database_path));
+    if let Some(val) = options.cache_size {
+        config.cache_size = val;
+    }
+    if let Some(val) = options.batch_size {
+        config.batch_size = val;
+    }
+    if let Some(val) = options.max_file_size {
+        config.max_file_size = val;
+    }
+    if let Some(val) = options.max_threads {
+        config.max_threads = val;
+    }
+    let db_path = options
+        .db
+        .unwrap_or_else(|| PathBuf::from(&config.database_path));
     let mut repo = SqliteScanRepository::new(&db_path)?;
 
     // Load custom detectors if specified
@@ -59,7 +75,10 @@ pub fn handle_scan(options: ScanOptions) -> Result<()> {
     let custom_detectors_vec = custom_detector_manager.get_detectors();
     if !custom_detectors_vec.is_empty() {
         detectors.extend(custom_detectors_vec);
-        println!("🔧 Added {} custom detectors", detectors.len() - get_detectors_from_profile(&options.profile).len());
+        println!(
+            "🔧 Added {} custom detectors",
+            detectors.len() - get_detectors_from_profile(&options.profile).len()
+        );
     }
 
     let pb = if options.show_progress {
@@ -203,13 +222,19 @@ pub fn handle_scan(options: ScanOptions) -> Result<()> {
             println!("   Scan duration: {}ms", metrics.scan_duration_ms);
 
             if metrics.cache_hits > 0 || metrics.cache_misses > 0 {
-                let hit_rate = metrics.cache_hits as f64 / (metrics.cache_hits + metrics.cache_misses) as f64;
+                let hit_rate =
+                    metrics.cache_hits as f64 / (metrics.cache_hits + metrics.cache_misses) as f64;
                 println!("   Cache hit rate: {:.1}%", hit_rate * 100.0);
             }
 
-            let files_per_sec = metrics.total_files_scanned as f64 / (metrics.scan_duration_ms as f64 / 1000.0);
-            let lines_per_sec = metrics.total_lines_processed as f64 / (metrics.scan_duration_ms as f64 / 1000.0);
-            println!("   Performance: {:.1} files/sec, {:.1} lines/sec", files_per_sec, lines_per_sec);
+            let files_per_sec =
+                metrics.total_files_scanned as f64 / (metrics.scan_duration_ms as f64 / 1000.0);
+            let lines_per_sec =
+                metrics.total_lines_processed as f64 / (metrics.scan_duration_ms as f64 / 1000.0);
+            println!(
+                "   Performance: {:.1} files/sec, {:.1} lines/sec",
+                files_per_sec, lines_per_sec
+            );
         }
         println!();
     }

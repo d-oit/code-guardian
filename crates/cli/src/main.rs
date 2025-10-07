@@ -5,22 +5,22 @@ use code_guardian_storage::ScanRepository;
 use std::io;
 use std::path::PathBuf;
 
-
-
-mod benchmark;
 mod advanced_handlers;
-mod utils;
-mod scan_handlers;
-mod report_handlers;
+mod benchmark;
 mod comparison_handlers;
+mod production_handlers;
+mod report_handlers;
+mod scan_handlers;
+mod utils;
 
 use advanced_handlers::*;
+use production_handlers::*;
 
 #[derive(Parser)]
 #[command(
     name = "code-guardian",
-    about = "A tool to scan codebases for patterns like TODO and FIXME",
-    long_about = "Code Guardian is a command-line tool designed to scan your codebase for common patterns such as TODO and FIXME comments. It helps developers track unfinished work and potential issues in their code.\n\nUse subcommands to perform scans, view history, generate reports, and compare scans.",
+    about = "Multi-language code analysis tool for production readiness and code quality",
+    long_about = "Code Guardian is a comprehensive code analysis tool that scans codebases across 30+ programming languages for production readiness issues, code quality problems, and development artifacts.\n\nFeatures:\n• Production readiness scanning (console.log, debugger, dev/staging code)\n• Multi-language support (JavaScript, TypeScript, Python, Rust, Go, Java, C#, PHP, etc.)\n• Technology stack presets (web, backend, fullstack, mobile, systems)\n• CI/CD integration with proper exit codes\n• Pre-commit hooks for code quality gates\n• Real-time file watching (coming soon)\n\nUse subcommands for different scanning modes and integrations.",
     version
 )]
 struct Cli {
@@ -80,7 +80,11 @@ enum Commands {
     /// List all scan history from the database
     History {
         /// Database file path (optional, defaults to data/code-guardian.db)
-        #[arg(short, long, help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'")]
+        #[arg(
+            short,
+            long,
+            help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'"
+        )]
         db: Option<PathBuf>,
     },
     /// Generate a report for a specific scan in various formats
@@ -88,10 +92,19 @@ enum Commands {
         /// Scan ID to generate report for
         id: i64,
         /// Output format: text, json, csv, markdown, html (default: text)
-        #[arg(short, long, default_value = "text", help = "Choose the output format for the report")]
+        #[arg(
+            short,
+            long,
+            default_value = "text",
+            help = "Choose the output format for the report"
+        )]
         format: String,
         /// Database file path (optional, defaults to data/code-guardian.db)
-        #[arg(short, long, help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'")]
+        #[arg(
+            short,
+            long,
+            help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'"
+        )]
         db: Option<PathBuf>,
     },
     /// Compare two scans and show differences
@@ -101,10 +114,19 @@ enum Commands {
         /// Second scan ID
         id2: i64,
         /// Output format: text, json, csv, markdown, html (default: text)
-        #[arg(short, long, default_value = "text", help = "Choose the output format for the comparison")]
+        #[arg(
+            short,
+            long,
+            default_value = "text",
+            help = "Choose the output format for the comparison"
+        )]
         format: String,
         /// Database file path (optional, defaults to data/code-guardian.db)
-        #[arg(short, long, help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'")]
+        #[arg(
+            short,
+            long,
+            help = "Specify the database file path. If not provided, uses 'data/code-guardian.db'"
+        )]
         db: Option<PathBuf>,
     },
     /// Generate shell completion scripts
@@ -134,6 +156,92 @@ enum Commands {
     Distributed {
         #[command(subcommand)]
         action: DistributedAction,
+    },
+    /// Quick production readiness check
+    ProductionCheck {
+        /// Path to the directory to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Output format: text, json, summary (default: text)
+        #[arg(short, long, default_value = "text")]
+        format: String,
+        /// Exit with non-zero code if critical issues found
+        #[arg(long)]
+        fail_on_critical: bool,
+        /// Exit with non-zero code if high severity issues found
+        #[arg(long)]
+        fail_on_high: bool,
+        /// Only show issues with specified severity levels
+        #[arg(long, value_delimiter = ',')]
+        severity: Vec<String>,
+        /// Output file path (optional)
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+    },
+    /// Pre-commit hook for checking code quality
+    PreCommit {
+        /// Path to the directory to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Check only staged files
+        #[arg(long)]
+        staged_only: bool,
+        /// Fast mode - only critical and high severity issues
+        #[arg(long)]
+        fast: bool,
+    },
+    /// CI/CD gate with proper exit codes
+    CiGate {
+        /// Path to the directory to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Configuration file for CI settings
+        #[arg(short, long)]
+        config: Option<PathBuf>,
+        /// Output JSON report to file
+        #[arg(short, long)]
+        output: Option<PathBuf>,
+        /// Maximum allowed critical issues (default: 0)
+        #[arg(long, default_value = "0")]
+        max_critical: u32,
+        /// Maximum allowed high severity issues (default: 5)
+        #[arg(long, default_value = "5")]
+        max_high: u32,
+    },
+    /// Language-specific scanning presets
+    Lang {
+        /// Target languages (comma-separated): js,ts,py,rs,go,java,cs,php,etc.
+        #[arg(value_delimiter = ',', required = true)]
+        languages: Vec<String>,
+        /// Path to the directory to scan
+        #[arg(short, long, default_value = ".")]
+        path: PathBuf,
+        /// Output format: text, json, summary (default: text)
+        #[arg(short, long, default_value = "text")]
+        format: String,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+    /// Technology stack presets
+    Stack {
+        #[command(subcommand)]
+        preset: StackPreset,
+    },
+    /// Live scanning with file watching
+    Watch {
+        /// Path to the directory to watch
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Only scan files matching these patterns
+        #[arg(long, value_delimiter = ',')]
+        include: Vec<String>,
+        /// Exclude files matching these patterns  
+        #[arg(long, value_delimiter = ',')]
+        exclude: Vec<String>,
+        /// Debounce delay in milliseconds
+        #[arg(long, default_value = "500")]
+        delay: u64,
     },
 }
 
@@ -192,11 +300,76 @@ enum DistributedAction {
     },
 }
 
+#[derive(Subcommand)]
+enum StackPreset {
+    /// Web frontend (JavaScript, TypeScript, React, Vue, etc.)
+    Web {
+        /// Path to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+    /// Backend services (Python, Java, Go, C#, etc.)
+    Backend {
+        /// Path to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+    /// Full-stack monorepo
+    Fullstack {
+        /// Path to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+    /// Mobile development (React Native, Flutter, Swift, Kotlin)
+    Mobile {
+        /// Path to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+    /// Systems programming (Rust, C++, C)
+    Systems {
+        /// Path to scan
+        #[arg(default_value = ".")]
+        path: PathBuf,
+        /// Include production readiness checks
+        #[arg(long)]
+        production: bool,
+    },
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Scan { path, db, config, profile, progress, optimize, streaming, metrics, incremental, distributed, custom_detectors, cache_size, batch_size, max_file_size, max_threads } => {
+        Commands::Scan {
+            path,
+            db,
+            config,
+            profile,
+            progress,
+            optimize,
+            streaming,
+            metrics,
+            incremental,
+            distributed,
+            custom_detectors,
+            cache_size,
+            batch_size,
+            max_file_size,
+            max_threads,
+        } => {
             let options = scan_handlers::ScanOptions {
                 path,
                 db,
@@ -229,6 +402,46 @@ fn main() -> Result<()> {
         Commands::CustomDetectors { action } => handle_custom_detectors(action),
         Commands::Incremental { action } => handle_incremental(action),
         Commands::Distributed { action } => handle_distributed(action),
+        Commands::ProductionCheck {
+            path,
+            format,
+            fail_on_critical,
+            fail_on_high,
+            severity,
+            output,
+        } => handle_production_check(
+            path,
+            format,
+            fail_on_critical,
+            fail_on_high,
+            severity,
+            output,
+        ),
+        Commands::PreCommit {
+            path,
+            staged_only,
+            fast,
+        } => handle_pre_commit(path, staged_only, fast),
+        Commands::CiGate {
+            path,
+            config,
+            output,
+            max_critical,
+            max_high,
+        } => handle_ci_gate(path, config, output, max_critical, max_high),
+        Commands::Lang {
+            languages,
+            path,
+            format,
+            production,
+        } => handle_lang_scan(languages, path, format, production),
+        Commands::Stack { preset } => handle_stack_preset(preset),
+        Commands::Watch {
+            path,
+            include,
+            exclude,
+            delay,
+        } => handle_watch(path, include, exclude, delay),
     }
 }
 
@@ -268,5 +481,83 @@ fn handle_benchmark(path: Option<PathBuf>, quick: bool) -> Result<()> {
         benchmark::quick_performance_test(&benchmark_path)
     } else {
         benchmark::run_benchmark(&benchmark_path)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cli_help_generation() {
+        let mut cli = Cli::command();
+        let help_output = cli.render_help();
+
+        // Verify the CLI help contains our new commands
+        assert!(help_output.to_string().contains("production-check"));
+        assert!(help_output.to_string().contains("pre-commit"));
+        assert!(help_output.to_string().contains("ci-gate"));
+        assert!(help_output.to_string().contains("lang"));
+        assert!(help_output.to_string().contains("stack"));
+        assert!(help_output.to_string().contains("watch"));
+    }
+
+    #[test]
+    fn test_cli_description() {
+        let cli = Cli::command();
+        let about = cli.get_about().unwrap().to_string();
+
+        // Verify the CLI description mentions key features
+        assert!(about.contains("Multi-language"));
+        assert!(about.contains("production readiness"));
+        assert!(about.contains("code quality"));
+        // The about text is: "Multi-language code analysis tool for production readiness and code quality"
+    }
+
+    #[test]
+    fn test_stack_preset_variants() {
+        // Test that all stack presets are properly defined
+        let web_preset = StackPreset::Web {
+            path: PathBuf::from("."),
+            production: false,
+        };
+        let backend_preset = StackPreset::Backend {
+            path: PathBuf::from("."),
+            production: false,
+        };
+        let fullstack_preset = StackPreset::Fullstack {
+            path: PathBuf::from("."),
+            production: false,
+        };
+        let mobile_preset = StackPreset::Mobile {
+            path: PathBuf::from("."),
+            production: false,
+        };
+        let systems_preset = StackPreset::Systems {
+            path: PathBuf::from("."),
+            production: false,
+        };
+
+        // Basic validation that variants exist
+        match web_preset {
+            StackPreset::Web { .. } => (),
+            _ => panic!("Web preset should match"),
+        }
+        match backend_preset {
+            StackPreset::Backend { .. } => (),
+            _ => panic!("Backend preset should match"),
+        }
+        match fullstack_preset {
+            StackPreset::Fullstack { .. } => (),
+            _ => panic!("Fullstack preset should match"),
+        }
+        match mobile_preset {
+            StackPreset::Mobile { .. } => (),
+            _ => panic!("Mobile preset should match"),
+        }
+        match systems_preset {
+            StackPreset::Systems { .. } => (),
+            _ => panic!("Systems preset should match"),
+        }
     }
 }

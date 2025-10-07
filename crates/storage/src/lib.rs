@@ -242,17 +242,24 @@ mod tests {
 #[cfg(test)]
 mod proptest_tests {
     use super::*;
-    use proptest::prelude::*;
     use chrono::Utc;
+    use proptest::prelude::*;
 
     fn arb_match() -> impl Strategy<Value = Match> {
-        ("[a-zA-Z0-9_.]+", 1..10000usize, 1..10000usize, "[A-Z]+", ".*").prop_map(|(fp, ln, col, pat, msg)| Match {
-            file_path: fp.to_string(),
-            line_number: ln,
-            column: col,
-            pattern: pat.to_string(),
-            message: msg.to_string(),
-        })
+        (
+            "[a-zA-Z0-9_.]+",
+            1..10000usize,
+            1..10000usize,
+            "[A-Z]+",
+            ".*",
+        )
+            .prop_map(|(fp, ln, col, pat, msg)| Match {
+                file_path: fp.to_string(),
+                line_number: ln,
+                column: col,
+                pattern: pat.to_string(),
+                message: msg.to_string(),
+            })
     }
 
     proptest! {

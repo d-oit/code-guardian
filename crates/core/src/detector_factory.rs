@@ -14,20 +14,20 @@ impl DetectorFactory {
             match Self::create_detector(detector_type, Some(config)) {
                 Ok(Some(detector)) => detectors.push(detector),
                 Ok(None) => {} // Detector type not supported or disabled
-                Err(e) => eprintln!("Warning: Failed to create detector for {:?}: {}", detector_type, e),
+                Err(e) => eprintln!(
+                    "Warning: Failed to create detector for {:?}: {}",
+                    detector_type, e
+                ),
             }
         }
         detectors
     }
-    
+
     /// Create a default set of detectors (backwards compatibility)
     pub fn create_default_detectors() -> Vec<Box<dyn PatternDetector>> {
-        vec![
-            Box::new(TodoDetector),
-            Box::new(FixmeDetector),
-        ]
+        vec![Box::new(TodoDetector), Box::new(FixmeDetector)]
     }
-    
+
     /// Create an extended set of detectors for comprehensive scanning
     pub fn create_comprehensive_detectors() -> Vec<Box<dyn PatternDetector>> {
         vec![
@@ -39,23 +39,58 @@ impl DetectorFactory {
             Box::new(XxxDetector),
             Box::new(NoteDetector),
             Box::new(WarningDetector),
-            
             // Rust-specific patterns
             Box::new(PanicDetector),
             Box::new(UnwrapDetector),
             Box::new(ExpectDetector),
             Box::new(UnimplementedDetector),
             Box::new(UnreachableDetector),
-            
             // Performance patterns
             Box::new(CloneDetector),
             Box::new(ToStringDetector),
-            
             // Security patterns
+            Box::new(UnsafeDetector),
+            // Development/Phase patterns
+            Box::new(DevDetector),
+            Box::new(DebugDetector),
+            Box::new(TestDetector),
+            Box::new(PhaseDetector),
+            Box::new(StagingDetector),
+            // Non-production code patterns
+            Box::new(ConsoleLogDetector),
+            Box::new(PrintDetector),
+            Box::new(AlertDetector),
+            Box::new(DebuggerDetector),
+            Box::new(UnusedVarDetector),
+            Box::new(DeadCodeDetector),
+            Box::new(ExperimentalDetector),
+        ]
+    }
+
+    /// Create detectors specifically for finding non-production code
+    pub fn create_production_ready_detectors() -> Vec<Box<dyn PatternDetector>> {
+        vec![
+            // Development/Phase patterns
+            Box::new(DevDetector),
+            Box::new(DebugDetector),
+            Box::new(TestDetector),
+            Box::new(PhaseDetector),
+            Box::new(StagingDetector),
+            // Non-production code patterns
+            Box::new(ConsoleLogDetector),
+            Box::new(PrintDetector),
+            Box::new(AlertDetector),
+            Box::new(DebuggerDetector),
+            Box::new(UnusedVarDetector),
+            Box::new(DeadCodeDetector),
+            Box::new(ExperimentalDetector),
+            // Critical issues that shouldn't be in production
+            Box::new(PanicDetector),
+            Box::new(UnwrapDetector),
             Box::new(UnsafeDetector),
         ]
     }
-    
+
     /// Create security-focused detectors
     pub fn create_security_detectors() -> Vec<Box<dyn PatternDetector>> {
         vec![
@@ -65,7 +100,7 @@ impl DetectorFactory {
             Box::new(ExpectDetector),
         ]
     }
-    
+
     /// Create performance-focused detectors
     pub fn create_performance_detectors() -> Vec<Box<dyn PatternDetector>> {
         vec![
@@ -74,9 +109,12 @@ impl DetectorFactory {
             Box::new(UnwrapDetector), // Can cause performance issues
         ]
     }
-    
+
     /// Create a single detector by type
-    fn create_detector(detector_type: &DetectorType, config: Option<&EnhancedScanConfig>) -> Result<Option<Box<dyn PatternDetector>>> {
+    fn create_detector(
+        detector_type: &DetectorType,
+        config: Option<&EnhancedScanConfig>,
+    ) -> Result<Option<Box<dyn PatternDetector>>> {
         match detector_type {
             DetectorType::Todo => Ok(Some(Box::new(TodoDetector))),
             DetectorType::Fixme => Ok(Some(Box::new(FixmeDetector))),
@@ -93,6 +131,23 @@ impl DetectorFactory {
             DetectorType::Clone => Ok(Some(Box::new(CloneDetector))),
             DetectorType::ToString => Ok(Some(Box::new(ToStringDetector))),
             DetectorType::Unsafe => Ok(Some(Box::new(UnsafeDetector))),
+
+            // Development/Phase patterns
+            DetectorType::Dev => Ok(Some(Box::new(DevDetector))),
+            DetectorType::Debug => Ok(Some(Box::new(DebugDetector))),
+            DetectorType::Test => Ok(Some(Box::new(TestDetector))),
+            DetectorType::Phase => Ok(Some(Box::new(PhaseDetector))),
+            DetectorType::Staging => Ok(Some(Box::new(StagingDetector))),
+
+            // Non-production code patterns
+            DetectorType::ConsoleLog => Ok(Some(Box::new(ConsoleLogDetector))),
+            DetectorType::Print => Ok(Some(Box::new(PrintDetector))),
+            DetectorType::Alert => Ok(Some(Box::new(AlertDetector))),
+            DetectorType::Debugger => Ok(Some(Box::new(DebuggerDetector))),
+            DetectorType::UnusedVar => Ok(Some(Box::new(UnusedVarDetector))),
+            DetectorType::DeadCode => Ok(Some(Box::new(DeadCodeDetector))),
+            DetectorType::Experimental => Ok(Some(Box::new(ExperimentalDetector))),
+
             DetectorType::Custom(name) => {
                 if let Some(config) = config {
                     if let Some(pattern) = config.custom_patterns.get(name) {
@@ -121,6 +176,8 @@ pub enum DetectorProfile {
     Performance,
     /// Rust-specific patterns only
     Rust,
+    /// Production-readiness scanning (finds non-production code)
+    ProductionReady,
     /// Custom configuration
     Custom(Box<EnhancedScanConfig>),
 }
@@ -133,6 +190,9 @@ impl DetectorProfile {
             DetectorProfile::Comprehensive => DetectorFactory::create_comprehensive_detectors(),
             DetectorProfile::Security => DetectorFactory::create_security_detectors(),
             DetectorProfile::Performance => DetectorFactory::create_performance_detectors(),
+            DetectorProfile::ProductionReady => {
+                DetectorFactory::create_production_ready_detectors()
+            }
             DetectorProfile::Rust => vec![
                 Box::new(PanicDetector),
                 Box::new(UnwrapDetector),
@@ -151,25 +211,25 @@ impl DetectorProfile {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_default_detectors() {
         let detectors = DetectorFactory::create_default_detectors();
         assert_eq!(detectors.len(), 2);
     }
-    
+
     #[test]
     fn test_comprehensive_detectors() {
         let detectors = DetectorFactory::create_comprehensive_detectors();
         assert!(detectors.len() > 10);
     }
-    
+
     #[test]
     fn test_security_detectors() {
         let detectors = DetectorFactory::create_security_detectors();
         assert!(detectors.len() >= 4);
     }
-    
+
     #[test]
     fn test_detector_profiles() {
         let basic = DetectorProfile::Basic.get_detectors();
@@ -181,8 +241,12 @@ mod tests {
     #[test]
     fn test_factory_with_custom_detectors() {
         let mut config = EnhancedScanConfig::default();
-        config.custom_patterns.insert("MY_PATTERN".to_string(), r"custom".to_string());
-        config.enabled_detectors.push(DetectorType::Custom("MY_PATTERN".to_string()));
+        config
+            .custom_patterns
+            .insert("MY_PATTERN".to_string(), r"custom".to_string());
+        config
+            .enabled_detectors
+            .push(DetectorType::Custom("MY_PATTERN".to_string()));
 
         let detectors = DetectorFactory::create_detectors(&config);
         assert!(detectors.len() >= 1);
@@ -193,9 +257,14 @@ mod tests {
     #[test]
     fn test_custom_detector_creation_success() {
         let mut config = EnhancedScanConfig::default();
-        config.custom_patterns.insert("TEST".to_string(), r"test".to_string());
+        config
+            .custom_patterns
+            .insert("TEST".to_string(), r"test".to_string());
 
-        let result = DetectorFactory::create_detector(&DetectorType::Custom("TEST".to_string()), Some(&config));
+        let result = DetectorFactory::create_detector(
+            &DetectorType::Custom("TEST".to_string()),
+            Some(&config),
+        );
         assert!(result.is_ok());
         assert!(result.unwrap().is_some());
     }
@@ -204,14 +273,18 @@ mod tests {
     fn test_custom_detector_creation_missing_pattern() {
         let config = EnhancedScanConfig::default();
 
-        let result = DetectorFactory::create_detector(&DetectorType::Custom("MISSING".to_string()), Some(&config));
+        let result = DetectorFactory::create_detector(
+            &DetectorType::Custom("MISSING".to_string()),
+            Some(&config),
+        );
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
     }
 
     #[test]
     fn test_custom_detector_creation_no_config() {
-        let result = DetectorFactory::create_detector(&DetectorType::Custom("TEST".to_string()), None);
+        let result =
+            DetectorFactory::create_detector(&DetectorType::Custom("TEST".to_string()), None);
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
     }
@@ -219,8 +292,12 @@ mod tests {
     #[test]
     fn test_custom_detector_invalid_regex() {
         let mut config = EnhancedScanConfig::default();
-        config.custom_patterns.insert("INVALID".to_string(), r"[invalid".to_string());
-        config.enabled_detectors.push(DetectorType::Custom("INVALID".to_string()));
+        config
+            .custom_patterns
+            .insert("INVALID".to_string(), r"[invalid".to_string());
+        config
+            .enabled_detectors
+            .push(DetectorType::Custom("INVALID".to_string()));
 
         let detectors = DetectorFactory::create_detectors(&config);
         // Should have default detectors but not the invalid custom one

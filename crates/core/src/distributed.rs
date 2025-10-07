@@ -59,8 +59,10 @@ impl DistributedCoordinator {
 
     /// Register a worker node
     pub fn register_worker(&mut self, config: WorkerConfig) {
-        println!("🤖 Registered worker: {} (cores: {}, memory: {}MB)", 
-                 config.worker_id, config.cpu_cores, config.memory_limit_mb);
+        println!(
+            "🤖 Registered worker: {} (cores: {}, memory: {}MB)",
+            config.worker_id, config.cpu_cores, config.memory_limit_mb
+        );
         self.workers.push(config);
     }
 
@@ -81,15 +83,18 @@ impl DistributedCoordinator {
                 priority: self.calculate_priority(chunk),
                 estimated_duration_ms: estimated_duration,
             };
-            
+
             self.work_queue.push(work_unit);
         }
-        
+
         // Sort by priority (higher priority first)
         self.work_queue.sort_by(|a, b| b.priority.cmp(&a.priority));
-        
-        println!("📦 Created {} work units from {} files", 
-                 self.work_queue.len(), files.len());
+
+        println!(
+            "📦 Created {} work units from {} files",
+            self.work_queue.len(),
+            files.len()
+        );
         Ok(())
     }
 
@@ -97,9 +102,12 @@ impl DistributedCoordinator {
     pub fn execute_distributed_scan(&mut self) -> Result<Vec<Match>> {
         let start_time = Instant::now();
         let total_units = self.work_queue.len();
-        
-        println!("🚀 Starting distributed scan with {} workers and {} work units", 
-                 self.workers.len(), total_units);
+
+        println!(
+            "🚀 Starting distributed scan with {} workers and {} work units",
+            self.workers.len(),
+            total_units
+        );
 
         if self.workers.is_empty() {
             // Fallback to local processing
@@ -110,7 +118,8 @@ impl DistributedCoordinator {
         // actual network communication, message queues, etc.)
         self.simulate_distributed_execution()?;
 
-        let total_matches: Vec<Match> = self.completed_work
+        let total_matches: Vec<Match> = self
+            .completed_work
             .values()
             .flat_map(|result| result.matches.clone())
             .collect();
@@ -123,26 +132,34 @@ impl DistributedCoordinator {
 
     /// Get distributed scan statistics
     pub fn get_statistics(&self) -> DistributedStats {
-        let total_files: usize = self.completed_work.values()
+        let total_files: usize = self
+            .completed_work
+            .values()
             .map(|r| r.files_processed)
             .sum();
-        
-        let total_processing_time: u64 = self.completed_work.values()
+
+        let total_processing_time: u64 = self
+            .completed_work
+            .values()
             .map(|r| r.processing_time_ms)
             .sum();
 
-        let worker_utilization: HashMap<String, f64> = self.workers.iter()
+        let worker_utilization: HashMap<String, f64> = self
+            .workers
+            .iter()
             .map(|w| {
-                let worker_results: Vec<&WorkResult> = self.completed_work.values()
+                let worker_results: Vec<&WorkResult> = self
+                    .completed_work
+                    .values()
                     .filter(|r| r.worker_id == w.worker_id)
                     .collect();
-                
+
                 let utilization = if !worker_results.is_empty() {
                     worker_results.len() as f64 / self.work_queue.len() as f64
                 } else {
                     0.0
                 };
-                
+
                 (w.worker_id.clone(), utilization)
             })
             .collect();
@@ -164,9 +181,10 @@ impl DistributedCoordinator {
 
     fn simulate_distributed_execution(&mut self) -> Result<()> {
         use rayon::prelude::*;
-        
+
         // Process work units in parallel (simulating distributed workers)
-        let results: Vec<WorkResult> = self.work_queue
+        let results: Vec<WorkResult> = self
+            .work_queue
             .par_iter()
             .enumerate()
             .map(|(i, unit)| {
@@ -223,7 +241,7 @@ impl DistributedCoordinator {
 
     fn execute_local_fallback(&mut self) -> Result<Vec<Match>> {
         println!("⚠️  No workers available, falling back to local processing");
-        
+
         let mut all_matches = Vec::new();
         for unit in &self.work_queue {
             let mut result = self.process_work_unit(unit, "local_worker")?;
@@ -231,18 +249,19 @@ impl DistributedCoordinator {
             self.completed_work.insert(unit.id.clone(), result);
             all_matches.extend(matches);
         }
-        
+
         Ok(all_matches)
     }
 
     fn estimate_processing_time(&self, files: &[PathBuf]) -> u64 {
         // Simple estimation: 1ms per file + size factor
         let base_time = files.len() as u64;
-        let size_factor: u64 = files.iter()
+        let size_factor: u64 = files
+            .iter()
             .filter_map(|f| std::fs::metadata(f).ok())
             .map(|m| (m.len() / 1024).min(100)) // Cap at 100ms per file
             .sum();
-        
+
         base_time + size_factor
     }
 
@@ -257,11 +276,12 @@ impl DistributedCoordinator {
         };
 
         // Boost priority for certain file types
-        let type_priority = files.iter()
+        let type_priority = files
+            .iter()
             .filter_map(|f| f.extension())
             .filter_map(|ext| ext.to_str())
             .map(|ext| match ext {
-                "rs" => 50,  // Rust files get higher priority
+                "rs" => 50, // Rust files get higher priority
                 "py" | "js" | "ts" => 30,
                 _ => 10,
             })
@@ -276,11 +296,11 @@ impl DistributedCoordinator {
         println!("   Duration: {:?}", duration);
         println!("   Total matches: {}", total_matches);
         println!("   Work units processed: {}", self.completed_work.len());
-        
+
         let stats = self.get_statistics();
         println!("   Files processed: {}", stats.total_files_processed);
         println!("   Average unit size: {:.1} files", stats.average_unit_size);
-        
+
         // Show worker utilization
         for (worker_id, utilization) in &stats.worker_utilization {
             println!("   {}: {:.1}% utilization", worker_id, utilization * 100.0);
@@ -322,7 +342,7 @@ mod tests {
     #[test]
     fn test_worker_registration() {
         let mut coordinator = DistributedCoordinator::new();
-        
+
         let worker_config = WorkerConfig {
             worker_id: "test_worker".to_string(),
             max_concurrent_units: 4,
@@ -331,7 +351,7 @@ mod tests {
             memory_limit_mb: 4096,
             endpoint: None,
         };
-        
+
         coordinator.register_worker(worker_config);
         assert_eq!(coordinator.workers.len(), 1);
     }
@@ -341,13 +361,13 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let test_file = temp_dir.path().join("test.rs");
         std::fs::write(&test_file, "// TODO: test").unwrap();
-        
+
         let mut coordinator = DistributedCoordinator::new();
         coordinator.register_detector("TODO".to_string(), Box::new(TodoDetector));
-        
+
         let files = vec![test_file];
         coordinator.create_work_units(files, 10).unwrap();
-        
+
         assert_eq!(coordinator.work_queue.len(), 1);
         assert_eq!(coordinator.work_queue[0].files.len(), 1);
     }

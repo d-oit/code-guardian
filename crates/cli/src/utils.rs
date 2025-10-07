@@ -20,4 +20,3 @@ pub fn get_detectors_from_profile(profile: &str) -> Vec<Box<dyn PatternDetector>
         }
     }
 }
-

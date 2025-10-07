@@ -310,34 +310,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
-name = "code-guardian-cli"
-version = "0.1.0-alpha"
-dependencies = [
- "anyhow",
- "assert_cmd",
- "chrono",
- "clap",
- "clap_complete",
- "code-guardian-core",
- "code-guardian-output",
- "code-guardian-storage",
- "colored",
- "comfy-table",
- "config",
- "git2",
- "ignore",
- "indicatif",
- "num_cpus",
- "predicates",
- "rayon",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "thiserror",
-]
-
-[[package]]
 name = "code-guardian-core"
 version = "0.1.0-alpha"
 dependencies = [
@@ -390,6 +362,34 @@ dependencies = [
  "rusqlite",
  "serde",
  "serde_json",
+ "tempfile",
+ "thiserror",
+]
+
+[[package]]
+name = "code_guardian_cli"
+version = "0.1.0-alpha"
+dependencies = [
+ "anyhow",
+ "assert_cmd",
+ "chrono",
+ "clap",
+ "clap_complete",
+ "code-guardian-core",
+ "code-guardian-output",
+ "code-guardian-storage",
+ "colored",
+ "comfy-table",
+ "config",
+ "git2",
+ "ignore",
+ "indicatif",
+ "num_cpus",
+ "predicates",
+ "rayon",
+ "serde",
+ "serde_json",
+ "serde_yaml",
  "tempfile",
  "thiserror",
 ]

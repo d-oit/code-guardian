@@ -1,5 +1,7 @@
 use anyhow::Result;
-use code_guardian_output::formatters::{Formatter, TextFormatter, JsonFormatter, CsvFormatter, MarkdownFormatter, HtmlFormatter};
+use code_guardian_output::formatters::{
+    CsvFormatter, Formatter, HtmlFormatter, JsonFormatter, MarkdownFormatter, TextFormatter,
+};
 use code_guardian_storage::{ScanRepository, SqliteScanRepository};
 use std::path::PathBuf;
 
