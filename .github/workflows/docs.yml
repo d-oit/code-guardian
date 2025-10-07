@@ -31,10 +31,29 @@ jobs:
           ~/.cargo/git
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build Documentation
-      run: cargo doc --no-deps --workspace --document-private-items
+     - name: Build Documentation
+       run: cargo doc --no-deps --workspace --document-private-items
 
-    - name: Setup Pages
+      - name: Create index.html
+        run: |
+          cat > target/doc/index.html << 'EOF'
+          <html>
+          <head>
+          <title>Code-Guardian Documentation</title>
+          </head>
+          <body>
+          <h1>Code-Guardian Workspace Documentation</h1>
+          <ul>
+          <li><a href="code_guardian_cli/index.html">CLI Crate</a></li>
+          <li><a href="code_guardian_core/index.html">Core Crate</a></li>
+          <li><a href="code_guardian_output/index.html">Output Crate</a></li>
+          <li><a href="code_guardian_storage/index.html">Storage Crate</a></li>
+          </ul>
+          </body>
+          </html>
+          EOF
+
+     - name: Setup Pages
       uses: actions/configure-pages@v4
 
     - name: Upload artifact
