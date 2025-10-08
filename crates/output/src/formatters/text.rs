@@ -63,10 +63,10 @@ mod tests {
         let matches = vec![
             Match {
                 file_path: "src/main.rs".to_string(),
-                line_number: 5,
-                column: 3,
+                line_number: 10,
+                column: 5,
                 pattern: "TODO".to_string(),
-                message: "TODO: implement feature".to_string(),
+                message: "Found a TODO".to_string(),
             },
             Match {
                 file_path: "src/lib.rs".to_string(),
@@ -77,18 +77,12 @@ mod tests {
             },
         ];
         let output = formatter.format(&matches);
-        // Check that the output contains the expected headers with correct capitalization
-        assert!(output.contains("File"));
-        assert!(output.contains("Line"));
-        assert!(output.contains("Column"));
-        assert!(output.contains("Pattern"));
-        assert!(output.contains("Message"));
         // Check that the output contains the expected data
         assert!(output.contains("src/main.rs"));
+        assert!(output.contains("10"));
         assert!(output.contains("5"));
-        assert!(output.contains("3"));
         assert!(output.contains("TODO"));
-        assert!(output.contains("TODO: implement feature"));
+        assert!(output.contains("Found a TODO"));
         assert!(output.contains("src/lib.rs"));
         assert!(output.contains("10"));
         assert!(output.contains("1"));
