@@ -78,6 +78,12 @@ mod tests {
             },
         ];
         let output = formatter.format(&matches);
+        // Check that the output contains the expected headers with correct capitalization
+        assert!(output.contains("File"));
+        assert!(output.contains("Line"));
+        assert!(output.contains("Column"));
+        assert!(output.contains("Pattern"));
+        assert!(output.contains("Message"));
         // Check that the output contains the expected data
         assert!(output.contains("src/main.rs"));
         assert!(output.contains("5"));
