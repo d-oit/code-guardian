@@ -14,7 +14,6 @@ impl Formatter for TextFormatter {
 
         let mut table = Table::new();
         table
-            .enforce_styling()
             .set_header(vec!["File", "Line", "Column", "Pattern", "Message"]);
 
         for m in matches {
