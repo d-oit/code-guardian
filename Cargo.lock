@@ -346,7 +346,6 @@ dependencies = [
  "chrono",
  "code-guardian-core",
  "colored",
- "comfy-table",
  "csv",
  "proptest",
  "serde",

@@ -1,9 +1,8 @@
 use super::Formatter;
 use code_guardian_core::Match;
-use comfy_table::{Cell, Table};
 
-/// Formatter that outputs matches in a plain text table format.
-/// Uses a table for structured display.
+/// Formatter that outputs matches in a simple text format.
+/// Each match is displayed as "file:line:column: pattern - message".
 pub struct TextFormatter;
 
 impl Formatter for TextFormatter {
@@ -12,21 +11,14 @@ impl Formatter for TextFormatter {
             return "No matches found.".to_string();
         }
 
-        let mut table = Table::new();
-        table
-            .set_header(vec!["File", "Line", "Column", "Pattern", "Message"]);
-
+        let mut output = String::new();
         for m in matches {
-            table.add_row(vec![
-                Cell::new(&m.file_path),
-                Cell::new(m.line_number.to_string()),
-                Cell::new(m.column.to_string()),
-                Cell::new(&m.pattern),
-                Cell::new(&m.message),
-            ]);
+            output.push_str(&format!(
+                "{}:{}:{}: {} - {}\n",
+                m.file_path, m.line_number, m.column, m.pattern, m.message
+            ));
         }
-
-        table.to_string()
+        output.trim_end().to_string()
     }
 }
 
@@ -53,8 +45,8 @@ mod tests {
             message: "TODO comment".to_string(),
         }];
         let output = formatter.format(&matches);
-        assert!(output.contains("test.rs"));
-        assert!(output.contains("TODO"));
+        let expected = "test.rs:1:1: TODO - TODO comment";
+        assert_eq!(output, expected);
     }
 
     #[test]
@@ -77,18 +69,8 @@ mod tests {
             },
         ];
         let output = formatter.format(&matches);
-        // Check that the output contains the expected data
-        assert!(output.contains("src/main.rs"));
-        assert!(output.contains("10"));
-        assert!(output.contains("5"));
-        assert!(output.contains("TODO"));
-        assert!(output.contains("Found a TODO"));
-        assert!(output.contains("src/lib.rs"));
-        assert!(output.contains("10"));
-        assert!(output.contains("1"));
-        assert!(output.contains("FIXME"));
-        assert!(output.contains("FIXME: temporary workaround"));
-        // Ensure it's a table format
+        let expected = "src/main.rs:10:5: TODO - Found a TODO\nsrc/lib.rs:10:1: FIXME - FIXME: temporary workaround";
+        assert_eq!(output, expected);
     }
 
     #[test]
@@ -111,10 +93,8 @@ mod tests {
             },
         ];
         let output = formatter.format(&matches);
-        assert!(output.contains("test.rs"));
-        assert!(output.contains("test.js"));
-        assert!(output.contains("TODO"));
-        assert!(output.contains("FIXME"));
+        let expected = "test.rs:1:1: TODO - TODO\ntest.js:2:3: FIXME - FIXME";
+        assert_eq!(output, expected);
     }
 }
 
