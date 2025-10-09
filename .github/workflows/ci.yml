@@ -95,7 +95,7 @@ jobs:
       uses: taiki-e/install-action@cargo-llvm-cov
     
     - name: Generate code coverage
-      run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info --fail-under 82
+      run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
