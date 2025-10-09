@@ -85,11 +85,11 @@ jobs:
           if [ "${{ steps.check.outputs.format_needed }}" = "true" ]; then
             COMMIT_MSG="$COMMIT_MSG
 
-- Apply cargo fmt formatting"
-          fi
-          if [ "${{ steps.check.outputs.clippy_needed }}" = "true" ]; then
-            COMMIT_MSG="$COMMIT_MSG
-- Apply clippy suggestions"
+        - Apply cargo fmt formatting"
+              fi
+              if [ "${{ steps.check.outputs.clippy_needed }}" = "true" ]; then
+                COMMIT_MSG="$COMMIT_MSG
+        - Apply clippy suggestions"
           fi
           
           git commit -m "$COMMIT_MSG"

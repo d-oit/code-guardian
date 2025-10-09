@@ -706,4 +706,39 @@ mod tests {
             _ => panic!("Systems preset should match"),
         }
     }
+
+    #[test]
+    fn test_cli_parse_invalid_subcommand() {
+        let args = vec!["code-guardian", "invalid"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cli_parse_scan_missing_path() {
+        let args = vec!["code-guardian", "scan"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cli_parse_report_missing_id() {
+        let args = vec!["code-guardian", "report"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_handle_history_invalid_db() {
+        let invalid_db = PathBuf::from("/invalid/path/db.db");
+        let result = handle_history(Some(invalid_db));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_handle_benchmark_invalid_path() {
+        let invalid_path = PathBuf::from("/invalid/path");
+        let result = handle_benchmark(Some(invalid_path), false);
+        assert!(result.is_err());
+    }
 }

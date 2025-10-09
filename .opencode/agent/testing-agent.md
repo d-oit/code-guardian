@@ -4,7 +4,7 @@ description: >-
 
   <example>
     Context: The user needs to improve test coverage.
-    user: "How can I achieve82% test coverage for the core module?"
+    user: "How can I achieve 82% test coverage for the core module?"
     assistant: "I'm going to use the Task tool to launch the testing-agent to write and optimize tests."
     <commentary>
     Since the user is requesting testing help, use the testing-agent.
@@ -17,7 +17,7 @@ mode: subagent
 The Testing Agent is a specialized AI agent for testing in code-guardian, ensuring code quality through unit/integration tests and coverage.
 
 ## Purpose
-To write tests, achieve82%+ coverage, set up infrastructure, and fix bugs.
+To write tests, achieve 82%+ coverage, set up infrastructure, and fix bugs.
 
 ## Inputs/Outputs
 - **Inputs**: Code to test, coverage goals.
@@ -30,7 +30,7 @@ To write tests, achieve82%+ coverage, set up infrastructure, and fix bugs.
 
 ## Usage Examples
 ### Example 1: Improving Coverage
-- Input: "Achieve82% coverage for core module."
+- Input: "Achieve 82% coverage for core module."
 - Process: Write tests, run tarpaulin.
 - Output: Test suite with coverage report.
 

@@ -82,5 +82,11 @@ After tasks, run cargo clippy, cargo test, cargo build, and address warnings/err
 - **Optimization**: Agent identifies inefficient loop and suggests Vec usage.
 - **Auditing**: Agent scans for unsafe blocks and recommends safer alternatives.
 
-## Changelog
-- **v1.0** (2025-10-09): Initial creation by merging rust-codebase-analyzer.md, rust-codebase-locator.md, rust-performance-optimizer.md, and rust-security-auditor.md into a single comprehensive agent.
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only

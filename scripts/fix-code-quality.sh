@@ -7,21 +7,51 @@ set -e
 echo "🔧 Code Guardian - Auto-fix Code Quality Issues"
 echo "=============================================="
 
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    local status=$1
+    local message=$2
+    case $status in
+        "success")
+            echo -e "${GREEN}✅ $message${NC}"
+            ;;
+        "warning")
+            echo -e "${YELLOW}⚠️  $message${NC}"
+            ;;
+        "error")
+            echo -e "${RED}❌ $message${NC}"
+            ;;
+        "info")
+            echo -e "${BLUE}ℹ️  $message${NC}"
+            ;;
+        *)
+            echo "$message"
+            ;;
+    esac
+}
+
 # Check if we're in a git repository
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    echo "❌ Error: Not in a git repository"
+    print_status error "Not in a git repository"
     exit 1
 fi
 
 # Function to check if there are uncommitted changes
 check_git_status() {
     if ! git diff --quiet || ! git diff --staged --quiet; then
-        echo "⚠️  Warning: You have uncommitted changes."
+        print_status warning "You have uncommitted changes."
         echo "   Consider committing or stashing them before running auto-fix."
         read -p "   Continue anyway? (y/N): " -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            echo "❌ Aborted."
+            print_status error "Aborted."
             exit 1
         fi
     fi
@@ -29,30 +59,30 @@ check_git_status() {
 
 # Function to apply formatting
 apply_formatting() {
-    echo "🎨 Checking code formatting..."
-    
+    print_status info "Checking code formatting..."
+
     if cargo fmt --all -- --check > /dev/null 2>&1; then
-        echo "✅ Code formatting is already correct."
+        print_status success "Code formatting is already correct."
         return 0
     else
-        echo "🔧 Applying formatting fixes..."
+        print_status info "Applying formatting fixes..."
         cargo fmt --all
-        echo "✅ Formatting applied."
+        print_status success "Formatting applied."
         return 1
     fi
 }
 
 # Function to apply clippy fixes
 apply_clippy() {
-    echo "📎 Checking clippy issues..."
-    
+    print_status info "Checking clippy issues..."
+
     if cargo clippy --all-targets --all-features -- -D warnings > /dev/null 2>&1; then
-        echo "✅ No clippy issues found."
+        print_status success "No clippy issues found."
         return 0
     else
-        echo "🔧 Applying clippy fixes..."
+        print_status info "Applying clippy fixes..."
         cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged
-        echo "✅ Clippy fixes applied."
+        print_status success "Clippy fixes applied."
         return 1
     fi
 }
@@ -60,7 +90,7 @@ apply_clippy() {
 # Function to commit changes
 commit_changes() {
     if ! git diff --quiet; then
-        echo "📝 Committing auto-fix changes..."
+        print_status info "Committing auto-fix changes..."
         git add .
         git commit -m "auto-fix: apply code quality fixes
 
@@ -68,9 +98,9 @@ commit_changes() {
 - Apply clippy suggestions
 
 [automated commit]"
-        echo "✅ Changes committed."
+        print_status success "Changes committed."
     else
-        echo "ℹ️  No changes to commit."
+        print_status info "No changes to commit."
     fi
 }
 
@@ -120,28 +150,28 @@ main() {
     
     # Summary
     echo ""
-    echo "📊 Summary:"
+    print_status info "Summary:"
     if [ "$format_changed" = true ]; then
         echo "  🎨 Formatting: Fixed"
     else
         echo "  🎨 Formatting: Already correct"
     fi
-    
+
     if [ "$clippy_changed" = true ]; then
         echo "  📎 Clippy: Fixed"
     else
         echo "  📎 Clippy: No issues"
     fi
-    
+
     # Auto-commit if requested and there are changes
     if [ "$auto_commit" = true ] && ([ "$format_changed" = true ] || [ "$clippy_changed" = true ]); then
         echo ""
         commit_changes
     fi
-    
+
     echo ""
-    echo "🎉 Code quality check complete!"
-    
+    print_status success "Code quality check complete!"
+
     if [ "$format_changed" = true ] || [ "$clippy_changed" = true ]; then
         if [ "$auto_commit" = false ]; then
             echo "💡 Tip: Use --commit flag to automatically commit these changes."

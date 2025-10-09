@@ -274,9 +274,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed contribution guidelines.
 Quick checklist:
 1. Follow the guidelines in `AGENTS.md`
 2. Keep modules under 500 lines of code
-3. Maintain82%+ test coverage
+3. Maintain 82%+ test coverage
 4. Use conventional commit messages
 
 ## License
 
-[MIT](LICENSE)# CI rerun
+[MIT](LICENSE)

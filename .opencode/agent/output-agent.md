@@ -39,3 +39,12 @@ To handle output formatting, ensure consistency, and optimize for large datasets
 ## Error Scenarios
 - Large datasets: Use streaming.
 - Invalid formats: Validate and correct.
+
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only

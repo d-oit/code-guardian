@@ -40,3 +40,12 @@ To develop efficient, scalable scanning functionality, including detectors, para
 ## Error Scenarios
 - Performance issues: Optimize with rayon.
 - Modularity violations: Refactor to adhere to 500 LOC rule.
+
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only
