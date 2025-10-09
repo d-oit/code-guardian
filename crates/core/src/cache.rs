@@ -30,6 +30,24 @@ where
     }
 }
 
+impl<K, V> Cache<K, V> for InMemoryCache<K, V>
+where
+    K: Eq + std::hash::Hash + Clone + Send + Sync,
+    V: Clone + Send + Sync,
+{
+    fn get(&self, key: &K) -> Option<V> {
+        self.map.get(key).map(|value| value.clone())
+    }
+
+    fn set(&self, key: K, value: V) {
+        self.map.insert(key, value);
+    }
+
+    fn clear(&self) {
+        self.map.clear();
+    }
+}
+
 impl<K, V> Default for InMemoryCache<K, V>
 where
     K: Eq + std::hash::Hash + Clone + Send + Sync,
