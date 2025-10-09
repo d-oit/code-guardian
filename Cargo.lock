@@ -347,7 +347,7 @@ checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
 name = "code-guardian-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -379,7 +379,7 @@ dependencies = [
 
 [[package]]
 name = "code-guardian-output"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -395,7 +395,7 @@ dependencies = [
 
 [[package]]
 name = "code-guardian-storage"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -411,7 +411,7 @@ dependencies = [
 
 [[package]]
 name = "code_guardian_cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "assert_cmd",

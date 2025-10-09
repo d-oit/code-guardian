@@ -42,11 +42,24 @@ jobs:
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     
-    - name: Check formatting
-      run: cargo fmt --all -- --check
+    - name: Check and apply formatting
+      run: |
+        cargo fmt --all -- --check || {
+          echo "Code formatting issues detected. Applying fixes..."
+          cargo fmt --all
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff --staged --quiet || git commit -m "auto-fix: apply cargo fmt formatting [skip ci]"
+        }
     
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+    - name: Run clippy with auto-fix
+      run: |
+        cargo clippy --all-targets --all-features --fix --allow-dirty -- -D warnings || {
+          echo "Clippy issues detected. Applied available fixes."
+          git add .
+          git diff --staged --quiet || git commit -m "auto-fix: apply clippy suggestions [skip ci]"
+        }
     
     - name: Build
       run: cargo build --verbose

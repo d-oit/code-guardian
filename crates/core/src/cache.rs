@@ -1,9 +1,4 @@
 use dashmap::DashMap;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
-use std::sync::Mutex;
 
 /// Trait for caching analysis results.
 /// Key is typically a file path or module identifier.
