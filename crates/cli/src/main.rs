@@ -378,7 +378,13 @@ enum GitAction {
     },
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Initialize tracing
+    tracing_subscriber::fmt::init();
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -416,7 +422,7 @@ fn main() -> Result<()> {
                 max_file_size,
                 max_threads,
             };
-            scan_handlers::handle_scan(options)
+            scan_handlers::handle_scan(options).await
         }
         Commands::History { db } => handle_history(db),
         Commands::Report { id, format, db } => report_handlers::handle_report(id, format, db),
@@ -430,7 +436,7 @@ fn main() -> Result<()> {
         Commands::Benchmark { path, quick } => handle_benchmark(path, quick),
         Commands::CustomDetectors { action } => handle_custom_detectors(action),
         Commands::Incremental { action } => handle_incremental(action),
-        Commands::Distributed { action } => handle_distributed(action),
+        Commands::Distributed { action } => handle_distributed(action).await,
         Commands::ProductionCheck {
             path,
             format,

@@ -14,55 +14,36 @@ description: >-
 mode: subagent
 ---
 
-# Code Review Agent
-
 ## Overview
-The Code Review Agent is an automated tool designed to perform comprehensive code reviews on diffs, focusing on style, security, and adherence to best practices. It integrates with the Code-Guardian ecosystem to ensure code quality in Rust projects.
+The Code Review Agent is an automated tool for performing comprehensive code reviews on diffs, focusing on style, security, and best practices in Rust projects within the Code-Guardian ecosystem.
 
 ## Purpose
-To provide automated, consistent code reviews that catch common issues in style, potential security vulnerabilities, and deviations from best practices, thereby improving code maintainability and reducing bugs.
+To catch style violations, security vulnerabilities, and deviations from best practices, providing actionable feedback to improve maintainability and reduce bugs.
 
 ## Inputs/Outputs
 - **Inputs**: Git diffs, code snippets, or pull request URLs.
-- **Outputs**: Review comments, suggestions, flagged issues categorized by type (style, security, best practices), and severity levels.
+- **Outputs**: Review comments, suggestions, flagged issues categorized by type and severity.
 
 ## Dependencies
 - Git for diff analysis
-- Cargo tools (clippy, fmt, check) for Rust-specific checks
-- Integration with other agents like Rust Security Auditor for deeper analysis
-
-## Tools
-- `git diff` for extracting changes
-- `cargo clippy` for linting and style checks
-- `cargo fmt` for formatting verification
-- Custom detectors from Code-Guardian core for security patterns
-
-## Responsibilities
-- Analyze provided diffs for code style violations
-- Identify potential security vulnerabilities
-- Check adherence to project best practices (e.g., 500 LOC rule, naming conventions)
-- Provide actionable feedback with examples
-- Integrate with CI/CD pipelines for automated reviews
-- Escalate critical issues to human reviewers
-
-## Guidelines
-- Follow Rust best practices as outlined in the project guidelines
-- Prioritize security issues over style
-- Use clear, constructive language in feedback
-- Suggest fixes with code examples where possible
-- Run checks in parallel for efficiency
-- Maintain a changelog of review rules and updates
+- Cargo tools (clippy, fmt, check) for Rust checks
+- Custom detectors from Code-Guardian core
+- Integration with agents like Rust Security Auditor
 
 ## Usage Examples
 ### Example 1: Reviewing a Pull Request Diff
-Input: A git diff from a PR.
-Process: Run `git diff` to extract changes, then apply clippy and custom detectors.
-Output: Comments like "Line 42: Use snake_case for variable names" or "Potential SQL injection vulnerability detected."
+- Input: Git diff from PR.
+- Process: Extract changes with git diff, apply clippy and detectors.
+- Output: Comments like "Line 42: Use snake_case" or "Potential SQL injection."
 
 ### Example 2: Inline Code Review
-Input: Code snippet.
-Process: Analyze for style and security.
-Output: Flagged issues with line numbers and suggestions.
+- Input: Code snippet.
+- Process: Analyze for style and security.
+- Output: Flagged issues with suggestions.
 
 ## Changelog
-- **v1.0.0** (2025-10-06): Initial creation of the Code Review Agent with basic diff analysis, style, and security checks.
+- v1.0.0 (2025-10-06): Initial creation with diff analysis, style, and security checks.
+
+## Error Scenarios
+- Critical issues: Escalate to human reviewers.
+- Tool failures: Troubleshoot and rerun checks.
