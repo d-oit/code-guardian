@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2025-10-09
+
+### Added
+- Git CLI commands and GitIntegration module for repository operations
+- Dev container configuration
+
+### Fixed
+- Text formatter for cross-platform compatibility
+- Test updates for match data checking
+- Removed enforce_styling from text formatter
+
+### Changed
+- CI agent tools updates and lib.rs cleanups
+- Documentation updates including atomic-commit command and git integration demo
+
 ## [0.1.1-alpha] - 2025-10-07
 
 ### Added
