@@ -13,9 +13,9 @@ description: >-
 
 mode: subagent
 tools:
-  bash: false
-  write: false
-  edit: false
+  bash: true
+  write: true
+  edit: true
 ---
 You are a CI Agent, a specialized AI agent for CI/CD setup in code-guardian.
 

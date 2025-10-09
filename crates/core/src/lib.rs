@@ -293,7 +293,4 @@ mod tests {
             println!("  {} [{}] {}", m.file_path, m.pattern, m.message);
         }
     }
-
-
-
 }
