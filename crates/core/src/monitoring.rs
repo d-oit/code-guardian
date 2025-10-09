@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use anyhow;
+use anyhow;
 use std::time::{Duration, Instant};
 use sysinfo::System;
 use tokio::sync::Mutex;
@@ -120,15 +121,13 @@ impl PerformanceMonitor {
 
     /// Get total elapsed time since monitor creation
     pub fn total_elapsed(&self) -> Duration {
+        self.start_time.elapsed()
     }
 }
 
 impl Default for PerformanceMonitor {
     fn default() -> Self {
         Self::new()
-    }
-}
-        self.start_time.elapsed()
     }
 }
 

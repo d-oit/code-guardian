@@ -71,3 +71,22 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  docs-agent:
+    name: Docs Agent
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Check documentation
+      run: cargo doc --no-deps --workspace --document-private-items
+
+    - name: Comment on PR if docs issues
+      if: failure()
+      run: gh pr comment ${{ github.event.pull_request.number }} --body "Docs agent detected issues in documentation generation."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -12,8 +12,8 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -28,20 +28,16 @@ jobs:
           echo "prerelease=false" >> $GITHUB_ENV
         fi
     - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
+      run: gh release create ${{ github.ref_name }} --title "Release ${{ github.ref_name }}" --generate-notes ${{ env.prerelease == 'true' && '--prerelease' || '' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: ${{ env.prerelease }}
 
   build-release:
     name: Build Release
     needs: create-release
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
@@ -94,11 +90,6 @@ jobs:
         echo "ARCHIVE_NAME=${archive_name}" >> $GITHUB_ENV
     
     - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+      run: gh release upload ${{ github.ref_name }} ./${{ env.ARCHIVE_NAME }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ env.ARCHIVE_NAME }}
-        asset_name: ${{ env.ARCHIVE_NAME }}
-        asset_content_type: application/octet-stream

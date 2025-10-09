@@ -55,9 +55,6 @@ Context: Commit has unrelated bug fix and refactoring.
 - Process: Identify unrelated parts, advise selective staging.
 - Output: Split into "fix: handle validation edge case" and "refactor: simplify algorithm".
 
-## Changelog
-- Initial version: Basic atomic commit analysis and suggestions.
-
 ## Error Scenarios
 - Intertwined changes: Advise selective staging with 'git add -p'.
 - Unclear intent: Ask for clarification on change purposes.

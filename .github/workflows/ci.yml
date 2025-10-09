@@ -10,8 +10,8 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
-    name: Test
+  testing-agent:
+    name: Testing Agent
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -85,9 +85,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Install cargo-audit
       uses: taiki-e/install-action@cargo-audit
-    
+
     - name: Run security audit
       run: cargo audit
+
+  code-review-agent:
+    name: Code Review Agent
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy
+
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    - name: Comment on PR if issues found
+      if: failure()
+      run: gh pr comment ${{ github.event.pull_request.number }} --body "Code review agent detected issues. Please address the clippy warnings."
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
