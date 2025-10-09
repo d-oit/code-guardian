@@ -27,7 +27,7 @@ build-release: ## Build all crates in release mode
 
 build-cli: ## Build only the CLI crate
 	@echo "🔨 Building CLI crate..."
-	cargo build -p cli
+	cargo build -p code_guardian_cli
 
 # Testing commands
 test: ## Run all tests
