@@ -1,6 +1,6 @@
 [package]
 name = "code_guardian_cli"
-version = "0.2.0"
+version = "0.1.1"
 edition = "2021"
 
 [dependencies]
@@ -20,6 +20,10 @@ ignore = { workspace = true }
 git2 = { workspace = true, optional = true }
 num_cpus = { workspace = true }
 rayon = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+sysinfo = { workspace = true }
 
 code-guardian-core = { path = "../core" }
 code-guardian-storage = { path = "../storage" }
