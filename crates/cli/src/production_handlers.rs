@@ -1,3 +1,4 @@
+use crate::git_integration::GitIntegration;
 use anyhow::Result;
 use code_guardian_core::{AlertDetector, ConsoleLogDetector, DebuggerDetector};
 use code_guardian_core::{DetectorFactory, Match, PatternDetector, Scanner};
@@ -102,9 +103,48 @@ pub fn handle_pre_commit(path: PathBuf, staged_only: bool, fast: bool) -> Result
     };
 
     let scanner = Scanner::new(detectors);
+
     let matches = if staged_only {
-        // TODO: Implement git diff --cached integration
-        scanner.scan(&path)?
+        // Check if we're in a git repository
+        if !GitIntegration::is_git_repo(&path) {
+            println!("⚠️  Not in a git repository. Scanning entire directory instead.");
+            scanner.scan(&path)?
+        } else {
+            // Get repo root and staged files
+            let repo_root = GitIntegration::get_repo_root(&path)?;
+            let staged_files = GitIntegration::get_staged_files(&repo_root)?;
+
+            if staged_files.is_empty() {
+                println!("ℹ️  No staged files found. Nothing to scan.");
+                return Ok(());
+            }
+
+            println!("🔍 Scanning {} staged file(s)...", staged_files.len());
+            if !fast {
+                for file in &staged_files {
+                    println!("  📄 {}", file.display());
+                }
+            }
+
+            // Scan only staged files
+            let mut all_matches = Vec::new();
+            for file_path in staged_files {
+                if file_path.is_file() {
+                    // For now, use the directory scanner on each file's parent
+                    // This is a workaround until we implement file-specific scanning
+                    if let Some(parent) = file_path.parent() {
+                        let file_matches = scanner.scan(parent)?;
+                        // Filter matches to only include the specific file
+                        let filtered_matches: Vec<_> = file_matches
+                            .into_iter()
+                            .filter(|m| m.file_path == file_path.to_string_lossy())
+                            .collect();
+                        all_matches.extend(filtered_matches);
+                    }
+                }
+            }
+            all_matches
+        }
     } else {
         scanner.scan(&path)?
     };
@@ -263,66 +303,6 @@ pub fn handle_lang_scan(
     }
 
     Ok(())
-}
-
-/// Handle technology stack presets
-pub fn handle_stack_preset(preset: crate::StackPreset) -> Result<()> {
-    use crate::StackPreset;
-
-    match preset {
-        StackPreset::Web { path, production } => {
-            let languages = vec![
-                "js".to_string(),
-                "ts".to_string(),
-                "jsx".to_string(),
-                "tsx".to_string(),
-                "vue".to_string(),
-                "svelte".to_string(),
-            ];
-            handle_lang_scan(languages, path, "text".to_string(), production)
-        }
-        StackPreset::Backend { path, production } => {
-            let languages = vec![
-                "py".to_string(),
-                "java".to_string(),
-                "go".to_string(),
-                "cs".to_string(),
-                "php".to_string(),
-                "rb".to_string(),
-            ];
-            handle_lang_scan(languages, path, "text".to_string(), production)
-        }
-        StackPreset::Fullstack { path, production } => {
-            let languages = vec![
-                "js".to_string(),
-                "ts".to_string(),
-                "py".to_string(),
-                "java".to_string(),
-                "go".to_string(),
-                "rs".to_string(),
-            ];
-            handle_lang_scan(languages, path, "text".to_string(), production)
-        }
-        StackPreset::Mobile { path, production } => {
-            let languages = vec![
-                "js".to_string(),
-                "ts".to_string(),
-                "swift".to_string(),
-                "kt".to_string(),
-                "dart".to_string(),
-            ];
-            handle_lang_scan(languages, path, "text".to_string(), production)
-        }
-        StackPreset::Systems { path, production } => {
-            let languages = vec![
-                "rs".to_string(),
-                "cpp".to_string(),
-                "c".to_string(),
-                "go".to_string(),
-            ];
-            handle_lang_scan(languages, path, "text".to_string(), production)
-        }
-    }
 }
 
 /// Handle file watching command

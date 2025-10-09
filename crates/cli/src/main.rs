@@ -8,12 +8,14 @@ use std::path::PathBuf;
 mod advanced_handlers;
 mod benchmark;
 mod comparison_handlers;
+mod git_integration;
 mod production_handlers;
 mod report_handlers;
 mod scan_handlers;
 mod utils;
 
 use advanced_handlers::*;
+use git_integration::GitIntegration;
 use production_handlers::*;
 
 #[derive(Parser)]
@@ -243,6 +245,11 @@ enum Commands {
         #[arg(long, default_value = "500")]
         delay: u64,
     },
+    /// Git integration and hook management
+    Git {
+        #[command(subcommand)]
+        action: GitAction,
+    },
 }
 
 #[derive(Subcommand)]
@@ -349,6 +356,28 @@ enum StackPreset {
     },
 }
 
+#[derive(Subcommand)]
+enum GitAction {
+    /// Install pre-commit hook
+    InstallHook {
+        /// Path to git repository (default: current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+    /// Uninstall pre-commit hook
+    UninstallHook {
+        /// Path to git repository (default: current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+    /// List staged files that would be scanned
+    Staged {
+        /// Path to git repository (default: current directory)
+        #[arg(default_value = ".")]
+        path: PathBuf,
+    },
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -435,13 +464,14 @@ fn main() -> Result<()> {
             format,
             production,
         } => handle_lang_scan(languages, path, format, production),
-        Commands::Stack { preset } => handle_stack_preset(preset),
+        Commands::Stack { preset } => handle_stack_preset_main(preset),
         Commands::Watch {
             path,
             include,
             exclude,
             delay,
         } => handle_watch(path, include, exclude, delay),
+        Commands::Git { action } => handle_git(action),
     }
 }
 
@@ -481,6 +511,116 @@ fn handle_benchmark(path: Option<PathBuf>, quick: bool) -> Result<()> {
         benchmark::quick_performance_test(&benchmark_path)
     } else {
         benchmark::run_benchmark(&benchmark_path)
+    }
+}
+
+fn handle_stack_preset_main(preset: StackPreset) -> Result<()> {
+    match preset {
+        StackPreset::Web { path, production } => {
+            let languages = vec![
+                "js".to_string(),
+                "ts".to_string(),
+                "jsx".to_string(),
+                "tsx".to_string(),
+                "vue".to_string(),
+                "svelte".to_string(),
+            ];
+            handle_lang_scan(languages, path, "text".to_string(), production)
+        }
+        StackPreset::Backend { path, production } => {
+            let languages = vec![
+                "py".to_string(),
+                "java".to_string(),
+                "go".to_string(),
+                "cs".to_string(),
+                "php".to_string(),
+                "rb".to_string(),
+            ];
+            handle_lang_scan(languages, path, "text".to_string(), production)
+        }
+        StackPreset::Fullstack { path, production } => {
+            let languages = vec![
+                "js".to_string(),
+                "ts".to_string(),
+                "py".to_string(),
+                "java".to_string(),
+                "go".to_string(),
+                "rs".to_string(),
+            ];
+            handle_lang_scan(languages, path, "text".to_string(), production)
+        }
+        StackPreset::Mobile { path, production } => {
+            let languages = vec![
+                "js".to_string(),
+                "ts".to_string(),
+                "swift".to_string(),
+                "kt".to_string(),
+                "dart".to_string(),
+            ];
+            handle_lang_scan(languages, path, "text".to_string(), production)
+        }
+        StackPreset::Systems { path, production } => {
+            let languages = vec![
+                "rs".to_string(),
+                "cpp".to_string(),
+                "c".to_string(),
+                "go".to_string(),
+            ];
+            handle_lang_scan(languages, path, "text".to_string(), production)
+        }
+    }
+}
+
+fn handle_git(action: GitAction) -> Result<()> {
+    match action {
+        GitAction::InstallHook { path } => {
+            println!("🔧 Installing Code-Guardian pre-commit hook...");
+
+            if !GitIntegration::is_git_repo(&path) {
+                eprintln!("❌ Error: {} is not a git repository", path.display());
+                std::process::exit(1);
+            }
+
+            let repo_root = GitIntegration::get_repo_root(&path)?;
+            GitIntegration::install_pre_commit_hook(&repo_root)?;
+
+            println!("💡 Usage: The hook will automatically run on 'git commit'");
+            println!("💡 Manual run: code-guardian pre-commit --staged-only --fast");
+            Ok(())
+        }
+        GitAction::UninstallHook { path } => {
+            println!("🗑️  Uninstalling Code-Guardian pre-commit hook...");
+
+            if !GitIntegration::is_git_repo(&path) {
+                eprintln!("❌ Error: {} is not a git repository", path.display());
+                std::process::exit(1);
+            }
+
+            let repo_root = GitIntegration::get_repo_root(&path)?;
+            GitIntegration::uninstall_pre_commit_hook(&repo_root)?;
+            Ok(())
+        }
+        GitAction::Staged { path } => {
+            println!("📋 Listing staged files...");
+
+            if !GitIntegration::is_git_repo(&path) {
+                eprintln!("❌ Error: {} is not a git repository", path.display());
+                std::process::exit(1);
+            }
+
+            let repo_root = GitIntegration::get_repo_root(&path)?;
+            let staged_files = GitIntegration::get_staged_files(&repo_root)?;
+
+            if staged_files.is_empty() {
+                println!("ℹ️  No staged files found.");
+            } else {
+                println!("🔍 Found {} staged file(s):", staged_files.len());
+                for (i, file) in staged_files.iter().enumerate() {
+                    println!("  {}. {}", i + 1, file.display());
+                }
+            }
+            Ok(())
+        }
     }
 }
 
