@@ -14,7 +14,7 @@
 - **Types**: Use strong typing; prefer `&str` over `String` for parameters; use `Result<T, E>` for fallible operations
 - **Error Handling**: Use `thiserror` for custom errors, `anyhow` for generic errors; prefer `?` operator
 - **Documentation**: Document public APIs with `///` comments; use `cargo doc` to generate docs
-- **Testing**: Write unit tests with `#[test]`; use `#[cfg(test)]` modules; aim for 80%+ coverage
+- **Testing**: Write unit tests with `#[test]`; use `#[cfg(test)]` modules; aim for82%+ coverage
 - **Concurrency**: Use `rayon` for parallelism; prefer channels over shared state
 - **Serialization**: Use `serde` with derive macros; prefer JSON/YAML over binary formats
 
@@ -58,7 +58,7 @@
 - Review code across agents for integration
 
 ## Quality Control
-- 80%+ test coverage
+-82%+ test coverage
 - Pass CI/CD before merge
 - Adhere to modular architecture
 

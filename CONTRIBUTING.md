@@ -44,7 +44,7 @@ This project follows a code of conduct to ensure a welcoming environment for all
 ### Testing
 - Write unit tests for all new code using `#[test]`
 - Use `#[cfg(test)]` modules for test-specific code
-- Aim for 80%+ test coverage
+- Aim for82%+ test coverage
 - Run tests with `cargo test`
 
 ### Performance

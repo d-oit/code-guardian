@@ -27,8 +27,50 @@ jobs:
         else
           echo "prerelease=false" >> $GITHUB_ENV
         fi
+    - name: Extract changelog entry
+      id: changelog
+      run: |
+        VERSION="${{ github.ref_name }}"
+        # Remove 'v' prefix if present
+        VERSION_NUM="${VERSION#v}"
+        
+        # Extract the section for this version from CHANGELOG.md
+        if [ -f "CHANGELOG.md" ]; then
+          # Get content between this version and the next version/end of file
+          CHANGELOG_ENTRY=$(awk -v version="$VERSION_NUM" '
+            /^## \[/ {
+              if (found) exit
+              if ($0 ~ "\\[" version "\\]") found=1
+              next
+            }
+            found && !/^$/ { content = content $0 "\n" }
+            END { print content }
+          ' CHANGELOG.md)
+          
+          # Save to file and environment
+          if [ -n "$CHANGELOG_ENTRY" ]; then
+            echo "$CHANGELOG_ENTRY" > release_notes.md
+            echo "HAS_CHANGELOG=true" >> $GITHUB_ENV
+          else
+            echo "HAS_CHANGELOG=false" >> $GITHUB_ENV
+          fi
+        else
+          echo "HAS_CHANGELOG=false" >> $GITHUB_ENV
+        fi
+
     - name: Create Release
-      run: gh release create ${{ github.ref_name }} --title "Release ${{ github.ref_name }}" --generate-notes ${{ env.prerelease == 'true' && '--prerelease' || '' }}
+      run: |
+        if [ "${{ env.HAS_CHANGELOG }}" = "true" ] && [ -s release_notes.md ]; then
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --notes-file release_notes.md \
+            ${{ env.prerelease == 'true' && '--prerelease' || '' }}
+        else
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes \
+            ${{ env.prerelease == 'true' && '--prerelease' || '' }}
+        fi
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,7 +119,7 @@ jobs:
     - name: Create archive
       shell: bash
       run: |
-        binary_name="code-guardian-cli${{ matrix.suffix }}"
+        binary_name="code_guardian_cli${{ matrix.suffix }}"
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           archive_name="code-guardian-${{ matrix.target }}.zip"
           cp "target/${{ matrix.target }}/release/${binary_name}" .
