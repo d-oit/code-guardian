@@ -43,24 +43,33 @@ jobs:
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
     
     - name: Check formatting
+      run: cargo fmt --all -- --check
+      continue-on-error: true
+      id: fmt-check
+    
+    - name: Formatting feedback
+      if: steps.fmt-check.outcome == 'failure'
       run: |
-        if ! cargo fmt --all -- --check; then
-          echo "❌ Code formatting issues detected!"
-          echo "Please run 'cargo fmt --all' to fix formatting."
-          echo "Or add this to your pre-commit hook:"
-          echo "  cargo fmt --all"
-          exit 1
-        fi
+        echo "❌ Code formatting issues detected!"
+        echo "Please run 'cargo fmt --all' to fix formatting."
+        echo "Or add this to your pre-commit hook:"
+        echo "  cargo fmt --all"
+        exit 1
     
     - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+      continue-on-error: true  
+      id: clippy-check
+      
+    - name: Clippy feedback
+      if: steps.clippy-check.outcome == 'failure'
       run: |
-        if ! cargo clippy --all-targets --all-features -- -D warnings; then
-          echo "❌ Clippy issues detected!"
-          echo "Please run 'cargo clippy --all-targets --all-features --fix --allow-dirty' to fix issues."
-          echo "Or add this to your development workflow:"
-          echo "  cargo clippy --fix --allow-dirty"
-          exit 1
-        fi
+        echo "❌ Clippy issues detected!"
+        echo "Please run 'cargo clippy --all-targets --all-features --fix --allow-dirty' to fix issues."
+        echo "Or add this to your development workflow:"
+        echo "  cargo clippy --fix --allow-dirty"
+        echo "Or run './scripts/fix-code-quality.sh' to auto-fix both formatting and clippy issues."
+        exit 1
     
     - name: Build
       run: cargo build --verbose
