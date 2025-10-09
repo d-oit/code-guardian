@@ -1,8 +1,11 @@
-use crate::{Match, PatternDetector};
+use crate::{Match, PatternDetector, PerformanceMonitor};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tracing::{info, warn};
 
 use std::time::Instant;
 
@@ -39,12 +42,13 @@ pub struct WorkerConfig {
     pub endpoint: Option<String>, // For remote workers
 }
 
-/// Distributed scan coordinator
+/// Distributed scan coordinator with performance monitoring
 pub struct DistributedCoordinator {
     workers: Vec<WorkerConfig>,
     work_queue: Vec<WorkUnit>,
     completed_work: HashMap<String, WorkResult>,
     detectors: HashMap<String, Box<dyn PatternDetector>>,
+    monitor: Arc<Mutex<PerformanceMonitor>>,
 }
 
 impl DistributedCoordinator {
@@ -54,12 +58,13 @@ impl DistributedCoordinator {
             work_queue: Vec::new(),
             completed_work: HashMap::new(),
             detectors: HashMap::new(),
+            monitor: Arc::new(Mutex::new(PerformanceMonitor::new())),
         }
     }
 
     /// Register a worker node
     pub fn register_worker(&mut self, config: WorkerConfig) {
-        println!(
+        info!(
             "🤖 Registered worker: {} (cores: {}, memory: {}MB)",
             config.worker_id, config.cpu_cores, config.memory_limit_mb
         );
@@ -90,7 +95,7 @@ impl DistributedCoordinator {
         // Sort by priority (higher priority first)
         self.work_queue.sort_by(|a, b| b.priority.cmp(&a.priority));
 
-        println!(
+        info!(
             "📦 Created {} work units from {} files",
             self.work_queue.len(),
             files.len()
@@ -98,25 +103,31 @@ impl DistributedCoordinator {
         Ok(())
     }
 
-    /// Distribute and execute work units
-    pub fn execute_distributed_scan(&mut self) -> Result<Vec<Match>> {
+    /// Distribute and execute work units with performance monitoring
+    pub async fn execute_distributed_scan(&mut self) -> Result<Vec<Match>> {
         let start_time = Instant::now();
         let total_units = self.work_queue.len();
 
-        println!(
+        info!(
             "🚀 Starting distributed scan with {} workers and {} work units",
             self.workers.len(),
             total_units
         );
 
+        // Start monitoring
+        {
+            let mut monitor = self.monitor.lock().await;
+            monitor.start_operation("distributed_scan");
+        }
+
         if self.workers.is_empty() {
             // Fallback to local processing
-            return self.execute_local_fallback();
+            return self.execute_local_fallback().await;
         }
 
         // Simulate distributed processing (in real implementation, this would use
         // actual network communication, message queues, etc.)
-        self.simulate_distributed_execution()?;
+        self.simulate_distributed_execution().await?;
 
         let total_matches: Vec<Match> = self
             .completed_work
@@ -126,6 +137,12 @@ impl DistributedCoordinator {
 
         let duration = start_time.elapsed();
         self.print_execution_summary(duration, total_matches.len());
+
+        // End monitoring
+        {
+            let mut monitor = self.monitor.lock().await;
+            monitor.end_operation("distributed_scan").await?;
+        }
 
         Ok(total_matches)
     }
@@ -179,7 +196,7 @@ impl DistributedCoordinator {
         }
     }
 
-    fn simulate_distributed_execution(&mut self) -> Result<()> {
+    async fn simulate_distributed_execution(&mut self) -> Result<()> {
         use rayon::prelude::*;
 
         // Process work units in parallel (simulating distributed workers)
@@ -239,8 +256,8 @@ impl DistributedCoordinator {
         })
     }
 
-    fn execute_local_fallback(&mut self) -> Result<Vec<Match>> {
-        println!("⚠️  No workers available, falling back to local processing");
+    async fn execute_local_fallback(&mut self) -> Result<Vec<Match>> {
+        warn!("⚠️  No workers available, falling back to local processing");
 
         let mut all_matches = Vec::new();
         for unit in &self.work_queue {
@@ -292,18 +309,18 @@ impl DistributedCoordinator {
     }
 
     fn print_execution_summary(&self, duration: std::time::Duration, total_matches: usize) {
-        println!("✅ Distributed scan completed!");
-        println!("   Duration: {:?}", duration);
-        println!("   Total matches: {}", total_matches);
-        println!("   Work units processed: {}", self.completed_work.len());
+        info!("✅ Distributed scan completed!");
+        info!("   Duration: {:?}", duration);
+        info!("   Total matches: {}", total_matches);
+        info!("   Work units processed: {}", self.completed_work.len());
 
         let stats = self.get_statistics();
-        println!("   Files processed: {}", stats.total_files_processed);
-        println!("   Average unit size: {:.1} files", stats.average_unit_size);
+        info!("   Files processed: {}", stats.total_files_processed);
+        info!("   Average unit size: {:.1} files", stats.average_unit_size);
 
         // Show worker utilization
         for (worker_id, utilization) in &stats.worker_utilization {
-            println!("   {}: {:.1}% utilization", worker_id, utilization * 100.0);
+            info!("   {}: {:.1}% utilization", worker_id, utilization * 100.0);
         }
     }
 }
