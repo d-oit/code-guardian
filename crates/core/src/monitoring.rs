@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use anyhow::Result;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 use sysinfo::System;
 use tokio::sync::Mutex;
@@ -24,7 +24,11 @@ impl PerformanceMonitor {
     }
 
     /// Create a new performance monitor with custom thresholds
-    pub fn with_thresholds(timeout: Duration, memory_threshold_mb: usize, cpu_threshold_percent: f64) -> Self {
+    pub fn with_thresholds(
+        timeout: Duration,
+        memory_threshold_mb: usize,
+        cpu_threshold_percent: f64,
+    ) -> Self {
         let mut system = System::new_all();
         system.refresh_all();
 
@@ -59,13 +63,22 @@ impl PerformanceMonitor {
 
         // Check thresholds
         if duration > self.timeout_duration {
-            warn!("Operation {} exceeded timeout threshold: {:?} > {:?}", operation_name, duration, self.timeout_duration);
+            warn!(
+                "Operation {} exceeded timeout threshold: {:?} > {:?}",
+                operation_name, duration, self.timeout_duration
+            );
         }
         if metrics.memory_usage_mb > self.memory_threshold_mb as f64 {
-            warn!("Operation {} exceeded memory threshold: {:.1}MB > {}MB", operation_name, metrics.memory_usage_mb, self.memory_threshold_mb);
+            warn!(
+                "Operation {} exceeded memory threshold: {:.1}MB > {}MB",
+                operation_name, metrics.memory_usage_mb, self.memory_threshold_mb
+            );
         }
         if metrics.cpu_usage > self.cpu_threshold_percent {
-            warn!("Operation {} exceeded CPU threshold: {:.1}% > {:.1}%", operation_name, metrics.cpu_usage, self.cpu_threshold_percent);
+            warn!(
+                "Operation {} exceeded CPU threshold: {:.1}% > {:.1}%",
+                operation_name, metrics.cpu_usage, self.cpu_threshold_percent
+            );
         }
 
         Ok(())
@@ -100,7 +113,10 @@ impl PerformanceMonitor {
 
                 let elapsed = start_time.elapsed();
                 if elapsed > timeout_duration {
-                    error!("Monitoring timeout exceeded: {:?} > {:?}", elapsed, timeout_duration);
+                    error!(
+                        "Monitoring timeout exceeded: {:?} > {:?}",
+                        elapsed, timeout_duration
+                    );
                     break;
                 }
 
@@ -162,11 +178,20 @@ impl<T> MonitoredOperation<T> {
         self.monitor.start_operation(&self.operation_name);
 
         // Start monitoring
-        self.monitor.start_async_monitoring(Duration::from_secs(10)).await;
+        self.monitor
+            .start_async_monitoring(Duration::from_secs(10))
+            .await;
 
         // Execute with timeout
-        let result = time::timeout(self.monitor.timeout_duration, operation()).await
-            .map_err(|_| anyhow::anyhow!("Operation {} timed out after {:?}", self.operation_name, self.monitor.timeout_duration))?
+        let result = time::timeout(self.monitor.timeout_duration, operation())
+            .await
+            .map_err(|_| {
+                anyhow::anyhow!(
+                    "Operation {} timed out after {:?}",
+                    self.operation_name,
+                    self.monitor.timeout_duration
+                )
+            })?
             .map_err(|e| anyhow::anyhow!("Operation {} failed: {}", self.operation_name, e))?;
 
         self.monitor.end_operation(&self.operation_name).await?;
@@ -199,10 +224,12 @@ mod tests {
     async fn test_monitored_operation() {
         let mut monitored = MonitoredOperation::<String>::new("test_async_op");
 
-        let result = monitored.execute(|| async {
-            sleep(Duration::from_millis(50)).await;
-            Ok("success".to_string())
-        }).await;
+        let result = monitored
+            .execute(|| async {
+                sleep(Duration::from_millis(50)).await;
+                Ok("success".to_string())
+            })
+            .await;
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), "success");
