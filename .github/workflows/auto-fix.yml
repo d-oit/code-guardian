@@ -13,7 +13,7 @@ jobs:
   auto-fix:
     name: Auto-fix Formatting and Clippy Issues
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip auto-fix]')"
+    if: ${{ !contains(github.event.head_commit.message, '[skip auto-fix]') }}
     
     steps:
     - uses: actions/checkout@v4
@@ -81,8 +81,8 @@ jobs:
           git add .
 
           # Create detailed commit message
-          FORMAT_NEEDED="${{ steps.check.outputs.format_needed }}"
-          CLIPPY_NEEDED="${{ steps.check.outputs.clippy_needed }}"
+          FORMAT_NEEDED="${FORMAT_NEEDED_VAR}"
+          CLIPPY_NEEDED="${CLIPPY_NEEDED_VAR}"
           COMMIT_MSG="auto-fix: apply code quality fixes [skip auto-fix]"
           if [ "$FORMAT_NEEDED" = "true" ]; then
             COMMIT_MSG="$COMMIT_MSG
@@ -102,3 +102,6 @@ jobs:
         else
           echo "ℹ️ No changes were made by the auto-fix tools."
         fi
+      env:
+        FORMAT_NEEDED_VAR: ${{ steps.check.outputs.format_needed }}
+        CLIPPY_NEEDED_VAR: ${{ steps.check.outputs.clippy_needed }}
