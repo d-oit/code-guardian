@@ -35,7 +35,6 @@ permissions:
   read: deny
   bash: deny
 tools:
-  task: true
   read: false
   grep: false
   grop: false

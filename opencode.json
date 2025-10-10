@@ -1,9 +1,21 @@
 {
     "$schema": "https://opencode.ai/config.json",
+    "agent": {
+      
+    },
+    "provider": {
+        "nvidia": {
+            "models": {
+                "deepseek-ai/deepseek-v3.1-terminus": {
+                    "name": "deepseek-v3.1-terminus"
+                }
+            }
+        }        
+    },
     "mcp": {
         "context7": {
             "type": "remote",
-            "url": "https://mcp.context7.com/mcp",            
+            "url": "https://mcp.context7.com/mcp",
             "enabled": true
         }
     }
