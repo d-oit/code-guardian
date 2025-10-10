@@ -1,104 +1,350 @@
-name: Release
+name: Release Management
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - patch
+          - minor
+          - major
+          - prerelease
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write  # For signing artifacts
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  create-release:
-    name: Create Release
+  # Step 1: Release Please - Automated Release Management
+  release-please:
+    name: Release Please
     runs-on: ubuntu-latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      pr_created: ${{ steps.release.outputs.pr_created }}
+      pr_number: ${{ steps.release.outputs.pr_number }}
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Determine if prerelease
-      run: |
-        if [[ "${{ github.ref_name }}" == *"-"* ]]; then
-          echo "prerelease=true" >> $GITHUB_ENV
-        else
-          echo "prerelease=false" >> $GITHUB_ENV
-        fi
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: ${{ env.prerelease }}
+      - name: Run Release Please
+        uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          release-type: rust
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
 
+  # Step 2: Quality Assurance for Releases
+  quality-gate:
+    name: Release Quality Gate
+    runs-on: ubuntu-latest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Quality Checks
+        run: |
+          echo "🔍 Running release quality checks..."
+          cargo fmt --check
+          cargo clippy --all-targets --all-features -- -D warnings
+          cargo test --all-features
+          cargo doc --no-deps --all-features
+
+      - name: Security Audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
+  # Step 3: Build Multi-Platform Release Binaries
   build-release:
-    name: Build Release
-    needs: create-release
+    name: Build Release Binaries
     runs-on: ${{ matrix.os }}
+    needs: [release-please, quality-gate]
+    if: ${{ needs.release-please.outputs.release_created }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             suffix: ""
+            archive: tar.gz
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            suffix: ""
+            archive: tar.gz
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             suffix: ".exe"
+            archive: zip
           - os: macos-latest
             target: x86_64-apple-darwin
             suffix: ""
+            archive: tar.gz
           - os: macos-latest
             target: aarch64-apple-darwin
             suffix: ""
+            archive: tar.gz
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
-    
-    - name: Cache cargo registry
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
-    
-    - name: Build release binary
-      run: cargo build --release --target ${{ matrix.target }}
-    
-    - name: Create archive
-      shell: bash
-      run: |
-        binary_name="code-guardian-cli${{ matrix.suffix }}"
-        if [ "${{ matrix.os }}" = "windows-latest" ]; then
-          archive_name="code-guardian-${{ matrix.target }}.zip"
-          cp "target/${{ matrix.target }}/release/${binary_name}" .
-          7z a "${archive_name}" "${binary_name}" README.md
-        else
-          archive_name="code-guardian-${{ matrix.target }}.tar.gz"
-          cp "target/${{ matrix.target }}/release/${binary_name}" .
-          tar czf "${archive_name}" "${binary_name}" README.md
-        fi
-        echo "ARCHIVE_NAME=${archive_name}" >> $GITHUB_ENV
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ env.ARCHIVE_NAME }}
-        asset_name: ${{ env.ARCHIVE_NAME }}
-        asset_content_type: application/octet-stream
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools (Linux musl)
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-release-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Build release binary
+        run: |
+          cargo build --release --target ${{ matrix.target }} --bin code-guardian-cli
+
+      - name: Create release archive
+        shell: bash
+        run: |
+          binary_name="code-guardian-cli${{ matrix.suffix }}"
+          binary_path="target/${{ matrix.target }}/release/${binary_name}"
+          
+          # Verify binary exists
+          if [ ! -f "$binary_path" ]; then
+            echo "❌ Binary not found: $binary_path"
+            exit 1
+          fi
+          
+          # Copy binary to workspace
+          cp "$binary_path" .
+          
+          # Create archive
+          if [ "${{ matrix.archive }}" = "zip" ]; then
+            archive_name="code-guardian-${{ needs.release-please.outputs.version }}-${{ matrix.target }}.zip"
+            7z a "$archive_name" "$binary_name" README.md LICENSE CHANGELOG.md
+          else
+            archive_name="code-guardian-${{ needs.release-please.outputs.version }}-${{ matrix.target }}.tar.gz"
+            tar czf "$archive_name" "$binary_name" README.md LICENSE CHANGELOG.md
+          fi
+          
+          # Generate checksums
+          if command -v sha256sum &> /dev/null; then
+            sha256sum "$archive_name" > "$archive_name.sha256"
+          else
+            shasum -a 256 "$archive_name" > "$archive_name.sha256"
+          fi
+          
+          echo "ARCHIVE_NAME=$archive_name" >> $GITHUB_ENV
+          echo "CHECKSUM_FILE=$archive_name.sha256" >> $GITHUB_ENV
+
+      - name: Upload Release Assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload ${{ needs.release-please.outputs.tag_name }} \
+            "${{ env.ARCHIVE_NAME }}" \
+            "${{ env.CHECKSUM_FILE }}" \
+            --clobber
+
+  # Step 4: Publish to crates.io
+  publish-crates:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: [release-please, quality-gate, build-release]
+    if: ${{ needs.release-please.outputs.release_created }}
+    environment: 
+      name: crates-io
+      url: https://crates.io/crates/code-guardian
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Publish to crates.io
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          # Function to publish and wait
+          publish_crate() {
+            local crate_path=$1
+            local crate_name=$2
+            
+            echo "📦 Publishing $crate_name..."
+            cd "$crate_path"
+            
+            # Dry run first
+            cargo publish --dry-run --token $CARGO_REGISTRY_TOKEN
+            
+            # Actual publish
+            cargo publish --token $CARGO_REGISTRY_TOKEN
+            cd - > /dev/null
+            
+            echo "⏳ Waiting for $crate_name to be available..."
+            sleep 45  # Increased wait time for crates.io propagation
+          }
+          
+          # Publish in dependency order
+          publish_crate "crates/core" "core"
+          publish_crate "crates/storage" "storage"
+          publish_crate "crates/output" "output"
+          publish_crate "crates/cli" "CLI"
+          
+          echo "🎉 All crates published successfully!"
+
+  # Step 5: Update Documentation
+  update-docs:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: [release-please, publish-crates]
+    if: ${{ needs.release-please.outputs.release_created }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build documentation
+        run: |
+          cargo doc --no-deps --workspace --document-private-items
+          
+          # Create main index page
+          cat > target/doc/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Code-Guardian Documentation</title>
+              <style>
+                  body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 2rem; }
+                  .crate { margin: 1rem 0; padding: 1rem; border: 1px solid #ddd; border-radius: 8px; }
+                  .crate h3 { margin-top: 0; color: #333; }
+                  .crate a { color: #0066cc; text-decoration: none; }
+                  .crate a:hover { text-decoration: underline; }
+              </style>
+          </head>
+          <body>
+              <h1>🛡️ Code-Guardian Documentation</h1>
+              <p>Enterprise-grade code scanning and analysis tool</p>
+              
+              <div class="crate">
+                  <h3>📋 Core Library</h3>
+                  <p><a href="code_guardian_core/index.html">Core scanning engine and pattern detection</a></p>
+              </div>
+              
+              <div class="crate">
+                  <h3>💾 Storage</h3>
+                  <p><a href="code_guardian_storage/index.html">Database operations and persistence</a></p>
+              </div>
+              
+              <div class="crate">
+                  <h3>📄 Output</h3>
+                  <p><a href="code_guardian_output/index.html">Formatters and serialization</a></p>
+              </div>
+              
+              <div class="crate">
+                  <h3>⚡ CLI</h3>
+                  <p><a href="code_guardian_cli/index.html">Command-line interface</a></p>
+              </div>
+              
+              <hr>
+              <p><small>Generated for version ${{ needs.release-please.outputs.version }}</small></p>
+          </body>
+          </html>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          force_orphan: true
+
+  # Step 6: Notify Stakeholders
+  notify:
+    name: Release Notification
+    runs-on: ubuntu-latest
+    needs: [release-please, build-release, publish-crates, update-docs]
+    if: ${{ needs.release-please.outputs.release_created }}
+    steps:
+      - name: Create Release Summary
+        run: |
+          cat > release-summary.md << EOF
+          # 🎉 Code-Guardian ${{ needs.release-please.outputs.version }} Released!
+          
+          ## 📦 What's New
+          Check the [release notes](https://github.com/d-oit/code-guardian/releases/tag/${{ needs.release-please.outputs.tag_name }}) for detailed changes.
+          
+          ## 📥 Download
+          - **Linux (x86_64)**: [GNU](https://github.com/d-oit/code-guardian/releases/download/${{ needs.release-please.outputs.tag_name }}/code-guardian-${{ needs.release-please.outputs.version }}-x86_64-unknown-linux-gnu.tar.gz) | [musl](https://github.com/d-oit/code-guardian/releases/download/${{ needs.release-please.outputs.tag_name }}/code-guardian-${{ needs.release-please.outputs.version }}-x86_64-unknown-linux-musl.tar.gz)
+          - **Windows**: [x86_64](https://github.com/d-oit/code-guardian/releases/download/${{ needs.release-please.outputs.tag_name }}/code-guardian-${{ needs.release-please.outputs.version }}-x86_64-pc-windows-msvc.zip)
+          - **macOS**: [Intel](https://github.com/d-oit/code-guardian/releases/download/${{ needs.release-please.outputs.tag_name }}/code-guardian-${{ needs.release-please.outputs.version }}-x86_64-apple-darwin.tar.gz) | [Apple Silicon](https://github.com/d-oit/code-guardian/releases/download/${{ needs.release-please.outputs.tag_name }}/code-guardian-${{ needs.release-please.outputs.version }}-aarch64-apple-darwin.tar.gz)
+          
+          ## 📚 Resources
+          - 📖 [Documentation](https://d-oit.github.io/code-guardian/)
+          - 🦀 [crates.io](https://crates.io/crates/code-guardian)
+          - 🛠️ [GitHub Repository](https://github.com/d-oit/code-guardian)
+          
+          ## 🚀 Installation
+          \`\`\`bash
+          # Via Cargo
+          cargo install code-guardian-cli
+          
+          # Or download from releases
+          curl -L https://github.com/d-oit/code-guardian/releases/latest/download/code-guardian-\$(uname -s)-\$(uname -m).tar.gz | tar xz
+          \`\`\`
+          
+          EOF
+          
+          echo "📋 Release summary created!"
+
+      # Add future notification integrations here:
+      # - Slack/Discord notifications
+      # - Email notifications
+      # - Social media announcements
+      # - Package manager submissions
