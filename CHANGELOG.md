@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2025-10-09
+
+### Fixed
+- GitHub Actions release workflow binary name mismatch (code-guardian-cli vs code_guardian_cli)
+- Duplicate anyhow import in monitoring module
+- Syntax error in CLI main.rs tracing initialization
+
+### Added
+- Automatic changelog integration in release workflow
+- Enhanced release descriptions from CHANGELOG.md
+- Comprehensive workflow issue analysis and documentation
+
+### Changed
+- Release workflow now extracts and uses proper changelog content
+- Improved error handling in release process
+- Updated existing v0.1.1 release with proper description
+- Bump version to 0.1.1
+
+## [0.1.1] - 2025-10-09
 
 ### Added
 - Git CLI commands and GitIntegration module for repository operations
