@@ -41,7 +41,12 @@ ignore = "0.4"
 # Concurrency
 rayon = "1.10"
 num_cpus = "1.16"
-tokio = { version = "1.0", features = ["fs", "rt-multi-thread"] }
+tokio = { version = "1.0", features = ["fs", "rt-multi-thread", "time", "sync", "macros"] }
+
+# Logging and Monitoring
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+sysinfo = "0.30"
 
 # Error Handling
 thiserror = "1.0"

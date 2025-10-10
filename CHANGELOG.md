@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.2] - 2025-01-09
+## [0.1.2] - 2025-10-09
 
 ### Fixed
 - GitHub Actions release workflow binary name mismatch (code-guardian-cli vs code_guardian_cli)
@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release workflow now extracts and uses proper changelog content
 - Improved error handling in release process
 - Updated existing v0.1.1 release with proper description
+- Bump version to 0.1.1
 
 ## [0.1.1] - 2025-10-09
 
