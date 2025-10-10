@@ -1,0 +1,24 @@
+{
+  "name": "code-guardian-github-setup",
+  "version": "1.0.0",
+  "description": "GitHub repository setup scripts for Code-Guardian",
+  "main": "setup-repository-ruleset.js",
+  "scripts": {
+    "setup-rulesets": "node setup-repository-ruleset.js",
+    "setup-protection": "python3 github-api-setup.py",
+    "verify": "./setup-branch-protection.sh --verify",
+    "install-deps": "npm install && pip3 install requests"
+  },
+  "dependencies": {
+    "@octokit/rest": "^20.0.2"
+  },
+  "keywords": [
+    "github",
+    "repository",
+    "protection",
+    "security",
+    "automation"
+  ],
+  "author": "d-oit",
+  "license": "MIT"
+}

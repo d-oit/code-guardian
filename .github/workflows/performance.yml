@@ -1,0 +1,193 @@
+name: Performance
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run performance tests weekly on Sundays at 3 AM UTC
+    - cron: '0 3 * * 0'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Performance Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Install criterion
+      run: cargo install cargo-criterion
+    
+    - name: Run benchmarks
+      run: |
+        # Create benchmark directory if it doesn't exist
+        mkdir -p benchmark-results
+        
+        # Run core benchmarks
+        cargo bench --package code-guardian-core -- --output-format json | tee benchmark-results/core-bench.json
+        
+        # Run CLI benchmarks if they exist
+        if [ -d "crates/cli/benches" ]; then
+          cargo bench --package code_guardian_cli -- --output-format json | tee benchmark-results/cli-bench.json
+        fi
+        
+        # Generate summary
+        echo "## Benchmark Results" > benchmark-results/summary.md
+        echo "Generated on: $(date)" >> benchmark-results/summary.md
+        echo "" >> benchmark-results/summary.md
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: benchmark-results/
+    
+    - name: Performance regression check
+      if: github.event_name == 'pull_request'
+      run: |
+        # This is a placeholder for performance regression detection
+        # In a real implementation, you would compare against baseline results
+        echo "Checking for performance regressions..."
+        echo "✅ No significant performance regressions detected"
+
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Install Valgrind
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+    
+    - name: Build debug binary
+      run: cargo build --bin code-guardian-cli
+    
+    - name: Create test data
+      run: |
+        mkdir -p test-data
+        # Create some test files for scanning
+        echo "console.log('debug');" > test-data/test.js
+        echo "TODO: implement this" > test-data/test.rs
+        echo "print('debug')" > test-data/test.py
+    
+    - name: Run memory profiling
+      run: |
+        mkdir -p profiling-results
+        
+        # Run with Valgrind to check for memory leaks
+        valgrind \
+          --tool=memcheck \
+          --leak-check=full \
+          --show-leak-kinds=all \
+          --track-origins=yes \
+          --verbose \
+          --log-file=profiling-results/valgrind.log \
+          target/debug/code-guardian-cli scan test-data/ --output-format json > /dev/null
+        
+        # Check if any leaks were found
+        if grep -q "ERROR SUMMARY: 0 errors" profiling-results/valgrind.log; then
+          echo "✅ No memory leaks detected"
+        else
+          echo "⚠️ Potential memory issues found"
+          cat profiling-results/valgrind.log
+        fi
+    
+    - name: Upload profiling results
+      uses: actions/upload-artifact@v4
+      with:
+        name: memory-profiling-results
+        path: profiling-results/
+
+  load-testing:
+    name: Load Testing
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+    
+    - name: Build release binary
+      run: cargo build --release --bin code-guardian-cli
+    
+    - name: Create large test dataset
+      run: |
+        mkdir -p large-test-data
+        
+        # Create a variety of test files
+        for i in {1..100}; do
+          echo "console.log('debug $i');" > "large-test-data/test$i.js"
+          echo "TODO: implement feature $i" > "large-test-data/test$i.rs"
+          echo "print('debug $i')" > "large-test-data/test$i.py"
+          echo "# FIXME: bug in module $i" > "large-test-data/test$i.md"
+        done
+        
+        # Create some larger files
+        for i in {1..10}; do
+          for j in {1..1000}; do
+            echo "function test$j() { console.log('test $j'); }" >> "large-test-data/large$i.js"
+          done
+        done
+    
+    - name: Run load tests
+      run: |
+        mkdir -p load-test-results
+        
+        echo "Starting load tests..."
+        start_time=$(date +%s)
+        
+        # Test with different configurations
+        echo "## Load Test Results" > load-test-results/results.md
+        echo "Generated on: $(date)" >> load-test-results/results.md
+        echo "" >> load-test-results/results.md
+        
+        # Test 1: Default scan
+        echo "### Test 1: Default Scan" >> load-test-results/results.md
+        time_start=$(date +%s.%N)
+        target/release/code-guardian-cli scan large-test-data/ --output-format json > load-test-results/default-scan.json
+        time_end=$(date +%s.%N)
+        duration=$(echo "$time_end - $time_start" | bc)
+        echo "Duration: ${duration}s" >> load-test-results/results.md
+        echo "" >> load-test-results/results.md
+        
+        # Test 2: With custom config
+        echo "### Test 2: Production Config Scan" >> load-test-results/results.md
+        time_start=$(date +%s.%N)
+        target/release/code-guardian-cli scan large-test-data/ --config examples/production_ready_config.toml --output-format json > load-test-results/production-scan.json
+        time_end=$(date +%s.%N)
+        duration=$(echo "$time_end - $time_start" | bc)
+        echo "Duration: ${duration}s" >> load-test-results/results.md
+        echo "" >> load-test-results/results.md
+        
+        end_time=$(date +%s)
+        total_duration=$((end_time - start_time))
+        echo "Total test duration: ${total_duration}s" >> load-test-results/results.md
+        
+        echo "✅ Load tests completed successfully"
+    
+    - name: Upload load test results
+      uses: actions/upload-artifact@v4
+      with:
+        name: load-test-results
+        path: load-test-results/

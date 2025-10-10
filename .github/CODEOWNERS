@@ -1,0 +1,58 @@
+# Code Owners for Code-Guardian
+# 
+# This file defines who should be automatically requested for review
+# when certain files are modified in pull requests.
+#
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users will be requested for review on all PRs
+* @d-oit
+
+# Root configuration files
+/.github/ @d-oit
+/Cargo.toml @d-oit
+/Cargo.lock @d-oit
+/rustfmt.toml @d-oit
+/.gitignore @d-oit
+/README.md @d-oit
+/CONTRIBUTING.md @d-oit
+/CHANGELOG.md @d-oit
+/LICENSE @d-oit
+
+# CI/CD and automation
+/.github/workflows/ @d-oit
+/.opencode/ @d-oit
+
+# Core crate - Critical scanning logic
+/crates/core/ @d-oit
+
+# CLI crate - User-facing interface
+/crates/cli/ @d-oit
+
+# Storage crate - Database and persistence
+/crates/storage/ @d-oit
+
+# Output crate - Formatters and serialization
+/crates/output/ @d-oit
+
+# Documentation
+/docs/ @d-oit
+/examples/ @d-oit
+
+# Security-related files
+/.github/SECURITY.md @d-oit
+/.github/dependabot.yml @d-oit
+
+# Test files - require review from maintainers
+**/tests/ @d-oit
+**/*test*.rs @d-oit
+**/*bench*.rs @d-oit
+
+# Configuration files that affect behavior
+**/*.toml @d-oit
+**/*.yml @d-oit
+**/*.yaml @d-oit
+**/*.json @d-oit
+
+# Migration files - database schema changes
+/crates/storage/migrations/ @d-oit

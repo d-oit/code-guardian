@@ -1,0 +1,114 @@
+version: 2
+updates:
+  # Cargo dependencies
+  - package-ecosystem: "cargo"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    assignees:
+      - "d-oit"
+    reviewers:
+      - "d-oit"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "rust"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    groups:
+      # Group serde-related updates
+      serde:
+        patterns:
+          - "serde*"
+        
+      # Group tokio-related updates  
+      tokio:
+        patterns:
+          - "tokio*"
+        
+      # Group clap-related updates
+      clap:
+        patterns:
+          - "clap*"
+        
+      # Group tracing-related updates
+      tracing:
+        patterns:
+          - "tracing*"
+          
+      # Group test dependencies
+      test-deps:
+        patterns:
+          - "criterion"
+          - "proptest"
+          - "tempfile"
+          - "assert_cmd"
+          - "predicates"
+          - "rstest"
+          - "mockall"
+          - "insta"
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    assignees:
+      - "d-oit"
+    reviewers:
+      - "d-oit"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+
+  # NPM dependencies (for .opencode)
+  - package-ecosystem: "npm"
+    directory: "/.opencode"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    assignees:
+      - "d-oit"
+    reviewers:
+      - "d-oit"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "javascript"
+      - "opencode"
+    groups:
+      # Group testing dependencies
+      test-deps:
+        patterns:
+          - "jest*"
+          - "@types/jest"
+          - "eslint*"
+          - "babel*"
+          
+      # Group TypeScript dependencies
+      typescript:
+        patterns:
+          - "typescript"
+          - "@types/*"

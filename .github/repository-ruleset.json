@@ -1,0 +1,129 @@
+{
+  "name": "Code-Guardian Repository Protection Rules",
+  "target": "branch",
+  "source_type": "Repository",
+  "source": "d-oit/code-guardian",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main", "refs/heads/develop"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    {
+      "type": "pull_request",
+      "parameters": {
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": true,
+        "require_last_push_approval": true,
+        "required_approving_review_count": 1,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "required_status_checks": [
+          {
+            "context": "Test (ubuntu-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Test (windows-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Test (macos-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Coverage",
+            "integration_id": null
+          },
+          {
+            "context": "Security Audit",
+            "integration_id": null
+          },
+          {
+            "context": "CodeQL",
+            "integration_id": null
+          }
+        ],
+        "strict_required_status_checks_policy": true
+      }
+    },
+    {
+      "type": "non_fast_forward",
+      "parameters": {}
+    },
+    {
+      "type": "commit_message_pattern",
+      "parameters": {
+        "name": "Conventional Commits",
+        "negate": false,
+        "pattern": "^(feat|fix|docs|style|refactor|perf|test|chore|ci|build|revert)(\\(.+\\))?: .{1,50}",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "commit_author_email_pattern",
+      "parameters": {
+        "name": "Valid Email Pattern",
+        "negate": false,
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "committer_email_pattern",
+      "parameters": {
+        "name": "Valid Committer Email",
+        "negate": false,
+        "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$|^noreply@github\\.com$",
+        "operator": "regex"
+      }
+    },
+    {
+      "type": "creation"
+    },
+    {
+      "type": "update",
+      "parameters": {
+        "update_allows_fetch_and_merge": false
+      }
+    },
+    {
+      "type": "deletion"
+    },
+    {
+      "type": "required_linear_history",
+      "parameters": {}
+    },
+    {
+      "type": "max_file_path_length",
+      "parameters": {
+        "max_file_path_length": 255
+      }
+    },
+    {
+      "type": "file_path_restriction",
+      "parameters": {
+        "restricted_file_paths": [
+          "/.github/workflows/*",
+          "/Cargo.toml",
+          "/deny.toml",
+          "/.github/CODEOWNERS",
+          "/.github/SECURITY.md"
+        ]
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 1,
+      "actor_type": "Integration",
+      "bypass_mode": "always"
+    }
+  ]
+}

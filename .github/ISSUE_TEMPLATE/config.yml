@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussion Forum
+    url: https://github.com/d-oit/code-guardian/discussions
+    about: Ask questions and discuss features with the community
+  - name: 📖 Documentation
+    url: https://d-oit.github.io/code-guardian/
+    about: Check our documentation for usage guides and examples
+  - name: 🔒 Security Issue
+    url: https://github.com/d-oit/code-guardian/security/advisories/new
+    about: Report security vulnerabilities privately
