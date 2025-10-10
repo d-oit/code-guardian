@@ -378,7 +378,13 @@ enum GitAction {
     },
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
+    // Initialize tracing
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .init();
+
     let cli = Cli::parse();
 
     match cli.command {
@@ -416,7 +422,7 @@ fn main() -> Result<()> {
                 max_file_size,
                 max_threads,
             };
-            scan_handlers::handle_scan(options)
+            scan_handlers::handle_scan(options).await
         }
         Commands::History { db } => handle_history(db),
         Commands::Report { id, format, db } => report_handlers::handle_report(id, format, db),
@@ -430,7 +436,7 @@ fn main() -> Result<()> {
         Commands::Benchmark { path, quick } => handle_benchmark(path, quick),
         Commands::CustomDetectors { action } => handle_custom_detectors(action),
         Commands::Incremental { action } => handle_incremental(action),
-        Commands::Distributed { action } => handle_distributed(action),
+        Commands::Distributed { action } => handle_distributed(action).await,
         Commands::ProductionCheck {
             path,
             format,
@@ -699,5 +705,40 @@ mod tests {
             StackPreset::Systems { .. } => (),
             _ => panic!("Systems preset should match"),
         }
+    }
+
+    #[test]
+    fn test_cli_parse_invalid_subcommand() {
+        let args = vec!["code-guardian", "invalid"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cli_parse_scan_missing_path() {
+        let args = vec!["code-guardian", "scan"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_cli_parse_report_missing_id() {
+        let args = vec!["code-guardian", "report"];
+        let result = Cli::try_parse_from(args);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_handle_history_invalid_db() {
+        let invalid_db = PathBuf::from("/invalid/path/db.db");
+        let result = handle_history(Some(invalid_db));
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_handle_benchmark_invalid_path() {
+        let invalid_path = PathBuf::from("/invalid/path");
+        let result = handle_benchmark(Some(invalid_path), false);
+        assert!(result.is_err());
     }
 }

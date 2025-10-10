@@ -4,6 +4,7 @@ use ignore::WalkBuilder;
 use rayon::prelude::*;
 use std::path::Path;
 
+pub mod cache;
 pub mod config;
 pub mod custom_detectors;
 pub mod detector_factory;
@@ -11,6 +12,7 @@ pub mod detectors;
 pub mod distributed;
 pub mod enhanced_config;
 pub mod incremental;
+pub mod monitoring;
 pub mod optimized_scanner;
 pub mod performance;
 
@@ -126,12 +128,14 @@ impl Scanner {
 }
 
 // Re-export detectors and factory for convenience
+pub use cache::*;
 pub use custom_detectors::*;
 pub use detector_factory::*;
 pub use detectors::*;
 pub use distributed::*;
 pub use enhanced_config::*;
 pub use incremental::*;
+pub use monitoring::*;
 pub use optimized_scanner::*;
 pub use performance::*;
 

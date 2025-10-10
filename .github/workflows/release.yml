@@ -1,4 +1,4 @@
-name: Release
+name: Release Build
 
 on:
   push:
@@ -12,36 +12,35 @@ jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Determine if prerelease
+    
+    - name: Create Release
       run: |
         if [[ "${{ github.ref_name }}" == *"-"* ]]; then
-          echo "prerelease=true" >> $GITHUB_ENV
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes \
+            --prerelease
         else
-          echo "prerelease=false" >> $GITHUB_ENV
+          gh release create ${{ github.ref_name }} \
+            --title "Release ${{ github.ref_name }}" \
+            --generate-notes
         fi
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref_name }}
-        release_name: Release ${{ github.ref_name }}
-        draft: false
-        prerelease: ${{ env.prerelease }}
 
   build-release:
     name: Build Release
     needs: create-release
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       matrix:
         include:
@@ -59,7 +58,8 @@ jobs:
             suffix: ""
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
     
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
@@ -67,7 +67,7 @@ jobs:
         targets: ${{ matrix.target }}
     
     - name: Cache cargo registry
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
@@ -78,10 +78,10 @@ jobs:
     - name: Build release binary
       run: cargo build --release --target ${{ matrix.target }}
     
-    - name: Create archive
+    - name: Create and upload archive
       shell: bash
       run: |
-        binary_name="code-guardian-cli${{ matrix.suffix }}"
+        binary_name="code_guardian_cli${{ matrix.suffix }}"
         if [ "${{ matrix.os }}" = "windows-latest" ]; then
           archive_name="code-guardian-${{ matrix.target }}.zip"
           cp "target/${{ matrix.target }}/release/${binary_name}" .
@@ -91,14 +91,6 @@ jobs:
           cp "target/${{ matrix.target }}/release/${binary_name}" .
           tar czf "${archive_name}" "${binary_name}" README.md
         fi
-        echo "ARCHIVE_NAME=${archive_name}" >> $GITHUB_ENV
-    
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
+        gh release upload ${{ github.ref_name }} "./${archive_name}"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./${{ env.ARCHIVE_NAME }}
-        asset_name: ${{ env.ARCHIVE_NAME }}
-        asset_content_type: application/octet-stream

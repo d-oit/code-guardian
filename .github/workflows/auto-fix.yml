@@ -1,0 +1,107 @@
+name: Auto-fix Code Quality Issues
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:  # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-fix:
+    name: Auto-fix Formatting and Clippy Issues
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message, '[skip auto-fix]') }}
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+    
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+    
+    - name: Check if fixes are needed
+      id: check
+      run: |
+        echo "Running format check..."
+        FORMAT_NEEDED=false
+        if ! cargo fmt --all -- --check; then
+          FORMAT_NEEDED=true
+          echo "format_needed=true" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "Running clippy check..."
+        CLIPPY_NEEDED=false
+        if ! cargo clippy --all-targets --all-features -- -D warnings; then
+          CLIPPY_NEEDED=true
+          echo "clippy_needed=true" >> $GITHUB_OUTPUT
+        fi
+        
+        if [ "$FORMAT_NEEDED" = true ] || [ "$CLIPPY_NEEDED" = true ]; then
+          echo "fixes_needed=true" >> $GITHUB_OUTPUT
+        else
+          echo "fixes_needed=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Apply formatting fixes
+      if: steps.check.outputs.format_needed == 'true'
+      run: |
+        echo "🔧 Applying formatting fixes..."
+        cargo fmt --all
+        
+    - name: Apply clippy fixes
+      if: steps.check.outputs.clippy_needed == 'true'
+      run: |
+        echo "🔧 Applying clippy fixes..."
+        cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged
+    
+    - name: Commit and push fixes
+      if: steps.check.outputs.fixes_needed == 'true'
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+        # Check if there are changes to commit
+        if ! git diff --quiet; then
+          git add .
+
+          # Create detailed commit message
+          FORMAT_NEEDED="${FORMAT_NEEDED_VAR}"
+          CLIPPY_NEEDED="${CLIPPY_NEEDED_VAR}"
+          COMMIT_MSG="auto-fix: apply code quality fixes [skip auto-fix]"
+          if [ "$FORMAT_NEEDED" = "true" ]; then
+            COMMIT_MSG="$COMMIT_MSG
+
+        - Apply cargo fmt formatting"
+          fi
+          if [ "$CLIPPY_NEEDED" = "true" ]; then
+            COMMIT_MSG="$COMMIT_MSG
+
+        - Apply clippy suggestions"
+          fi
+
+          git commit -m "$COMMIT_MSG"
+          git push
+
+          echo "✅ Code quality fixes applied and pushed!"
+        else
+          echo "ℹ️ No changes were made by the auto-fix tools."
+        fi
+      env:
+        FORMAT_NEEDED_VAR: ${{ steps.check.outputs.format_needed }}
+        CLIPPY_NEEDED_VAR: ${{ steps.check.outputs.clippy_needed }}
