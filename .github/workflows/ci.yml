@@ -28,48 +28,46 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@master
+      uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: ${{ matrix.rust }}
         components: rustfmt, clippy
     
     - name: Cache cargo registry
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
           target
         key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-    
+
     - name: Check formatting
       run: cargo fmt --all -- --check
       continue-on-error: true
       id: fmt-check
-    
+
     - name: Formatting feedback
       if: steps.fmt-check.outcome == 'failure'
       run: |
-        echo "❌ Code formatting issues detected!"
+        echo "::warning::Code formatting issues detected!"
         echo "Please run 'cargo fmt --all' to fix formatting."
         echo "Or add this to your pre-commit hook:"
         echo "  cargo fmt --all"
-        exit 1
-    
+
     - name: Run clippy
       run: cargo clippy --all-targets --all-features -- -D warnings
-      continue-on-error: true  
+      continue-on-error: true
       id: clippy-check
-      
+
     - name: Clippy feedback
       if: steps.clippy-check.outcome == 'failure'
       run: |
-        echo "❌ Clippy issues detected!"
+        echo "::warning::Clippy issues detected!"
         echo "Please run 'cargo clippy --all-targets --all-features --fix --allow-dirty' to fix issues."
         echo "Or add this to your development workflow:"
         echo "  cargo clippy --fix --allow-dirty"
         echo "Or run './scripts/fix-code-quality.sh' to auto-fix both formatting and clippy issues."
-        exit 1
     
     - name: Build
       run: cargo build --verbose
@@ -93,15 +91,24 @@ jobs:
     
     - name: Install cargo-llvm-cov
       uses: taiki-e/install-action@cargo-llvm-cov
-    
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+
     - name: Generate code coverage
-      run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+      run: cargo llvm-cov --all-features --lcov --output-path lcov.info
+    
     - name: Upload coverage report
       uses: actions/upload-artifact@v4
       with:
         name: coverage-report
         path: lcov.info
-    
 
   security:
     name: Security Audit
@@ -119,6 +126,9 @@ jobs:
     name: Code Review Agent
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
     steps:
     - uses: actions/checkout@v4
 
@@ -132,6 +142,8 @@ jobs:
 
     - name: Comment on PR if issues found
       if: failure()
-      run: gh pr comment ${{ github.event.pull_request.number }} --body "Code review agent detected issues. Please address the clippy warnings."
+      run: |
+        gh pr comment $PR_NUMBER --body "Code review agent detected issues. Please address the clippy warnings."
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}

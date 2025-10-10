@@ -13,7 +13,7 @@ jobs:
   auto-fix:
     name: Auto-fix Formatting and Clippy Issues
     runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip auto-fix]')"
+    if: ${{ !contains(github.event.head_commit.message, '[skip auto-fix]') }}
     
     steps:
     - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
         components: rustfmt, clippy
     
     - name: Cache cargo registry
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
@@ -75,27 +75,33 @@ jobs:
       run: |
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        
+
         # Check if there are changes to commit
         if ! git diff --quiet; then
           git add .
-          
+
           # Create detailed commit message
+          FORMAT_NEEDED="${FORMAT_NEEDED_VAR}"
+          CLIPPY_NEEDED="${CLIPPY_NEEDED_VAR}"
           COMMIT_MSG="auto-fix: apply code quality fixes [skip auto-fix]"
-          if [ "${{ steps.check.outputs.format_needed }}" = "true" ]; then
+          if [ "$FORMAT_NEEDED" = "true" ]; then
             COMMIT_MSG="$COMMIT_MSG
 
         - Apply cargo fmt formatting"
-              fi
-              if [ "${{ steps.check.outputs.clippy_needed }}" = "true" ]; then
-                COMMIT_MSG="$COMMIT_MSG
+          fi
+          if [ "$CLIPPY_NEEDED" = "true" ]; then
+            COMMIT_MSG="$COMMIT_MSG
+
         - Apply clippy suggestions"
           fi
-          
+
           git commit -m "$COMMIT_MSG"
           git push
-          
+
           echo "✅ Code quality fixes applied and pushed!"
         else
           echo "ℹ️ No changes were made by the auto-fix tools."
         fi
+      env:
+        FORMAT_NEEDED_VAR: ${{ steps.check.outputs.format_needed }}
+        CLIPPY_NEEDED_VAR: ${{ steps.check.outputs.clippy_needed }}
