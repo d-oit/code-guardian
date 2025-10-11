@@ -196,7 +196,7 @@ pub fn handle_incremental(action: IncrementalAction) -> Result<()> {
     Ok(())
 }
 
-pub fn handle_distributed(action: DistributedAction) -> Result<()> {
+pub async fn handle_distributed(action: DistributedAction) -> Result<()> {
     match action {
         DistributedAction::Setup { workers } => {
             println!(
@@ -287,7 +287,7 @@ pub fn handle_distributed(action: DistributedAction) -> Result<()> {
                 .collect();
 
             coordinator.create_work_units(files, batch_size)?;
-            let matches = coordinator.execute_distributed_scan()?;
+            let matches = coordinator.execute_distributed_scan().await?;
 
             let stats = coordinator.get_statistics();
 

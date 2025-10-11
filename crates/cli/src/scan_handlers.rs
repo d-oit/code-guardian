@@ -29,7 +29,7 @@ pub struct ScanOptions {
     pub max_threads: Option<usize>,
 }
 
-pub fn handle_scan(options: ScanOptions) -> Result<()> {
+pub async fn handle_scan(options: ScanOptions) -> Result<()> {
     if !options.path.exists() {
         return Err(anyhow::anyhow!(
             "Path '{}' does not exist",
@@ -151,7 +151,7 @@ pub fn handle_scan(options: ScanOptions) -> Result<()> {
             .collect();
 
         coordinator.create_work_units(files, config.batch_size)?;
-        let matches = coordinator.execute_distributed_scan()?;
+        let matches = coordinator.execute_distributed_scan().await?;
 
         // Create basic metrics
         let metrics = code_guardian_core::ScanMetrics {

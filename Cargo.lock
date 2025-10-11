@@ -341,7 +341,7 @@ checksum = "b94f61472cee1439c0b966b47e3aca9ae07e45d070759512cd390ea2bebc6675"
 
 [[package]]
 name = "code-guardian-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -361,16 +361,19 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "smallvec",
+ "sysinfo",
  "tempfile",
  "thiserror",
+ "tokio",
  "toml",
+ "tracing",
  "uuid",
  "walkdir",
 ]
 
 [[package]]
 name = "code-guardian-output"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -386,7 +389,7 @@ dependencies = [
 
 [[package]]
 name = "code-guardian-storage"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
@@ -402,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "code_guardian_cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -2401,6 +2404,18 @@ dependencies = [
  "mio",
  "pin-project-lite",
  "slab",
+ "tokio-macros",
+]
+
+[[package]]
+name = "tokio-macros"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e06d43f1345a3bcd39f6a56dbb7dcab2ba47e68e8ac134855e7e2bdbaf8cab8"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
