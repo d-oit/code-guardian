@@ -1,0 +1,26 @@
+# Global code owners for the code-guardian project
+# These users will be requested for review when anyone opens a pull request
+
+# Global owners - will be requested for review on all files
+* @d-oit
+
+# Core library changes require core team review
+/crates/core/ @d-oit
+
+# CLI changes require CLI maintainer review  
+/crates/cli/ @d-oit
+
+# GitHub workflows and CI/CD require DevOps review
+/.github/ @d-oit
+/scripts/ @d-oit
+/Makefile @d-oit
+
+# Documentation changes
+/docs/ @d-oit
+/README.md @d-oit
+/CONTRIBUTING.md @d-oit
+
+# Security and configuration files
+/deny.toml @d-oit
+/Cargo.toml @d-oit
+/.gitignore @d-oit
