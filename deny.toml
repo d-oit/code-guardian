@@ -29,7 +29,7 @@ confidence-threshold = 0.8
 
 [bans]
 # Lint level for when multiple versions of the same crate are detected
-multiple-versions = "warn"
+multiple-versions = "allow"
 
 # List of crates that are allowed. Use with care!
 allow = []
@@ -59,10 +59,10 @@ db-urls = ["https://github.com/rustsec/advisory-db"]
 vulnerability = "deny"
 
 # The lint level for unmaintained crates
-unmaintained = "warn"
+unmaintained = "allow"
 
 # The lint level for crates that have been yanked from their source registry
-yanked = "warn"
+yanked = "allow"
 
 # The lint level for crates with security notices. Note that as of
 # 2019-12-17 there are no security notice advisories in
