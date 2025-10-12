@@ -56,8 +56,8 @@ if [ ! -z "$RUST_FILES" ]; then
     AFFECTED_CRATES=$(echo $AFFECTED_CRATES | tr ' ' '\n' | sort -u | tr '\n' ' ')
     
     for crate in $AFFECTED_CRATES; do
-        echo -e "${YELLOW}🔍 Checking crate: code-guardian-$crate${NC}"
-        cargo clippy -p code-guardian-$crate --quiet -- -D warnings || {
+        echo -e "${YELLOW}🔍 Checking crate: code_guardian_$crate${NC}"
+        cargo clippy -p code_guardian_$crate --quiet -- -D warnings || {
             echo -e "${RED}❌ Clippy failed for crate: $crate${NC}"
             exit 1
         }
@@ -65,8 +65,8 @@ if [ ! -z "$RUST_FILES" ]; then
     
     echo -e "${YELLOW}🧪 Running tests for affected crates...${NC}"
     for crate in $AFFECTED_CRATES; do
-        echo -e "${YELLOW}🧪 Testing crate: code-guardian-$crate${NC}"
-        cargo test -p code-guardian-$crate --quiet || {
+        echo -e "${YELLOW}🧪 Testing crate: code_guardian_$crate${NC}"
+        cargo test -p code_guardian_$crate --quiet || {
             echo -e "${RED}❌ Tests failed for crate: $crate${NC}"
             exit 1
         }
