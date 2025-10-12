@@ -24,7 +24,7 @@
 - Write tests for all new code
 - Document public APIs
 - Commit frequently with clear messages
-- Use GOAP planner for planning changes
+- Use GOAP planner for planning changes, no dublicate code, always anaylse first before create a new file
 - Organize project files in subfolders; avoid cluttering the root directory
 
 ## Quality Control

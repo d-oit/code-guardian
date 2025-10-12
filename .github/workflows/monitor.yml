@@ -43,7 +43,7 @@ jobs:
       - name: Check for failures in monitored workflows
         run: |
           # Define monitored workflows (without .yml extension)
-          workflows=("auto-fix" "CI" "docs" "release" "pages")
+          workflows=("Auto-fix Code Quality Issues" "CI" "Deploy Docs" "Release Build")
           
           failures=()
           

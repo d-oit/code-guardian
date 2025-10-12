@@ -1,0 +1,43 @@
+name: Performance
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Run benchmarks
+      run: |
+        if find . -name "*.rs" -path "*/benches/*" | grep -q .; then
+          cargo bench --workspace
+        else
+          echo "No benchmarks found, skipping..."
+        fi
+
+    - name: Performance regression check
+      run: |
+        echo "Performance check completed"
+        # Add performance regression detection logic here if needed

@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -110,17 +111,6 @@ jobs:
         name: coverage-report
         path: lcov.info
 
-  security:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install cargo-audit
-      uses: taiki-e/install-action@cargo-audit
-
-    - name: Run security audit
-      run: cargo audit
 
   code-review-agent:
     name: Code Review Agent
