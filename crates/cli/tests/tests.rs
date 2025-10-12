@@ -1,4 +1,3 @@
-extern crate code_guardian_cli;
 
 use clap::Parser;
 use code_guardian_cli::cli_definitions::{Cli, StackPreset};
