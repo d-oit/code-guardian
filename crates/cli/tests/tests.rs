@@ -110,7 +110,7 @@ fn test_cli_parse_report_missing_id() {
 #[test]
 fn test_handle_history_invalid_db() {
     use code_guardian_cli::command_handlers::handle_history;
-    let invalid_db = PathBuf::from("/invalid/path/db.db");
+    let invalid_db = PathBuf::from("nonexistent/db.db");
     let result = handle_history(Some(invalid_db));
     assert!(result.is_err());
 }
@@ -119,7 +119,7 @@ fn test_handle_history_invalid_db() {
 #[test]
 fn test_handle_benchmark_invalid_path() {
     use code_guardian_cli::command_handlers::handle_benchmark;
-    let invalid_path = PathBuf::from("/invalid/path");
+    let invalid_path = PathBuf::from("invalid/path");
     let result = handle_benchmark(Some(invalid_path), false);
     assert!(result.is_err());
 }
