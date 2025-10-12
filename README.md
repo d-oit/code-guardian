@@ -42,7 +42,7 @@ cd code-guardian
 cargo build --release
 ```
 
-The binary will be available at `target/release/code-guardian-cli`.
+The binary will be available at `target/release/code_guardian_cli`.
 
 ## Usage
 

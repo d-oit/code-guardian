@@ -228,22 +228,22 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Build Code-Guardian
-      run: cargo build --release --bin code-guardian-cli
+      run: cargo build --release --bin code_guardian_cli
 
     - name: Run Security Scan
       run: |
-        ./target/release/code-guardian-cli scan . \
+        ./target/release/code_guardian_cli scan . \
           --custom-detectors security_detectors.json \
           --db /tmp/security.db
 
     - name: Check for Security Issues
       run: |
-        SCAN_ID=$(./target/release/code-guardian-cli history --db /tmp/security.db | tail -1 | awk '{print $2}' | tr -d ',')
-        COUNT=$(./target/release/code-guardian-cli report "$SCAN_ID" --db /tmp/security.db --format json | jq '.matches | length')
+        SCAN_ID=$(./target/release/code_guardian_cli history --db /tmp/security.db | tail -1 | awk '{print $2}' | tr -d ',')
+        COUNT=$(./target/release/code_guardian_cli report "$SCAN_ID" --db /tmp/security.db --format json | jq '.matches | length')
 
         if [ "$COUNT" -gt 0 ]; then
           echo "🚨 Security issues found: $COUNT"
-          ./target/release/code-guardian-cli report "$SCAN_ID" --db /tmp/security.db --format markdown >> $GITHUB_STEP_SUMMARY
+          ./target/release/code_guardian_cli report "$SCAN_ID" --db /tmp/security.db --format markdown >> $GITHUB_STEP_SUMMARY
           exit 1
         else
           echo "✅ No security issues found"

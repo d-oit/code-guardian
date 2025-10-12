@@ -23,20 +23,20 @@ Add a pre-commit hook to prevent commits with too many new TODOs:
 # .git/hooks/pre-commit
 
 # Build code-guardian if needed
-# cargo build --release --bin code-guardian-cli
+# cargo build --release --bin code_guardian_cli
 
 DB_PATH=".code-guardian.db"
 SCAN_DIR="."
 
 # Run scan
-./target/release/code-guardian-cli scan "$SCAN_DIR" --db "$DB_PATH" > /dev/null 2>&1
+./target/release/code_guardian_cli scan "$SCAN_DIR" --db "$DB_PATH" > /dev/null 2>&1
 
 # Get latest scan ID
-SCAN_ID=$(./target/release/code-guardian-cli history --db "$DB_PATH" 2>/dev/null | tail -1 | awk '{print $2}' | tr -d ',')
+SCAN_ID=$(./target/release/code_guardian_cli history --db "$DB_PATH" 2>/dev/null | tail -1 | awk '{print $2}' | tr -d ',')
 
 if [ -n "$SCAN_ID" ]; then
     # Count matches
-    COUNT=$(./target/release/code-guardian-cli report "$SCAN_ID" --db "$DB_PATH" --format json 2>/dev/null | jq '.matches | length' 2>/dev/null || echo "0")
+    COUNT=$(./target/release/code_guardian_cli report "$SCAN_ID" --db "$DB_PATH" --format json 2>/dev/null | jq '.matches | length' 2>/dev/null || echo "0")
 
     echo "Found $COUNT TODO/FIXME items in this commit"
 
@@ -74,20 +74,20 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Build Code-Guardian
-      run: cargo build --release --bin code-guardian-cli
+      run: cargo build --release --bin code_guardian_cli
 
     - name: Scan codebase
-      run: ./target/release/code-guardian-cli scan . --db /tmp/scans.db
+      run: ./target/release/code_guardian_cli scan . --db /tmp/scans.db
 
     - name: Generate report
       run: |
-        SCAN_ID=$(./target/release/code-guardian-cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-        ./target/release/code-guardian-cli report $SCAN_ID --db /tmp/scans.db --format markdown >> $GITHUB_STEP_SUMMARY
+        SCAN_ID=$(./target/release/code_guardian_cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+        ./target/release/code_guardian_cli report $SCAN_ID --db /tmp/scans.db --format markdown >> $GITHUB_STEP_SUMMARY
 
     - name: Check thresholds
       run: |
-        SCAN_ID=$(./target/release/code-guardian-cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-        COUNT=$(./target/release/code-guardian-cli report $SCAN_ID --db /tmp/scans.db --format json | jq '.matches | length')
+        SCAN_ID=$(./target/release/code_guardian_cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+        COUNT=$(./target/release/code_guardian_cli report $SCAN_ID --db /tmp/scans.db --format json | jq '.matches | length')
 
         if [ "$COUNT" -gt 100 ]; then
           echo "❌ Too many TODO/FIXME items: $COUNT"
@@ -121,15 +121,15 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Build Code-Guardian
-      run: cargo build --release --bin code-guardian-cli
+      run: cargo build --release --bin code_guardian_cli
 
     - name: Scan and analyze
       run: |
         # Use persistent database
-        ./target/release/code-guardian-cli scan . --db scans.db
+        ./target/release/code_guardian_cli scan . --db scans.db
 
         # Get all scan IDs
-        SCAN_IDS=$(./target/release/code-guardian-cli history --db scans.db | awk '{print $2}' | tr -d ',' | tail -10)
+        SCAN_IDS=$(./target/release/code_guardian_cli history --db scans.db | awk '{print $2}' | tr -d ',' | tail -10)
 
         echo "# Code-Guardian Trend Report" >> trend-report.md
         echo "" >> trend-report.md
@@ -137,7 +137,7 @@ jobs:
         echo "|---------|------|------------|-------------|-------|" >> trend-report.md
 
         for id in $SCAN_IDS; do
-          JSON=$(./target/release/code-guardian-cli report $id --db scans.db --format json)
+          JSON=$(./target/release/code_guardian_cli report $id --db scans.db --format json)
           DATE=$(echo "$JSON" | jq -r '.timestamp | strftime("%Y-%m-%d")')
           TODO_COUNT=$(echo "$JSON" | jq '.matches | map(select(.pattern == "TODO")) | length')
           FIXME_COUNT=$(echo "$JSON" | jq '.matches | map(select(.pattern == "FIXME")) | length')
@@ -169,15 +169,15 @@ pipeline {
             steps {
                 sh '''
                     # Build tool
-                    cargo build --release --bin code-guardian-cli
+                    cargo build --release --bin code_guardian_cli
 
                     # Run scan
-                    ./target/release/code-guardian-cli scan . --db scans.db
+                    ./target/release/code_guardian_cli scan . --db scans.db
 
                     # Generate reports
-                    SCAN_ID=$(./target/release/code-guardian-cli history --db scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-                    ./target/release/code-guardian-cli report $SCAN_ID --db scans.db --format html > scan-report.html
-                    ./target/release/code-guardian-cli report $SCAN_ID --db scans.db --format json > scan-data.json
+                    SCAN_ID=$(./target/release/code_guardian_cli history --db scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+                    ./target/release/code_guardian_cli report $SCAN_ID --db scans.db --format html > scan-report.html
+                    ./target/release/code_guardian_cli report $SCAN_ID --db scans.db --format json > scan-data.json
                 '''
 
                 publishHTML(target: [
@@ -229,13 +229,13 @@ FROM rust:1.70-slim as builder
 
 WORKDIR /app
 COPY . .
-RUN cargo build --release --bin code-guardian-cli
+RUN cargo build --release --bin code_guardian_cli
 
 FROM debian:bullseye-slim
 
 RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/code-guardian-cli /usr/local/bin/code-guardian
+COPY --from=builder /app/target/release/code_guardian_cli /usr/local/bin/code-guardian
 
 CMD ["code-guardian", "--help"]
 ```

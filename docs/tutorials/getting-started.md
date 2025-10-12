@@ -17,14 +17,14 @@ cd code-guardian
 cargo build --release
 ```
 
-The binary will be at `target/release/code-guardian-cli` (or just `code-guardian` if installed).
+The binary will be at `target/release/code_guardian_cli` (or just `code-guardian` if installed).
 
 ## Step 2: Run Your First Scan
 
 Let's scan the current directory for TODO and FIXME comments:
 
 ```bash
-./target/release/code-guardian-cli scan .
+./target/release/code_guardian_cli scan .
 ```
 
 You should see output like:
@@ -42,7 +42,7 @@ src/utils.rs:8:9 - TODO: Add documentation
 Check what scans you've run:
 
 ```bash
-./target/release/code-guardian-cli history
+./target/release/code_guardian_cli history
 ```
 
 Output:
@@ -57,13 +57,13 @@ Create a detailed report in different formats:
 
 ```bash
 # Text format (default)
-./target/release/code-guardian-cli report 1
+./target/release/code_guardian_cli report 1
 
 # JSON format
-./target/release/code-guardian-cli report 1 --format json
+./target/release/code_guardian_cli report 1 --format json
 
 # HTML format (save to file)
-./target/release/code-guardian-cli report 1 --format html > report.html
+./target/release/code_guardian_cli report 1 --format html > report.html
 ```
 
 ## Step 5: Open the HTML Report

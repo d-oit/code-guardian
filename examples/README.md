@@ -6,22 +6,22 @@ This directory contains examples of how to use the Code-Guardian CLI tool, inclu
 
 ### Scan a directory
 ```bash
-cargo run --bin code-guardian-cli -- scan ./src
+cargo run --bin code_guardian_cli -- scan ./src
 ```
 
 ### View scan history
 ```bash
-cargo run --bin code-guardian-cli -- history
+cargo run --bin code_guardian_cli -- history
 ```
 
 ### Generate a report
 ```bash
-cargo run --bin code-guardian-cli -- report 1 --format json
+cargo run --bin code_guardian_cli -- report 1 --format json
 ```
 
 ### Compare two scans
 ```bash
-cargo run --bin code-guardian-cli -- compare 1 2 --format markdown
+cargo run --bin code_guardian_cli -- compare 1 2 --format markdown
 ```
 
 ## Sample Output
@@ -40,17 +40,17 @@ src/utils.rs:8:9 - TODO: Add documentation
 
 ### JSON Output
 ```bash
-cargo run --bin code-guardian-cli -- report 1 --format json
+cargo run --bin code_guardian_cli -- report 1 --format json
 ```
 
 ### HTML Output
 ```bash
-cargo run --bin code-guardian-cli -- report 1 --format html > report.html
+cargo run --bin code_guardian_cli -- report 1 --format html > report.html
 ```
 
 ### CSV Output
 ```bash
-cargo run --bin code-guardian-cli -- report 1 --format csv > report.csv
+cargo run --bin code_guardian_cli -- report 1 --format csv > report.csv
 ```
 
 ## Custom Detectors
@@ -59,13 +59,13 @@ cargo run --bin code-guardian-cli -- report 1 --format csv > report.csv
 
 ```bash
 # Create example custom detectors
-cargo run --bin code-guardian-cli -- custom-detectors create-examples --output custom_detectors.json
+cargo run --bin code_guardian_cli -- custom-detectors create-examples --output custom_detectors.json
 
 # Scan with custom detectors
-cargo run --bin code-guardian-cli -- scan ./src --custom-detectors custom_detectors.json
+cargo run --bin code_guardian_cli -- scan ./src --custom-detectors custom_detectors.json
 
 # List available custom detectors
-cargo run --bin code-guardian-cli -- custom-detectors list
+cargo run --bin code_guardian_cli -- custom-detectors list
 ```
 
 ### Configuration Files
@@ -75,7 +75,7 @@ cargo run --bin code-guardian-cli -- custom-detectors list
 Use `custom_config.toml` for basic custom patterns:
 
 ```bash
-cargo run --bin code-guardian-cli -- scan ./src --config custom_config.toml
+cargo run --bin code_guardian_cli -- scan ./src --config custom_config.toml
 ```
 
 #### Advanced Custom Detectors
@@ -83,7 +83,7 @@ cargo run --bin code-guardian-cli -- scan ./src --config custom_config.toml
 Use `custom_detectors.json` for full-featured custom detectors with severity levels, categories, and file filtering:
 
 ```bash
-cargo run --bin code-guardian-cli -- scan ./src --custom-detectors custom_detectors.json
+cargo run --bin code_guardian_cli -- scan ./src --custom-detectors custom_detectors.json
 ```
 
 ### Example Files
