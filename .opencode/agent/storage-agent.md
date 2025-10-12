@@ -33,9 +33,6 @@ To handle data storage, retrieval, migrations, and integrity for robust, efficie
 - Process: Implement schema, version properly.
 - Output: Migration files.
 
-## Changelog
-- Initial version: Database operations.
-
 ## Error Scenarios
 - Integrity issues: Handle with checks.
 - Thread safety: Ensure proper locking.

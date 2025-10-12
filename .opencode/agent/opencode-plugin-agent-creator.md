@@ -55,9 +55,6 @@ To create high-performance agent configs by interpreting plugin documentation, i
 - Process: Analyze docs, integrate cohesively.
 - Output: Single spec.
 
-## Changelog
-- Initial version: Plugin-based agent creation.
-
 ## Error Scenarios
 - Incomplete docs: Seek clarification.
 - Conflicts: Self-correct by re-reading.

@@ -1,5 +1,5 @@
-use code_guardian_cli::cli_definitions::{Cli, StackPreset};
 use clap::Parser;
+use code_guardian_cli::cli_definitions::{Cli, StackPreset};
 use std::path::PathBuf;
 
 #[cfg(test)]

@@ -41,9 +41,6 @@ To provide accurate access to library information for coding tasks, troubleshoot
 - Process: Resolve ID, fetch docs.
 - Output: Success with docs or failure with suggestions.
 
-## Changelog
-- Initial version: Library resolution and doc fetching.
-
 ## Error Scenarios
 - Ambiguous queries: Ask for clarification.
 - Resolution failures: Retry or suggest alternatives.

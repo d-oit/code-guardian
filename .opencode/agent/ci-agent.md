@@ -65,10 +65,6 @@ For verification tasks (e.g., "Verify no warnings or errors"):
 - Process: Launch rust-expert-agent for clippy, testing-agent for tests, aggregate results.
 - Output: Verification report from coordinated agents.
 
-## Changelog
-- Initial version: Basic CI/CD setup for Rust projects.
-- Optimization: Added orchestration focus, best practice workflow with agent handoff coordination for comprehensive CI tasks.
-
 ## Error Scenarios
 - Agent failures: Retry or substitute with alternatives (e.g., use general agent if specialized fails).
 - Pipeline issues: Troubleshoot via rust-expert-agent or core-agent.

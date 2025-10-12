@@ -50,9 +50,6 @@ This agent collaborates with code-modifying agents (e.g., Clean Code Developer) 
 - Process: git merge, handle conflicts if any.
 - Output: Merge result.
 
-## Changelog
-- Initial version: Git operations handling.
-
 ## Error Scenarios
 - Conflicts: Provide resolution guide.
 - Permission issues: Guide on auth setup.

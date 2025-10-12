@@ -34,9 +34,6 @@ To develop efficient, scalable scanning functionality, including detectors, para
 - Process: Implement trait, integrate into scanner.
 - Output: New detector code with tests.
 
-## Changelog
-- Initial version: Core scanning implementation.
-
 ## Error Scenarios
 - Performance issues: Optimize with rayon.
 - Modularity violations: Refactor to adhere to 500 LOC rule.

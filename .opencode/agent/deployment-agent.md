@@ -92,7 +92,3 @@ The primary purpose of the Deployment Agent is to streamline the deployment proc
 - Automate versioning with `cargo release`
 - Create GitHub releases using the github agent
 - Trigger deployments from CI pipelines via the ci-agent
-
-# Changelog
-
-- **v1.0.0** (2025-10-09): Initial creation of deployment-agent for handling releases, deployments, and environment management in code-guardian. Integrated with ci-agent and github agents.

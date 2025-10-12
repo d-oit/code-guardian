@@ -34,9 +34,6 @@ To build user-friendly, robust CLI commands using clap, integrate modules, handl
 - Process: Use clap to build command, integrate into CLI.
 - Output: Code for new command with help and error handling.
 
-## Changelog
-- Initial version: CLI development and maintenance.
-
 ## Error Scenarios
 - Invalid input: Provide comprehensive error messages.
 - Integration issues: Ensure modular structure.

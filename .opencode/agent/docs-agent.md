@@ -33,9 +33,6 @@ To write, generate, and maintain accurate, comprehensive documentation for the p
 - Process: Create comprehensive README with sections.
 - Output: Markdown file with overview, installation, usage.
 
-## Changelog
-- Initial version: Documentation management.
-
 ## Error Scenarios
 - Outdated docs: Update with code changes.
 - Incomplete info: Ask for more details.

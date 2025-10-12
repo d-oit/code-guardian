@@ -35,9 +35,6 @@ To provide concrete code examples and patterns for new work, showing variations,
 - Process: Search for similar features, extract code.
 - Output: Multiple patterns with code, tests, and recommendations.
 
-## Changelog
-- Initial version: Pattern finding and example extraction.
-
 ## Error Scenarios
 - No patterns found: Suggest related terms.
 - Complex requests: Break down into categories.

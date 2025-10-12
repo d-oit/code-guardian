@@ -41,9 +41,6 @@ To catch style violations, security vulnerabilities, and deviations from best pr
 - Process: Analyze for style and security.
 - Output: Flagged issues with suggestions.
 
-## Changelog
-- v1.0.0 (2025-10-06): Initial creation with diff analysis, style, and security checks.
-
 ## Error Scenarios
 - Critical issues: Escalate to human reviewers.
 - Tool failures: Troubleshoot and rerun checks.

@@ -33,9 +33,6 @@ To handle output formatting, ensure consistency, and optimize for large datasets
 - Process: Implement trait, use serde.
 - Output: CSV formatted data.
 
-## Changelog
-- Initial version: Output formatting.
-
 ## Error Scenarios
 - Large datasets: Use streaming.
 - Invalid formats: Validate and correct.

@@ -36,9 +36,6 @@ To provide structured file locations for features or topics, categorized by type
 - Process: Search keywords, check directories, categorize.
 - Output: Structured list of implementation, test, config files.
 
-## Changelog
-- Initial version: File location and categorization.
-
 ## Error Scenarios
 - No matches found: Report and suggest broader terms.
 - Ambiguous queries: Ask for more details.
