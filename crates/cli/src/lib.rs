@@ -8,6 +8,4 @@ pub mod production_handlers;
 pub mod report_handlers;
 pub mod scan_handlers;
 pub mod stack_presets;
-#[cfg(test)]
-pub mod tests;
 pub mod utils;

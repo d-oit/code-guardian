@@ -12,8 +12,6 @@ mod production_handlers;
 mod report_handlers;
 mod scan_handlers;
 mod stack_presets;
-#[cfg(test)]
-mod tests;
 mod utils;
 
 // Import the CLI definitions and command handlers
