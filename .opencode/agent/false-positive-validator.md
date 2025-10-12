@@ -56,9 +56,6 @@ To provide evidence-based assessments of flagged issues, preventing unnecessary 
 - Process: Check code context.
 - Output: Confirmed false positive or genuine.
 
-## Changelog
-- Initial version: False positive validation.
-
 ## Error Scenarios
 - Ambiguous input: Ask for full snippet or context.
 - Low confidence: Suggest human review.
