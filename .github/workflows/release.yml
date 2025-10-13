@@ -15,25 +15,38 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: Create Release
-      run: |
-        if [[ "${{ github.ref_name }}" == *"-"* ]]; then
-          gh release create ${{ github.ref_name }} \
-            --title "Release ${{ github.ref_name }}" \
-            --generate-notes \
-            --prerelease
-        else
-          gh release create ${{ github.ref_name }} \
-            --title "Release ${{ github.ref_name }}" \
-            --generate-notes
-        fi
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+     - name: Checkout code
+       uses: actions/checkout@v4
+       with:
+         fetch-depth: 0
+
+     - name: Extract changelog for release notes
+       run: |
+         VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
+         # Extract the changelog section for this version
+         CHANGELOG_CONTENT=$(sed -n "/## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$d')
+         # If no content found, use a default message
+         if [ -z "$CHANGELOG_CONTENT" ]; then
+           CHANGELOG_CONTENT="Release ${{ github.ref_name }}"
+         fi
+         echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+         echo "$CHANGELOG_CONTENT" >> $GITHUB_ENV
+         echo "EOF" >> $GITHUB_ENV
+
+     - name: Create Release
+       run: |
+         if [[ "${{ github.ref_name }}" == *"-"* ]]; then
+           gh release create ${{ github.ref_name }} \
+             --title "Release ${{ github.ref_name }}" \
+             --notes "$CHANGELOG_CONTENT" \
+             --prerelease
+         else
+           gh release create ${{ github.ref_name }} \
+             --title "Release ${{ github.ref_name }}" \
+             --notes "$CHANGELOG_CONTENT"
+         fi
+       env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-release:
     name: Build Release

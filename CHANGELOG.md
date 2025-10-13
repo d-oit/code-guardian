@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2025-10-13
+
+### Added
+- Complete GitHub workflows and branch protection configuration
+- Monitoring workflow to track recent workflow failures
+- Comprehensive development tooling with Makefile targets
+- Code quality automation with cross-platform CI compatibility
+- Incremental quality check script for faster development workflow
+- Branch protection setup script with quality gates enforcement
+- Issue and PR templates for better project management
+- Dev container configuration for consistent development environment
+- Cargo configuration for faster builds with optimized settings
+- GOAP coordination system for quality check optimization
+
+### Fixed
+- YAML indentation issues in GitHub Actions workflows
+- Cross-platform compatibility in CI workflows
+- Invalid --fail-under option in cargo llvm-cov configuration
+- CI workflow formatting and code quality issues
+- Applied cargo fmt formatting to resolve CI issues
+
+### Changed
+- Optimized development workflow with comprehensive tooling
+- Enhanced CI-agent documentation with orchestration workflow
+- Updated GitHub Actions workflows for better reliability
+- Improved code quality automation and validation processes
+
 ## [0.1.2] - 2025-10-09
 
 ### Fixed
