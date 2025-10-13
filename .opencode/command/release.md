@@ -26,12 +26,6 @@ To ensure releases are built, tested, and deployed reliably, coordinating multip
 - Patch release: `/release patch`
 - Dry-run: `/release dry-run`
 
-## Changelog
-- v1.0: Basic release with checks.
-- v1.1: Added agent coordination.
-- v1.2: Incorporated best practices for branch sync, changelog, and automated releases.
-- v1.3: Added support for dry-run argument to run quality checks and report without proceeding to release.
-
 ## Error Scenarios
 - **Build Failures**: Stop and report errors; suggest fixes before retrying.
 - **Test Failures**: Halt release; run diagnostics on failing tests.

@@ -2,7 +2,7 @@ use anyhow::Result;
 use code_guardian_core::{CustomDetectorManager, DistributedCoordinator, WorkerConfig};
 use std::path::PathBuf;
 
-use crate::{CustomDetectorAction, DistributedAction, IncrementalAction};
+use crate::cli_definitions::{CustomDetectorAction, DistributedAction, IncrementalAction};
 
 pub fn handle_custom_detectors(action: CustomDetectorAction) -> Result<()> {
     match action {

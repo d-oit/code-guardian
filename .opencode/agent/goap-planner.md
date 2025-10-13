@@ -61,12 +61,7 @@ To design and optimize GOAP systems for agent coordination, ensuring goal achiev
 - Process: Use HGOAP for decomposition, probabilistic effects.
 - Output: Hierarchical plan with replanning.
 
-## Changelog
-- Initial version: GOAP coordination for agent workflows.
-
 ## Error Scenarios
 - Ambiguous inputs: Seek clarification.
 - Unsuitable for GOAP: Suggest alternatives like FSMs.
 - Conflicts: Use priorities, retries, arbitration.
-
----

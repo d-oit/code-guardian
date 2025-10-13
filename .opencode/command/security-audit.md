@@ -1,7 +1,9 @@
-# Security Audit Command
+---
+description: This command initiates a security audit on the Rust codebase to identify potential vulnerabilities.
+agent: rust-security-auditor
+---
 
-## Overview
-This command initiates a security audit on the Rust codebase to identify potential vulnerabilities.
+# Security Audit Command
 
 ## Purpose
 To ensure the codebase is secure by analyzing for common security issues such as unsafe code usage, input validation flaws, and other risks.

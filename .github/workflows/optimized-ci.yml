@@ -1,0 +1,229 @@
+# Optimized CI Pipeline - GOAP Phase 3 Implementation
+# Parallel quality checks with intelligent caching and incremental testing
+
+name: Optimized Quality Check
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Pre-check job to determine what changed
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cli: ${{ steps.changes.outputs.cli }}
+      core: ${{ steps.changes.outputs.core }}
+      output: ${{ steps.changes.outputs.output }}
+      storage: ${{ steps.changes.outputs.storage }}
+      ci: ${{ steps.changes.outputs.ci }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            cli:
+              - 'crates/cli/**'
+            core:
+              - 'crates/core/**'
+            output:
+              - 'crates/output/**'
+            storage:
+              - 'crates/storage/**'
+            ci:
+              - '.github/workflows/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
+  # Parallel format checking
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Cache cargo registry
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  # Parallel clippy checking per crate
+  clippy-cli:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.cli == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy CLI crate
+        run: cargo clippy -p code_guardian_cli --all-targets --all-features -- -D warnings
+
+  clippy-core:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy Core crate
+        run: cargo clippy -p code-guardian-core --all-targets --all-features -- -D warnings
+
+  clippy-output:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.output == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy Output crate
+        run: cargo clippy -p code-guardian-output --all-targets --all-features -- -D warnings
+
+  clippy-storage:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.storage == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Clippy Storage crate
+        run: cargo clippy -p code-guardian-storage --all-targets --all-features -- -D warnings
+
+  # Parallel testing per crate
+  test-cli:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.cli == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test CLI crate
+        run: cargo test -p code_guardian_cli
+
+  test-core:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test Core crate
+        run: cargo test -p code-guardian-core
+
+  test-output:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.output == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test Output crate
+        run: cargo test -p code-guardian-output
+
+  test-storage:
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.storage == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+      - name: Test Storage crate
+        run: cargo test -p code-guardian-storage
+
+  # Integration build check
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache cargo build
+        uses: actions/cache@v3
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+      - name: Build all crates
+        run: cargo build --workspace
+
+  # Summary job that requires all checks to pass
+  quality-check-complete:
+    runs-on: ubuntu-latest
+    needs: [format, build, clippy-cli, clippy-core, clippy-output, clippy-storage, test-cli, test-core, test-output, test-storage]
+    if: always()
+    steps:
+      - name: Check all jobs succeeded
+        run: |
+          if [[ "${{ needs.format.result }}" != "success" ]] || 
+             [[ "${{ needs.build.result }}" != "success" ]] ||
+             [[ "${{ needs.clippy-cli.result }}" != "success" && "${{ needs.clippy-cli.result }}" != "skipped" ]] ||
+             [[ "${{ needs.clippy-core.result }}" != "success" && "${{ needs.clippy-core.result }}" != "skipped" ]] ||
+             [[ "${{ needs.clippy-output.result }}" != "success" && "${{ needs.clippy-output.result }}" != "skipped" ]] ||
+             [[ "${{ needs.clippy-storage.result }}" != "success" && "${{ needs.clippy-storage.result }}" != "skipped" ]] ||
+             [[ "${{ needs.test-cli.result }}" != "success" && "${{ needs.test-cli.result }}" != "skipped" ]] ||
+             [[ "${{ needs.test-core.result }}" != "success" && "${{ needs.test-core.result }}" != "skipped" ]] ||
+             [[ "${{ needs.test-output.result }}" != "success" && "${{ needs.test-output.result }}" != "skipped" ]] ||
+             [[ "${{ needs.test-storage.result }}" != "success" && "${{ needs.test-storage.result }}" != "skipped" ]]; then
+            echo "❌ Quality check failed"
+            exit 1
+          else
+            echo "✅ All quality checks passed!"
+          fi

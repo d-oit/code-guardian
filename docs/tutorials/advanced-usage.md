@@ -94,18 +94,18 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Build Code-Guardian
-      run: cargo build --release --bin code-guardian-cli
+      run: cargo build --release --bin code_guardian_cli
 
     - name: Scan for TODOs
       run: |
-        ./target/release/code-guardian-cli scan . --db /tmp/scans.db
+        ./target/release/code_guardian_cli scan . --db /tmp/scans.db
 
     - name: Check TODO count
       run: |
-        SCAN_ID=$(./target/release/code-guardian-cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-        COUNT=$(./target/release/code-guardian-cli report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
+        SCAN_ID=$(./target/release/code_guardian_cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+        COUNT=$(./target/release/code_guardian_cli report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
         echo "Found $COUNT TODO/FIXME items"
-        ./target/release/code-guardian-cli report "$SCAN_ID" --db /tmp/scans.db --format markdown >> $GITHUB_STEP_SUMMARY
+        ./target/release/code_guardian_cli report "$SCAN_ID" --db /tmp/scans.db --format markdown >> $GITHUB_STEP_SUMMARY
 
         # Optional: fail if too many TODOs
         if [ "$COUNT" -gt 50 ]; then
@@ -125,14 +125,14 @@ pipeline {
             steps {
                 sh '''
                     # Build Code-Guardian
-                    cargo build --release --bin code-guardian-cli
+                    cargo build --release --bin code_guardian_cli
 
                     # Run scan
-                    ./target/release/code-guardian-cli scan . --db scans.db
+                    ./target/release/code_guardian_cli scan . --db scans.db
 
                     # Get scan ID and generate report
-                    SCAN_ID=$(./target/release/code-guardian-cli history --db scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-                    ./target/release/code-guardian-cli report $SCAN_ID --db scans.db --format html > scan-report.html
+                    SCAN_ID=$(./target/release/code_guardian_cli history --db scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+                    ./target/release/code_guardian_cli report $SCAN_ID --db scans.db --format html > scan-report.html
                 '''
 
                 publishHTML(target: [

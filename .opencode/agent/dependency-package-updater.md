@@ -49,9 +49,6 @@ To update Cargo dependencies in the code-guardian Rust project, focusing on secu
 - Process: Analyze Cargo.toml, run `cargo update`, audit security, run tests and linting, ensure coverage.
 - Output: Comprehensive update report.
 
-## Changelog
-- Initial version: Rust-specific dependency management.
-
 ## Error Scenarios
 - Version conflicts: Suggest pinning versions or alternatives.
 - Security vulnerabilities: Prioritize fixes, suggest workarounds if needed.

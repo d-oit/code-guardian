@@ -53,9 +53,6 @@ To maintain accurate, standardized documentation for agents in the OpenCode ecos
 - Process: Check changes, update accordingly.
 - Output: Revised files.
 
-## Changelog
-- Initial version: Documentation management.
-
 ## Error Scenarios
 - Incomplete details: Seek clarification.
 - Conflicts: Prioritize authoritative sources.

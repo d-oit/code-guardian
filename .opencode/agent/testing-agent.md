@@ -34,9 +34,6 @@ To write tests, achieve 82%+ coverage, set up infrastructure, and fix bugs.
 - Process: Write tests, run tarpaulin.
 - Output: Test suite with coverage report.
 
-## Changelog
-- Initial version: Testing and coverage.
-
 ## Error Scenarios
 - Low coverage: Add more tests.
 - Bugs found: Fix and retest.

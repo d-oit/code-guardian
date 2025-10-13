@@ -1,12 +1,7 @@
-# PR Create Command
-
-## Description
-
-This command facilitates the creation of pull requests on GitHub for the current branch, ensuring all changes are properly analyzed and documented.
-
-## Agent Assignment
-
-Assigned to: GitHub Agent
+---
+description: This command facilitates the creation of pull requests on GitHub for the current branch, ensuring all changes are properly analyzed and documented.
+agent: github
+---
 
 ## Steps
 

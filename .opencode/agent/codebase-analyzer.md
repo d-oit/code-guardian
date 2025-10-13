@@ -35,9 +35,6 @@ To provide detailed analysis of code components, focusing on implementation, dat
 - Process: Read entry points, trace code paths, identify patterns.
 - Output: Structured analysis with sections like Entry Points, Core Implementation, Data Flow.
 
-## Changelog
-- Initial version: Implementation detail analysis with references.
-
 ## Error Scenarios
 - Files not found: Report inability to analyze.
 - Incomplete information: Ask for more details.

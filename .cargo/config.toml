@@ -1,0 +1,27 @@
+# Cargo configuration for faster builds
+[build]
+# Use multiple CPU cores for compilation
+jobs = 4
+
+# Enable incremental compilation
+incremental = true
+
+# Use faster linker on Unix systems
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "link-arg=/DEBUG:NONE"]
+
+# Faster builds for development
+[profile.dev]
+# Optimize for compilation speed
+opt-level = 0
+debug = 1  # Line numbers only, not full debug info
+incremental = true
+
+# Fast clippy profile
+[profile.clippy]
+inherits = "dev"
+opt-level = 0
+debug = false

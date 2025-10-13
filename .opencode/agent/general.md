@@ -50,9 +50,6 @@ To handle open-ended queries, perform thorough searches, and break down tasks in
 - Process: Search codebase, analyze.
 - Output: List with summaries.
 
-## Changelog
-- Initial version: General-purpose assistance.
-
 ## Error Scenarios
 - Uncertain searches: Perform thorough checks.
 - Ambiguous tasks: Break down and clarify.

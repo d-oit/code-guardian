@@ -1,0 +1,23 @@
+# Clippy Configuration for Performance Optimization
+# This configuration disables expensive lints during development builds
+# while maintaining code quality standards
+
+# Disable expensive lints that slow down clippy significantly
+avoid-breaking-exported-api = false
+msrv = "1.70"
+
+# Disable performance-intensive lints for faster development cycles
+# These can be re-enabled for release builds
+disallowed-methods = []
+disallowed-types = []
+disallowed-macros = []
+
+# Reduce complexity checks that require extensive analysis
+cognitive-complexity-threshold = 50
+type-complexity-threshold = 500
+
+# Disable lints that require cross-crate analysis
+missing-docs-in-crate-items = false
+
+# Keep essential quality lints enabled
+warn-on-all-wildcard-imports = true

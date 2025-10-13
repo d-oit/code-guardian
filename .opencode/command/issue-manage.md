@@ -1,10 +1,8 @@
+---
+description: This command file provides standardized instructions for managing GitHub issues and discussions within the OpenCode ecosystem. It covers commenting on issues, closing issues, and adding comments to discussions using the GitHub CLI (`gh`). This ensures consistent and efficient handling of repository interactions.
+agent: github
+---
 # Issue Management Command
-
-## Description
-This command file provides standardized instructions for managing GitHub issues and discussions within the OpenCode ecosystem. It covers commenting on issues, closing issues, and adding comments to discussions using the GitHub CLI (`gh`). This ensures consistent and efficient handling of repository interactions.
-
-## Agent Assignment
-GitHub
 
 ## Steps
 

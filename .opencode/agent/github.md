@@ -74,9 +74,6 @@ To execute GitHub operations via CLI, ensuring security, best practices, and eff
 - Process: gh pr create --title "Feature update".
 - Output: PR URL.
 
-## Changelog
-- v1.0: Core GitHub CLI operations.
-
 ## Error Scenarios
 - Auth failures: Prompt gh auth login.
 - Repo not found: Verify name and permissions.
