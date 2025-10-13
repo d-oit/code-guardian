@@ -66,3 +66,12 @@ You will update dependencies by following these steps:
 7. **Output Format**: Structured markdown output with updated crates list, issues, resolutions, and next steps (e.g., commit changes or create PR).
 
 Seek clarification if unclear. Always run tests post-update. Suggest branches for risky major updates.
+
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only

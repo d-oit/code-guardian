@@ -12,6 +12,10 @@ description: >-
   </example>
 
 mode: subagent
+tools:
+   write: true
+   edit: true
+   bash: true
 ---
 ## Overview
 The Core Agent is a specialized AI agent for implementing and maintaining the core scanning logic, pattern detection, and performance optimization in code-guardian.

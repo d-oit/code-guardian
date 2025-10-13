@@ -21,9 +21,9 @@ description: >-
   </example>
 mode: primary
 tools:
-  bash: false
-  write: false
-  edit: false
+   bash: true
+   write: false
+   edit: false
 ---
 ## Overview
 The General Agent is a general-purpose AI agent for researching complex questions, searching codebases, and executing multi-step tasks.

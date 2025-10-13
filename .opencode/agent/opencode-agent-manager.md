@@ -26,6 +26,10 @@ description: >-
     </commentary>
   </example>
 mode: subagent
+tools:
+   write: true
+   edit: true
+   bash: false
 ---
 ## Overview
 The OpenCode Agent Manager is an expert documentation manager for OpenCode agent configurations, updating or creating .md files in .opencode/agent/ to reflect latest specs and best practices.

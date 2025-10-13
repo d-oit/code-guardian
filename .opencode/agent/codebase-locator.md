@@ -39,3 +39,12 @@ To provide structured file locations for features or topics, categorized by type
 ## Error Scenarios
 - No matches found: Report and suggest broader terms.
 - Ambiguous queries: Ask for more details.
+
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only

@@ -12,6 +12,10 @@ description: >-
   </example>
 
 mode: subagent
+tools:
+   write: true
+   edit: true
+   bash: true
 ---
 ## Overview
 The Output Agent is a specialized AI agent for output formatting and serialization in code-guardian, implementing formatters for various formats.

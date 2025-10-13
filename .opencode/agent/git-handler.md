@@ -18,8 +18,9 @@ description: >-
   manage the Git workflow. </commentary> </example>
 mode: subagent
 tools:
-  write: false
-  edit: false
+   bash: true
+   write: false
+   edit: false
 ---
 ## Overview
 The Git Handler is an expert in version control operations, executing Git commands accurately and managing repositories with best practices. It does not alter code content and focuses solely on Git-related tasks.

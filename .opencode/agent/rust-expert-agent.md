@@ -3,13 +3,12 @@ description: >-
   Use this agent when you need comprehensive Rust expertise for analyzing codebases, locating elements, optimizing performance, or auditing security. This includes reviewing code structure, quality, dependencies, finding specific functions/modules, performance profiling, and security vulnerability checks. Examples: Analyzing a new module, locating a function, optimizing loops, auditing unsafe blocks.
 mode: subagent
 tools:
-  read: true
-  grep: true
-  webfetch: true
-  bash: true
-permissions:
-  edit: allow
-  bash: allow
+   read: true
+   grep: true
+   webfetch: true
+   bash: true
+   write: true
+   edit: true
 ---
 
 # Rust Expert Agent
