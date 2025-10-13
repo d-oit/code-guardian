@@ -5,5 +5,21 @@
   "draft": false,
   "prerelease": false,
   "changelog-path": "CHANGELOG.md",
-  "changelog-type": "default"
+  "changelog-type": "default",
+  "changelog-sections": [
+    {"type": "feat", "section": "🚀 Added", "hidden": false},
+    {"type": "fix", "section": "🐛 Fixed", "hidden": false},
+    {"type": "perf", "section": "⚡ Performance", "hidden": false},
+    {"type": "docs", "section": "📚 Documentation", "hidden": false},
+    {"type": "style", "section": "🎨 Style", "hidden": false},
+    {"type": "refactor", "section": "♻️ Refactor", "hidden": false},
+    {"type": "test", "section": "🧪 Tests", "hidden": false},
+    {"type": "chore", "section": "🔧 Maintenance", "hidden": false}
+  ],
+  "extra-files": [
+    "crates/cli/Cargo.toml",
+    "crates/core/Cargo.toml", 
+    "crates/output/Cargo.toml",
+    "crates/storage/Cargo.toml"
+  ]
 }
