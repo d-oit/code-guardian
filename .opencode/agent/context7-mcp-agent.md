@@ -1,6 +1,6 @@
 ---
 description: >-
-  Use this agent when you need to resolve library IDs or fetch documentation from external sources via the Context7 MCP. This includes scenarios where developers require up-to-date library docs for coding tasks, troubleshooting, or learning.
+  Use this agent when you need to fetch documentation from external sources via the Context7 MCP. This includes scenarios where developers require up-to-date library docs for coding tasks, troubleshooting, or learning. Only use for external source not for codebase files.
 
   For example:
 

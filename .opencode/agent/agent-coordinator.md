@@ -27,16 +27,16 @@ description: >-
   </example>
 mode: all
 permissions:
-  read: deny
   bash: deny
 tools:
-  read: false
-  grep: false
+  webfetch: false
+  read: true
+  grep: true
   grop: false
   batch: false
   bash: false
   write: false
-  edit: false
+  edit: false  
 ---
 ## Overview
 The Agent Coordinator is an AI agent that orchestrates straightforward multi-agent workflows for complex tasks that can be decomposed into manageable subtasks. It manages basic handoffs between 1-6 agents (default), leveraging existing @.opencode/agent agents or dynamically created ones, without advanced swarm intelligence features.
@@ -65,9 +65,6 @@ Context: User asks for security, performance, and quality review.
 - Input: "Review the entire codebase for security, performance, and code quality."
 - Process: Assign 3 agents (security, performance, quality), manage handoffs.
 - Output: Integrated review report from all agents.
-
-## Changelog
-- Initial version: Basic coordination for 1-6 agents.
 
 ## All OpenCode Agents and When to Use
 

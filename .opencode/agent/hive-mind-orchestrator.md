@@ -32,16 +32,16 @@ description: >-
   conflicts in swarm intelligence. </commentary> </example>
 mode: primary
 permissions:
-  read: deny
   bash: deny
 tools:
-  read: false
-  grep: false
+  read: true
+  grep: true
   grop: false
   batch: false
   bash: false
   write: false
   edit: false
+  webfetch: false
 
 ---
 

@@ -1,5 +1,6 @@
 use crate::detectors::*;
 use crate::enhanced_config::{DetectorType, EnhancedScanConfig};
+use crate::llm_detectors::*;
 use crate::PatternDetector;
 use anyhow::Result;
 
@@ -101,6 +102,49 @@ impl DetectorFactory {
         ]
     }
 
+    /// Create LLM-specific vulnerability detectors
+    pub fn create_llm_security_detectors() -> Vec<Box<dyn PatternDetector>> {
+        vec![
+            Box::new(HallucinatedApiDetector),
+            Box::new(LLMSQLInjectionDetector),
+            Box::new(InsecureRandomDetector),
+            Box::new(HardcodedCredentialsDetector),
+            Box::new(RustMemorySafetyDetector),
+            Box::new(CryptoAntipatternDetector),
+            Box::new(XSSInjectionDetector),
+            Box::new(FilesystemSecurityDetector),
+            Box::new(ContextConfusionDetector),
+        ]
+    }
+
+    /// Create comprehensive LLM detectors (all LLM-related patterns)
+    pub fn create_llm_comprehensive_detectors() -> Vec<Box<dyn PatternDetector>> {
+        vec![Box::new(ComprehensiveLLMDetector::new())]
+    }
+
+    /// Create LLM performance and quality detectors
+    pub fn create_llm_quality_detectors() -> Vec<Box<dyn PatternDetector>> {
+        vec![
+            Box::new(AsyncAntipatternDetector),
+            Box::new(PerformanceAntipatternDetector),
+            Box::new(ErrorHandlingDetector),
+            Box::new(OverengineeringDetector),
+            Box::new(ConfigAntipatternDetector),
+            Box::new(DatabaseAntipatternDetector),
+            Box::new(JSLLMIssuesDetector),
+            Box::new(PythonLLMIssuesDetector),
+        ]
+    }
+
+    /// Create detectors for production-ready scanning including LLM issues
+    pub fn create_production_ready_with_llm_detectors() -> Vec<Box<dyn PatternDetector>> {
+        let mut detectors = Self::create_production_ready_detectors();
+        detectors.extend(Self::create_llm_security_detectors());
+        detectors.extend(Self::create_llm_quality_detectors());
+        detectors.push(Box::new(LLMGeneratedCommentsDetector));
+        detectors
+    }
+
     /// Create performance-focused detectors
     pub fn create_performance_detectors() -> Vec<Box<dyn PatternDetector>> {
         vec![
@@ -148,6 +192,33 @@ impl DetectorFactory {
             DetectorType::DeadCode => Ok(Some(Box::new(DeadCodeDetector))),
             DetectorType::Experimental => Ok(Some(Box::new(ExperimentalDetector))),
 
+            // LLM-specific security patterns
+            DetectorType::LLMHallucinatedApi => Ok(Some(Box::new(HallucinatedApiDetector))),
+            DetectorType::LLMSQLInjection => Ok(Some(Box::new(LLMSQLInjectionDetector))),
+            DetectorType::LLMInsecureRandom => Ok(Some(Box::new(InsecureRandomDetector))),
+            DetectorType::LLMHardcodedCredentials => {
+                Ok(Some(Box::new(HardcodedCredentialsDetector)))
+            }
+            DetectorType::LLMRustMemorySafety => Ok(Some(Box::new(RustMemorySafetyDetector))),
+            DetectorType::LLMCryptoAntipattern => Ok(Some(Box::new(CryptoAntipatternDetector))),
+            DetectorType::LLMXSSInjection => Ok(Some(Box::new(XSSInjectionDetector))),
+            DetectorType::LLMFilesystemSecurity => Ok(Some(Box::new(FilesystemSecurityDetector))),
+            DetectorType::LLMContextConfusion => Ok(Some(Box::new(ContextConfusionDetector))),
+
+            // LLM-specific quality patterns
+            DetectorType::LLMAsyncAntipattern => Ok(Some(Box::new(AsyncAntipatternDetector))),
+            DetectorType::LLMPerformanceIssue => Ok(Some(Box::new(PerformanceAntipatternDetector))),
+            DetectorType::LLMErrorHandling => Ok(Some(Box::new(ErrorHandlingDetector))),
+            DetectorType::LLMOverengineering => Ok(Some(Box::new(OverengineeringDetector))),
+            DetectorType::LLMConfigAntipattern => Ok(Some(Box::new(ConfigAntipatternDetector))),
+            DetectorType::LLMDatabaseAntipattern => Ok(Some(Box::new(DatabaseAntipatternDetector))),
+            DetectorType::LLMJSIssues => Ok(Some(Box::new(JSLLMIssuesDetector))),
+            DetectorType::LLMPythonIssues => Ok(Some(Box::new(PythonLLMIssuesDetector))),
+            DetectorType::LLMGeneratedComments => Ok(Some(Box::new(LLMGeneratedCommentsDetector))),
+
+            // Comprehensive LLM detector
+            DetectorType::LLMComprehensive => Ok(Some(Box::new(ComprehensiveLLMDetector::new()))),
+
             DetectorType::Custom(name) => {
                 if let Some(config) = config {
                     if let Some(pattern) = config.custom_patterns.get(name) {
@@ -178,6 +249,14 @@ pub enum DetectorProfile {
     Rust,
     /// Production-readiness scanning (finds non-production code)
     ProductionReady,
+    /// LLM security vulnerabilities only
+    LLMSecurity,
+    /// LLM quality issues only
+    LLMQuality,
+    /// All LLM-related patterns
+    LLMComprehensive,
+    /// Production-ready with LLM detection
+    ProductionReadyWithLLM,
     /// Custom configuration
     Custom(Box<EnhancedScanConfig>),
 }
@@ -192,6 +271,14 @@ impl DetectorProfile {
             DetectorProfile::Performance => DetectorFactory::create_performance_detectors(),
             DetectorProfile::ProductionReady => {
                 DetectorFactory::create_production_ready_detectors()
+            }
+            DetectorProfile::LLMSecurity => DetectorFactory::create_llm_security_detectors(),
+            DetectorProfile::LLMQuality => DetectorFactory::create_llm_quality_detectors(),
+            DetectorProfile::LLMComprehensive => {
+                DetectorFactory::create_llm_comprehensive_detectors()
+            }
+            DetectorProfile::ProductionReadyWithLLM => {
+                DetectorFactory::create_production_ready_with_llm_detectors()
             }
             DetectorProfile::Rust => vec![
                 Box::new(PanicDetector),
