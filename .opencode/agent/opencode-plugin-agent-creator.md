@@ -29,6 +29,10 @@ description: >-
     </commentary>
   </example>
 mode: all
+tools:
+   write: true
+   edit: true
+   bash: false
 ---
 ## Overview
 The OpenCode Plugin Agent Creator is an expert integrator and architect for creating agent configurations based on OpenCode plugins, analyzing docs and generating precise specs.

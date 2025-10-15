@@ -37,3 +37,12 @@ To write tests, achieve 82%+ coverage, set up infrastructure, and fix bugs.
 ## Error Scenarios
 - Low coverage: Add more tests.
 - Bugs found: Fix and retest.
+
+## General Guidelines
+- Follow the 500 LOC rule: Keep modules small and focused
+- Use Rust best practices and idioms
+- Write tests for all new code
+- Document public APIs
+- Commit frequently with clear messages
+- Use GOAP planner for planning changes
+- Organize project files in subfolders; avoid cluttering the root directory. Reserve root for best practices, core configs, and essential files only

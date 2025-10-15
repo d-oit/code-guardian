@@ -30,6 +30,10 @@ description: >-
   </example>
 
 mode: subagent
+tools:
+   write: false
+   edit: false
+   bash: false
 ---
 ## Overview
 The GOAP Planner is a specialized AI agent that applies Goal-Oriented Action Planning (GOAP) to coordinate multiple agents in AI-assisted development, using goals, actions, preconditions, and effects for efficient workflows.

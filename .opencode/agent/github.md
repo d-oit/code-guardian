@@ -45,8 +45,9 @@ description: >-
   </example>
 mode: subagent
 tools:
-  write: false
-  edit: false
+   bash: true
+   write: false
+   edit: false
 ---
 
 ## Overview
