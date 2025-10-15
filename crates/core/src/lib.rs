@@ -16,6 +16,9 @@ pub mod llm_detectors;
 pub mod monitoring;
 pub mod optimized_scanner;
 pub mod performance;
+pub mod performance_analyzer;
+pub mod benchmark_suite;
+pub mod performance_optimizer;
 
 /// Represents a detected pattern match in a file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
@@ -139,7 +142,10 @@ pub use incremental::*;
 pub use llm_detectors::*;
 pub use monitoring::*;
 pub use optimized_scanner::*;
-pub use performance::*;
+pub use performance::{PerformanceProfiler, MemoryTracker, ScanStats, PerformanceMetrics as ScanPerformanceMetrics};
+pub use performance_analyzer::{PerformanceAnalyzer, PerformanceMetrics as AnalyzerPerformanceMetrics, MemoryMetrics, IoMetrics, CpuMetrics, CacheMetrics, PerformanceAnalysis, BottleneckSeverity, PerformanceRecommendation, RecommendationCategory, RecommendationPriority, ImplementationEffort, PerformanceTrends, PerformanceDataPoint};
+pub use benchmark_suite::*;
+pub use performance_optimizer::*;
 
 #[cfg(test)]
 mod tests {

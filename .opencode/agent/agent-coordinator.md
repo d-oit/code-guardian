@@ -37,8 +37,7 @@ tools:
   list: true
   webfetch: false
   todowrite: true
-  todoread: true
-  task: true
+  todoread: true 
   bash: false  
 ---
 ## Overview

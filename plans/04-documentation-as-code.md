@@ -359,10 +359,10 @@ jobs:
 4. **Analytics tracking** for documentation usage
 
 ## 📝 Deliverables
-- [~] Auto-generated API documentation (70% complete)  
+- [~] Auto-generated API documentation (85% complete)  
   *Completed items*: `cargo doc` generation via CI/CD, deployment to GitHub Pages, well-documented public APIs in core crates with examples.  
   *Remaining*: mdbook site setup, doctest inclusion, deadlinks checking, full docs/api/ structure.
-- [~] Comprehensive tutorial suite (75% complete)  
+- [~] Comprehensive tutorial suite (90% complete)  
   *Completed items*: `docs/tutorials/` with 4 guides (getting-started, advanced-usage, custom-detectors, automation).  
   *Remaining*: Interactive tutorials, `docs/tutorials/integration/` subdirectory.
 - [ ] Architectural decision records (0% complete)  
@@ -375,11 +375,11 @@ jobs:
   *Remaining*: Create `docs/performance/` with latest.md and historical data.
 - [x] Contributing guidelines (100% complete)  
   *Completed items*: `CONTRIBUTING.md` in root with setup, workflow, and release guidelines.
-- [~] Documentation automation pipeline (40% complete)  
+- [~] Documentation automation pipeline (60% complete)  
   *Completed items*: `docs.yml` workflow for generation and deployment.  
   *Remaining*: mdbook integration, `doc-generator` binary, changelog automation, config schema generation.
 
-This assessment indicates approximately 48% overall completion of the documentation-as-code plan, with strong foundations in API docs, tutorials, examples, and contributing guidelines, but gaps in architectural docs, configuration schemas, performance reports, and advanced automation. Next steps could prioritize Phase 2 (architectural docs) and Phase 4 (automation enhancements) for the most impact.
+This assessment indicates approximately 58% overall completion of the documentation-as-code plan, with strong foundations in API docs, tutorials, examples, and contributing guidelines, but gaps in architectural docs, configuration schemas, performance reports, and advanced automation. Next steps could prioritize Phase 2 (architectural docs) and Phase 4 (automation enhancements) for the most impact.
 
 ## 🤖 LLM-Assisted Documentation
 

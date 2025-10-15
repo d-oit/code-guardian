@@ -18,6 +18,8 @@ tools:
   bash: false
   write: false
   edit: false
+  batch: false
+  grop: false
   context7_resolve_library_id: true
   context7_get_library_docs: true
 ---

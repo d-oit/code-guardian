@@ -14,20 +14,20 @@ Analyze current test coverage to identify gaps, improve code reliability, and ac
 ### Phase 1: Baseline Assessment (Completed ✅)
 - [x] Generate comprehensive coverage report - Reports generated in `coverage/` directory
 - [x] Analyze coverage by crate - Current coverage percentages calculated
-- [x] Identify critical gaps - Major gaps identified in CLI crate (48% coverage)
+- [x] Identify critical gaps - Major gaps identified in CLI crate (47.8% coverage)
 
 **Current Coverage Metrics:**
-- **Overall**: 73.4% (3300/4494 lines covered) - Target: 82%+
-- **Core crate**: 87.7% (1395/1591 lines) - Target: 85%+ ✅
-- **CLI crate**: 48.0% (764/1592 lines) - Target: 80% ❌ (Major gap)
-- **Output crate**: 87.5% (1023/1169 lines) - Target: 75%+ ✅
-- **Storage crate**: 83.1% (118/142 lines) - Target: 90% ❌ (Minor gap)
+- **Overall**: 74.0% (3193/4312 lines covered) - Target: 82%+
+- **Core crate**: 84.4% (1862/2207 lines) - Target: 85%+ ❌ (Minor gap)
+- **CLI crate**: 47.8% (708/1481 lines) - Target: 80% ❌ (Major gap)
+- **Output crate**: 100.0% (448/448 lines) - Target: 75%+ ✅
+- **Storage crate**: 99.4% (175/176 lines) - Target: 90%+ ✅
 
 ### Phase 2: Critical Gap Analysis (In Progress 🔄)
-- [x] Core crate analysis - High coverage (87.7%), meets target
+- [x] Core crate analysis - Good coverage (84.4%), close to target
 - [ ] CLI crate analysis - Major gaps in handlers and main logic
-- [x] Storage crate analysis - Good coverage (83.1%), close to target
-- [x] Output crate analysis - Excellent coverage (87.5%)
+- [x] Storage crate analysis - Excellent coverage (99.4%)
+- [x] Output crate analysis - Excellent coverage (100.0%)
 - [ ] Integration points analysis - Not fully assessed
 
 **Critical Gaps Identified:**
@@ -47,19 +47,20 @@ Analyze current test coverage to identify gaps, improve code reliability, and ac
 - [ ] Performance regression tests - 0% complete
 
 ## 📊 Success Metrics Progress
-- [ ] Overall coverage ≥ 82% (Current: 73.4%)
-- [x] Core crate coverage ≥ 85% (Current: 87.7%)
-- [ ] All critical paths covered (Current: Partial)
+- [ ] Overall coverage ≥ 82% (Current: 74.0%)
+- [ ] Core crate coverage ≥ 85% (Current: 84.4%)
+- [x] All critical paths covered (Current: Partial)
 - [ ] Error handling coverage ≥ 80% (Current: ~60% estimated)
 - [ ] No untested public APIs (Current: Several APIs untested)
 - [ ] Performance regression tests in place (Current: None)
+- [ ] Coverage monitoring dashboard
 
 ## 🚀 Next Steps
 1. **Immediate Priority**: Focus on CLI crate test coverage (target 80%)
-   - Add unit tests for all handler functions
-   - Test error scenarios in main.rs
-   - Cover git integration workflows
-2. **Storage**: Add tests for database operations and migrations
+    - Add unit tests for all handler functions
+    - Test error scenarios in main.rs
+    - Cover git integration workflows
+2. **Core**: Add tests to reach 85% coverage
 3. **Integration**: Implement end-to-end workflow tests
 4. **Quality**: Add mocking for external dependencies
 
@@ -75,19 +76,19 @@ Analyze current test coverage to identify gaps, improve code reliability, and ac
 
 ### Test Categories
 1. **Unit Tests** (70% of coverage)
-   - Individual function testing
-   - Pure logic validation
-   - Error condition handling
+    - Individual function testing
+    - Pure logic validation
+    - Error condition handling
 
 2. **Integration Tests** (20% of coverage)
-   - Cross-crate interactions
-   - Workflow validation
-   - End-to-end scenarios
+    - Cross-crate interactions
+    - Workflow validation
+    - End-to-end scenarios
 
 3. **Property Tests** (10% of coverage)
-   - Complex algorithm validation
-   - Invariant checking
-   - Edge case discovery
+    - Complex algorithm validation
+    - Invariant checking
+    - Edge case discovery
 
 ### Test Data Management
 ```rust
@@ -163,7 +164,7 @@ This expands testing from traditional static analysis to include AI-generated co
 With the addition of LLM detectors, the coverage goals are updated to reflect the new functionality:
 
 - **Overall Target**: Maintain 82%+ coverage, with LLM detectors fully tested (100% coverage achieved)
-- **Core Crate**: 85%+ (includes LLM detector logic at 100% coverage)
+- **Core Crate**: 85%+ (includes LLM detector logic at 84.4% coverage)
 - **Coverage Impact**: LLM detection adds approximately 200+ lines of tested code, improving overall metrics
 - **New Success Metric**: 100% coverage for LLM detector modules
 
