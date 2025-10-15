@@ -1,6 +1,6 @@
 [package]
 name = "code_guardian_cli"
-version = "0.1.2"
+version = "0.1.4"
 edition = "2021"
 
 [dependencies]
@@ -33,6 +33,7 @@ code-guardian-output = { path = "../output" }
 assert_cmd = "2.0"
 predicates = "3.0"
 tempfile = "3.0"
+futures = "0.3"
 
 [features]
 default = []

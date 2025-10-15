@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2025-10-16
+
+### Added
+- Complete Phase 1 & 2 quality check implementation with comprehensive test coverage
+- Enhanced release-please configuration for automatic changelog generation
+- GOAP Phase 3 long-term CI/CD optimization system
+- GOAP Phase 1-2 quality check optimization framework
+
+### Fixed
+- Release workflow YAML formatting issues
+- Cross-workspace formatting inconsistencies
+- Test reference and integration test configuration
+- Clippy warnings and code quality issues
+
+### Changed
+- Updated agent documentation with GOAP coordination learnings
+- Improved project structure and cleanup of temporary files
+
 ## [0.1.3] - 2025-10-13
 
 ### Added
