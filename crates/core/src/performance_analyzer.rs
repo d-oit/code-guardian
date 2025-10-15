@@ -1,7 +1,7 @@
-use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
-use anyhow::Result;
 use crate::benchmark_suite::BenchmarkResult;
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
+use std::time::{Duration, Instant};
 
 /// Comprehensive performance analysis framework
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -53,7 +53,6 @@ pub struct CacheMetrics {
     pub cache_hit_rate: f64,
     pub cache_efficiency_score: f64,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceAnalysis {
@@ -130,6 +129,12 @@ pub struct PerformanceDataPoint {
     pub throughput: f64,
 }
 
+impl Default for PerformanceAnalyzer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PerformanceAnalyzer {
     pub fn new() -> Self {
         Self {
@@ -181,7 +186,8 @@ impl PerformanceAnalyzer {
                 severity: BottleneckSeverity::High,
                 impact_percentage: 25.0,
                 description: "High memory usage detected".to_string(),
-                suggested_fix: "Implement streaming processing or reduce memory footprint".to_string(),
+                suggested_fix: "Implement streaming processing or reduce memory footprint"
+                    .to_string(),
             });
         }
 
@@ -258,7 +264,8 @@ impl PerformanceAnalyzer {
         let io_score = self.calculate_io_score();
 
         // Weighted average
-        (execution_score * 0.3 + memory_score * 0.25 + cache_score * 0.25 + io_score * 0.2).min(100.0)
+        (execution_score * 0.3 + memory_score * 0.25 + cache_score * 0.25 + io_score * 0.2)
+            .min(100.0)
     }
 
     fn calculate_execution_score(&self) -> f64 {
@@ -294,7 +301,7 @@ impl PerformanceAnalyzer {
         if start_memory == 0.0 {
             return 1.0;
         }
-        
+
         let memory_growth = (end_memory - start_memory) / start_memory;
         if memory_growth < 0.1 {
             1.0
@@ -316,14 +323,14 @@ impl PerformanceAnalyzer {
     /// Generate performance report
     pub fn generate_report(&self) -> String {
         let mut report = String::new();
-        
+
         report.push_str("🚀 Performance Analysis Report\n");
         report.push_str("==============================\n\n");
-        
+
         // Overall score
         let score = self.calculate_performance_score();
         report.push_str(&format!("📊 Overall Performance Score: {:.1}/100\n", score));
-        
+
         if score >= 90.0 {
             report.push_str("✅ Excellent performance!\n");
         } else if score >= 70.0 {
@@ -333,37 +340,50 @@ impl PerformanceAnalyzer {
         } else {
             report.push_str("🚨 Poor performance - immediate optimization required\n");
         }
-        
-        report.push_str("\n");
-        
+
+        report.push('\n');
+
         // Execution metrics
         report.push_str("⏱️ Execution Metrics:\n");
         report.push_str(&format!("   Duration: {:?}\n", self.metrics.execution_time));
-        report.push_str(&format!("   Memory Peak: {:.1} MB\n", self.metrics.memory_usage.peak_memory_mb));
-        report.push_str(&format!("   Cache Hit Rate: {:.1}%\n", self.metrics.cache_metrics.cache_hit_rate * 100.0));
-        report.push_str("\n");
-        
+        report.push_str(&format!(
+            "   Memory Peak: {:.1} MB\n",
+            self.metrics.memory_usage.peak_memory_mb
+        ));
+        report.push_str(&format!(
+            "   Cache Hit Rate: {:.1}%\n",
+            self.metrics.cache_metrics.cache_hit_rate * 100.0
+        ));
+        report.push('\n');
+
         // Bottlenecks
         if !self.analysis.bottlenecks.is_empty() {
             report.push_str("🚨 Performance Bottlenecks:\n");
             for bottleneck in &self.analysis.bottlenecks {
-                report.push_str(&format!("   • {} ({:?}): {}\n", 
-                    bottleneck.component, bottleneck.severity, bottleneck.description));
+                report.push_str(&format!(
+                    "   • {} ({:?}): {}\n",
+                    bottleneck.component, bottleneck.severity, bottleneck.description
+                ));
                 report.push_str(&format!("     Fix: {}\n", bottleneck.suggested_fix));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
-        
+
         // Recommendations
         if !self.analysis.recommendations.is_empty() {
             report.push_str("💡 Optimization Recommendations:\n");
             for rec in &self.analysis.recommendations {
-                report.push_str(&format!("   • {:?} ({:?}): {}\n", 
-                    rec.category, rec.priority, rec.description));
-                report.push_str(&format!("     Expected improvement: {:.1}%\n", rec.expected_improvement));
+                report.push_str(&format!(
+                    "   • {:?} ({:?}): {}\n",
+                    rec.category, rec.priority, rec.description
+                ));
+                report.push_str(&format!(
+                    "     Expected improvement: {:.1}%\n",
+                    rec.expected_improvement
+                ));
             }
         }
-        
+
         report
     }
 }

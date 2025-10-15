@@ -1,10 +1,8 @@
-use crate::{
-    DetectorFactory, DetectorProfile, OptimizedScanner, Scanner, StreamingScanner,
-};
+use crate::{DetectorFactory, DetectorProfile, OptimizedScanner, Scanner, StreamingScanner};
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 use std::time::{Duration, Instant};
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BenchmarkResult {
@@ -224,19 +222,17 @@ impl BenchmarkConfigurations {
     pub fn regression_detection() -> BenchmarkSuite {
         BenchmarkSuite {
             name: "Regression Detection Benchmark".to_string(),
-            benchmarks: vec![
-                BenchmarkTest {
-                    name: "Performance Regression Detection".to_string(),
-                    description: "Detect performance regressions against baseline".to_string(),
-                    test_type: BenchmarkType::RegressiveDetection,
-                    expected_performance: ExpectedPerformance {
-                        max_duration_seconds: 10.0,
-                        max_memory_mb: 200.0,
-                        min_throughput_files_per_sec: 100.0,
-                        min_cache_hit_rate: 0.5,
-                    },
+            benchmarks: vec![BenchmarkTest {
+                name: "Performance Regression Detection".to_string(),
+                description: "Detect performance regressions against baseline".to_string(),
+                test_type: BenchmarkType::RegressiveDetection,
+                expected_performance: ExpectedPerformance {
+                    max_duration_seconds: 10.0,
+                    max_memory_mb: 200.0,
+                    min_throughput_files_per_sec: 100.0,
+                    min_cache_hit_rate: 0.5,
                 },
-            ],
+            }],
             baseline_metrics: None,
             results: Vec::new(),
             summary: BenchmarkSummary::default(),
@@ -249,7 +245,7 @@ impl BenchmarkSuite {
     pub fn run_benchmarks(&mut self, path: &Path) -> Result<()> {
         println!("🚀 Running Benchmark Suite: {}", self.name);
         println!("=====================================");
-        
+
         self.results.clear();
         let mut passed = 0;
         let mut failed = 0;
@@ -257,11 +253,12 @@ impl BenchmarkSuite {
         for benchmark in &self.benchmarks {
             println!("\n📊 Running: {}", benchmark.name);
             println!("   Description: {}", benchmark.description);
-            
+
             match self.run_single_benchmark(benchmark, path) {
                 Ok(result) => {
-                    let performance_met = self.check_performance_expectations(&result, &benchmark.expected_performance);
-                    
+                    let performance_met = self
+                        .check_performance_expectations(&result, &benchmark.expected_performance);
+
                     if performance_met {
                         println!("   ✅ PASSED");
                         passed += 1;
@@ -269,11 +266,11 @@ impl BenchmarkSuite {
                         println!("   ❌ FAILED - Performance expectations not met");
                         failed += 1;
                     }
-                    
+
                     println!("   ⏱️  Duration: {:?}", result.duration);
                     println!("   📈 Files/sec: {:.1}", result.throughput.files_per_second);
                     println!("   💾 Memory: {:.1} MB", result.resource_usage.memory_mb);
-                    
+
                     self.results.push(result);
                 }
                 Err(e) => {
@@ -298,22 +295,27 @@ impl BenchmarkSuite {
     }
 
     /// Run a single benchmark test
-    fn run_single_benchmark(&self, benchmark: &BenchmarkTest, path: &Path) -> Result<BenchmarkResult> {
+    fn run_single_benchmark(
+        &self,
+        benchmark: &BenchmarkTest,
+        path: &Path,
+    ) -> Result<BenchmarkResult> {
         let start_time = Instant::now();
         let start_memory = self.get_memory_usage();
 
-        let (files_scanned, lines_processed, matches_found, _cache_hits, _cache_misses) = match benchmark.test_type {
-            BenchmarkType::BasicScanning => self.run_basic_scan(path)?,
-            BenchmarkType::ComprehensiveScanning => self.run_comprehensive_scan(path)?,
-            BenchmarkType::OptimizedScanning => self.run_optimized_scan(path)?,
-            BenchmarkType::StreamingScanning => self.run_streaming_scan(path)?,
-            BenchmarkType::LargeFileHandling => self.run_large_file_test(path)?,
-            BenchmarkType::ManySmallFiles => self.run_many_small_files_test(path)?,
-            BenchmarkType::MemoryIntensive => self.run_memory_intensive_test(path)?,
-            BenchmarkType::CacheEfficiency => self.run_cache_efficiency_test(path)?,
-            BenchmarkType::ParallelProcessing => self.run_parallel_processing_test(path)?,
-            BenchmarkType::RegressiveDetection => self.run_regression_test(path)?,
-        };
+        let (files_scanned, lines_processed, matches_found, _cache_hits, _cache_misses) =
+            match benchmark.test_type {
+                BenchmarkType::BasicScanning => self.run_basic_scan(path)?,
+                BenchmarkType::ComprehensiveScanning => self.run_comprehensive_scan(path)?,
+                BenchmarkType::OptimizedScanning => self.run_optimized_scan(path)?,
+                BenchmarkType::StreamingScanning => self.run_streaming_scan(path)?,
+                BenchmarkType::LargeFileHandling => self.run_large_file_test(path)?,
+                BenchmarkType::ManySmallFiles => self.run_many_small_files_test(path)?,
+                BenchmarkType::MemoryIntensive => self.run_memory_intensive_test(path)?,
+                BenchmarkType::CacheEfficiency => self.run_cache_efficiency_test(path)?,
+                BenchmarkType::ParallelProcessing => self.run_parallel_processing_test(path)?,
+                BenchmarkType::RegressiveDetection => self.run_regression_test(path)?,
+            };
 
         let duration = start_time.elapsed();
         let end_memory = self.get_memory_usage();
@@ -333,7 +335,8 @@ impl BenchmarkSuite {
             thread_count: 1, // Would need actual thread monitoring
         };
 
-        let performance_score = self.calculate_performance_score(&throughput, &resource_usage, duration);
+        let performance_score =
+            self.calculate_performance_score(&throughput, &resource_usage, duration);
 
         Ok(BenchmarkResult {
             name: benchmark.name.clone(),
@@ -348,11 +351,11 @@ impl BenchmarkSuite {
     fn run_basic_scan(&self, path: &Path) -> Result<(u64, u64, u64, u64, u64)> {
         let scanner = Scanner::new(DetectorFactory::create_default_detectors());
         let matches = scanner.scan(path)?;
-        
+
         // Estimate metrics (in real implementation, these would be tracked)
         let files_scanned = self.estimate_file_count(path);
         let lines_processed = files_scanned * 100; // Estimate
-        
+
         Ok((files_scanned, lines_processed, matches.len() as u64, 0, 0))
     }
 
@@ -360,10 +363,10 @@ impl BenchmarkSuite {
     fn run_comprehensive_scan(&self, path: &Path) -> Result<(u64, u64, u64, u64, u64)> {
         let scanner = Scanner::new(DetectorProfile::Comprehensive.get_detectors());
         let matches = scanner.scan(path)?;
-        
+
         let files_scanned = self.estimate_file_count(path);
         let lines_processed = files_scanned * 100;
-        
+
         Ok((files_scanned, lines_processed, matches.len() as u64, 0, 0))
     }
 
@@ -372,7 +375,7 @@ impl BenchmarkSuite {
         let scanner = OptimizedScanner::new(DetectorProfile::Comprehensive.get_detectors())
             .with_cache_size(10000);
         let (matches, metrics) = scanner.scan_optimized(path)?;
-        
+
         Ok((
             metrics.total_files_scanned as u64,
             metrics.total_lines_processed as u64,
@@ -390,7 +393,7 @@ impl BenchmarkSuite {
             matches.extend(batch);
             Ok(())
         })?;
-        
+
         Ok((
             metrics.total_files_scanned as u64,
             metrics.total_lines_processed as u64,
@@ -421,15 +424,15 @@ impl BenchmarkSuite {
     /// Run cache efficiency test
     fn run_cache_efficiency_test(&self, path: &Path) -> Result<(u64, u64, u64, u64, u64)> {
         // Run multiple scans to test cache effectiveness
-        let scanner = OptimizedScanner::new(DetectorProfile::Basic.get_detectors())
-            .with_cache_size(50000);
-        
+        let scanner =
+            OptimizedScanner::new(DetectorProfile::Basic.get_detectors()).with_cache_size(50000);
+
         // First scan (cold cache)
         let _ = scanner.scan_optimized(path)?;
-        
+
         // Second scan (should hit cache)
         let (matches, metrics) = scanner.scan_optimized(path)?;
-        
+
         Ok((
             metrics.total_files_scanned as u64,
             metrics.total_lines_processed as u64,
@@ -452,7 +455,11 @@ impl BenchmarkSuite {
     }
 
     /// Check if performance meets expectations
-    fn check_performance_expectations(&self, result: &BenchmarkResult, expected: &ExpectedPerformance) -> bool {
+    fn check_performance_expectations(
+        &self,
+        result: &BenchmarkResult,
+        expected: &ExpectedPerformance,
+    ) -> bool {
         result.duration.as_secs_f64() <= expected.max_duration_seconds
             && result.resource_usage.memory_mb <= expected.max_memory_mb
             && result.throughput.files_per_second >= expected.min_throughput_files_per_sec
@@ -463,16 +470,33 @@ impl BenchmarkSuite {
         if self.results.is_empty() {
             return 0.0;
         }
-        
-        self.results.iter().map(|r| r.performance_score).sum::<f64>() / self.results.len() as f64
+
+        self.results
+            .iter()
+            .map(|r| r.performance_score)
+            .sum::<f64>()
+            / self.results.len() as f64
     }
 
     /// Calculate performance score for individual benchmark
-    fn calculate_performance_score(&self, throughput: &ThroughputMetrics, resource_usage: &ResourceUsage, duration: Duration) -> f64 {
-        let time_score = if duration.as_secs() < 5 { 100.0 } else { 100.0 / duration.as_secs() as f64 };
-        let memory_score = if resource_usage.memory_mb < 100.0 { 100.0 } else { 10000.0 / resource_usage.memory_mb };
+    fn calculate_performance_score(
+        &self,
+        throughput: &ThroughputMetrics,
+        resource_usage: &ResourceUsage,
+        duration: Duration,
+    ) -> f64 {
+        let time_score = if duration.as_secs() < 5 {
+            100.0
+        } else {
+            100.0 / duration.as_secs() as f64
+        };
+        let memory_score = if resource_usage.memory_mb < 100.0 {
+            100.0
+        } else {
+            10000.0 / resource_usage.memory_mb
+        };
         let throughput_score = throughput.files_per_second.min(100.0);
-        
+
         (time_score * 0.4 + memory_score * 0.3 + throughput_score * 0.3).min(100.0)
     }
 
@@ -480,7 +504,8 @@ impl BenchmarkSuite {
     fn detect_regression(&self) -> bool {
         if let Some(baseline) = &self.baseline_metrics {
             if let Some(current) = self.results.first() {
-                return current.performance_score < baseline.performance_score * 0.9; // 10% regression threshold
+                return current.performance_score < baseline.performance_score * 0.9;
+                // 10% regression threshold
             }
         }
         false
@@ -489,7 +514,7 @@ impl BenchmarkSuite {
     /// Identify areas for improvement
     fn identify_improvement_areas(&self) -> Vec<String> {
         let mut areas = Vec::new();
-        
+
         for result in &self.results {
             if result.resource_usage.memory_mb > 500.0 {
                 areas.push("Memory optimization needed".to_string());
@@ -501,7 +526,7 @@ impl BenchmarkSuite {
                 areas.push("Execution time optimization needed".to_string());
             }
         }
-        
+
         areas.sort();
         areas.dedup();
         areas
@@ -515,14 +540,17 @@ impl BenchmarkSuite {
         println!("Total Tests: {}", self.summary.total_tests);
         println!("Passed: ✅ {}", self.summary.passed_tests);
         println!("Failed: ❌ {}", self.summary.failed_tests);
-        println!("Performance Score: {:.1}/100", self.summary.performance_score);
-        
+        println!(
+            "Performance Score: {:.1}/100",
+            self.summary.performance_score
+        );
+
         if self.summary.regression_detected {
             println!("🚨 Performance regression detected!");
         } else {
             println!("✅ No performance regression");
         }
-        
+
         if !self.summary.improvement_areas.is_empty() {
             println!("\n💡 Improvement Areas:");
             for area in &self.summary.improvement_areas {

@@ -1,7 +1,7 @@
 use anyhow::Result;
 use code_guardian_core::{
-    DetectorFactory, DetectorProfile, OptimizedScanner, Scanner, StreamingScanner,
-    BenchmarkSuite, BenchmarkConfigurations, PerformanceAnalyzer,
+    BenchmarkConfigurations, BenchmarkSuite, DetectorFactory, DetectorProfile, OptimizedScanner,
+    PerformanceAnalyzer, Scanner, StreamingScanner,
 };
 use std::path::Path;
 use std::time::Instant;
@@ -122,6 +122,7 @@ pub fn run_benchmark(path: &Path) -> Result<()> {
 }
 
 /// Run comprehensive benchmark suite
+#[allow(dead_code)]
 pub fn run_comprehensive_benchmark(path: &Path, suite_type: &str) -> Result<()> {
     println!("🚀 Code-Guardian Comprehensive Benchmark");
     println!("=========================================\n");
@@ -144,14 +145,15 @@ pub fn run_comprehensive_benchmark(path: &Path, suite_type: &str) -> Result<()> 
     };
 
     suite.run_benchmarks(path)?;
-    
+
     // Generate detailed report
     generate_benchmark_report(&suite)?;
-    
+
     Ok(())
 }
 
 /// Run all benchmark suites
+#[allow(dead_code)]
 pub fn run_all_benchmark_suites(path: &Path) -> Result<()> {
     println!("🏃‍♂️ Running All Benchmark Suites");
     println!("==================================\n");
@@ -160,7 +162,10 @@ pub fn run_all_benchmark_suites(path: &Path) -> Result<()> {
         ("Small Project", BenchmarkConfigurations::small_project()),
         ("Medium Project", BenchmarkConfigurations::medium_project()),
         ("Large Project", BenchmarkConfigurations::large_project()),
-        ("Regression Detection", BenchmarkConfigurations::regression_detection()),
+        (
+            "Regression Detection",
+            BenchmarkConfigurations::regression_detection(),
+        ),
     ];
 
     let mut all_results = Vec::new();
@@ -170,7 +175,7 @@ pub fn run_all_benchmark_suites(path: &Path) -> Result<()> {
     for (name, mut suite) in suites {
         println!("🔄 Running {} Suite...", name);
         suite.run_benchmarks(path)?;
-        
+
         total_passed += suite.summary.passed_tests;
         total_tests += suite.summary.total_tests;
         all_results.push((name, suite));
@@ -183,7 +188,7 @@ pub fn run_all_benchmark_suites(path: &Path) -> Result<()> {
     println!("Total Tests: {}", total_tests);
     println!("Total Passed: ✅ {}", total_passed);
     println!("Total Failed: ❌ {}", total_tests - total_passed);
-    
+
     let success_rate = (total_passed as f64 / total_tests as f64) * 100.0;
     println!("Success Rate: {:.1}%", success_rate);
 
@@ -199,12 +204,13 @@ pub fn run_all_benchmark_suites(path: &Path) -> Result<()> {
 }
 
 /// Run performance analysis with detailed metrics
+#[allow(dead_code)]
 pub fn run_performance_analysis(path: &Path) -> Result<()> {
     println!("🔍 Performance Analysis");
     println!("======================\n");
 
     let mut analyzer = PerformanceAnalyzer::new();
-    
+
     analyzer.analyze_performance(|| {
         // Run a comprehensive scan for analysis
         let scanner = OptimizedScanner::new(DetectorProfile::Comprehensive.get_detectors())
@@ -224,13 +230,17 @@ pub fn run_performance_analysis(path: &Path) -> Result<()> {
 }
 
 /// Generate comprehensive benchmark report
+#[allow(dead_code)]
 fn generate_benchmark_report(suite: &BenchmarkSuite) -> Result<()> {
     println!("\n📊 Detailed Benchmark Report");
     println!("============================");
-    
+
     println!("Suite: {}", suite.name);
-    println!("Performance Score: {:.1}/100", suite.summary.performance_score);
-    
+    println!(
+        "Performance Score: {:.1}/100",
+        suite.summary.performance_score
+    );
+
     if !suite.results.is_empty() {
         println!("\n📈 Individual Test Results:");
         for result in &suite.results {
@@ -257,40 +267,45 @@ fn generate_benchmark_report(suite: &BenchmarkSuite) -> Result<()> {
 }
 
 /// Save benchmark report to file
+#[allow(dead_code)]
 fn save_benchmark_report(suite: &BenchmarkSuite) -> Result<()> {
     use std::fs;
     use std::path::PathBuf;
-    
+
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let filename = format!("benchmark_report_{}_{}.json", 
-        suite.name.replace(" ", "_").to_lowercase(), timestamp);
-    
+    let filename = format!(
+        "benchmark_report_{}_{}.json",
+        suite.name.replace(" ", "_").to_lowercase(),
+        timestamp
+    );
+
     let reports_dir = PathBuf::from("reports");
     fs::create_dir_all(&reports_dir)?;
-    
+
     let report_path = reports_dir.join(filename);
     let json_report = serde_json::to_string_pretty(suite)?;
     fs::write(&report_path, json_report)?;
-    
+
     println!("\n📄 Report saved to: {}", report_path.display());
     Ok(())
 }
 
 /// Save performance analysis to file
-fn save_performance_analysis(analyzer: &PerformanceAnalyzer, path: &Path) -> Result<()> {
+#[allow(dead_code)]
+fn save_performance_analysis(analyzer: &PerformanceAnalyzer, _path: &Path) -> Result<()> {
     use std::fs;
     use std::path::PathBuf;
-    
+
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
     let filename = format!("performance_analysis_{}.json", timestamp);
-    
+
     let reports_dir = PathBuf::from("reports");
     fs::create_dir_all(&reports_dir)?;
-    
+
     let report_path = reports_dir.join(filename);
     let json_analysis = serde_json::to_string_pretty(analyzer)?;
     fs::write(&report_path, json_analysis)?;
-    
+
     println!("\n📄 Analysis saved to: {}", report_path.display());
     Ok(())
 }

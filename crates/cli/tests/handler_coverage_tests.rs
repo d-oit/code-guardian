@@ -4,7 +4,7 @@ use tempfile::TempDir;
 fn create_test_project() -> TempDir {
     let temp_dir = TempDir::new().unwrap();
     let project_path = temp_dir.path();
-    
+
     // Create a basic project structure
     std::fs::create_dir_all(project_path.join("src")).unwrap();
     std::fs::write(
@@ -16,8 +16,9 @@ fn create_test_project() -> TempDir {
             console.log("Debug message");
         }
         "#,
-    ).unwrap();
-    
+    )
+    .unwrap();
+
     // Create Cargo.toml
     std::fs::write(
         project_path.join("Cargo.toml"),
@@ -27,8 +28,9 @@ name = "test-project"
 version = "0.1.0"
 edition = "2021"
 "#,
-    ).unwrap();
-    
+    )
+    .unwrap();
+
     temp_dir
 }
 
@@ -41,15 +43,8 @@ mod production_handler_tests {
     fn test_handle_production_check_basic() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
-        let result = handle_production_check(
-            path,
-            "text".to_string(),
-            false,
-            false,
-            vec![],
-            None,
-        );
+
+        let result = handle_production_check(path, "text".to_string(), false, false, vec![], None);
         assert!(result.is_ok());
     }
 
@@ -57,30 +52,17 @@ mod production_handler_tests {
     fn test_handle_production_check_json_format() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
-        let result = handle_production_check(
-            path,
-            "json".to_string(),
-            false,
-            false,
-            vec![],
-            None,
-        );
+
+        let result = handle_production_check(path, "json".to_string(), false, false, vec![], None);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_handle_production_check_invalid_path() {
         let invalid_path = PathBuf::from("nonexistent/path");
-        
-        let result = handle_production_check(
-            invalid_path,
-            "text".to_string(),
-            false,
-            false,
-            vec![],
-            None,
-        );
+
+        let result =
+            handle_production_check(invalid_path, "text".to_string(), false, false, vec![], None);
         // Production check handles invalid paths gracefully and reports 0 issues
         assert!(result.is_ok());
     }
@@ -89,7 +71,7 @@ mod production_handler_tests {
     fn test_handle_pre_commit_basic() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         let result = handle_pre_commit(path, false, false);
         assert!(result.is_ok());
     }
@@ -98,7 +80,7 @@ mod production_handler_tests {
     fn test_handle_pre_commit_fast_mode() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         let result = handle_pre_commit(path, false, true);
         assert!(result.is_ok());
     }
@@ -107,7 +89,7 @@ mod production_handler_tests {
     fn test_handle_ci_gate_basic() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         let result = handle_ci_gate(path, None, None, 10, 10);
         assert!(result.is_ok());
     }
@@ -116,13 +98,8 @@ mod production_handler_tests {
     fn test_handle_lang_scan_rust() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
-        let result = handle_lang_scan(
-            vec!["rust".to_string()],
-            path,
-            "text".to_string(),
-            false,
-        );
+
+        let result = handle_lang_scan(vec!["rust".to_string()], path, "text".to_string(), false);
         assert!(result.is_ok());
     }
 
@@ -130,7 +107,7 @@ mod production_handler_tests {
     fn test_handle_lang_scan_multiple_languages() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         let result = handle_lang_scan(
             vec!["rust".to_string(), "javascript".to_string()],
             path,
@@ -144,7 +121,7 @@ mod production_handler_tests {
     fn test_handle_watch() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         let result = handle_watch(path, vec![], vec![], 1000);
         assert!(result.is_ok());
     }
@@ -158,7 +135,7 @@ mod scan_handler_tests {
     fn test_scan_options_creation() {
         let temp_dir = create_test_project();
         let path = temp_dir.path().to_path_buf();
-        
+
         // Test that we can create scan options - this exercises the validation logic
         assert!(path.exists());
         assert!(path.join("src").exists());
@@ -170,7 +147,7 @@ mod scan_handler_tests {
         // Test ID validation logic
         let valid_id: i64 = 123;
         let negative_id: i64 = -1;
-        
+
         assert!(valid_id > 0);
         assert!(negative_id < 0);
     }
@@ -180,7 +157,7 @@ mod scan_handler_tests {
         let temp_dir = create_test_project();
         let valid_path = temp_dir.path().to_path_buf();
         let invalid_path = PathBuf::from("nonexistent/path/that/does/not/exist");
-        
+
         assert!(valid_path.exists());
         assert!(!invalid_path.exists());
     }
@@ -202,7 +179,7 @@ mod utils_tests {
     fn test_get_db_path_with_provided() {
         let temp_dir = create_test_project();
         let db_path = temp_dir.path().join("test.db");
-        
+
         let result = get_db_path(Some(db_path.clone()));
         assert_eq!(result, db_path);
     }

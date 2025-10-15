@@ -4,6 +4,7 @@ use ignore::WalkBuilder;
 use rayon::prelude::*;
 use std::path::Path;
 
+pub mod benchmark_suite;
 pub mod cache;
 pub mod config;
 pub mod custom_detectors;
@@ -17,7 +18,6 @@ pub mod monitoring;
 pub mod optimized_scanner;
 pub mod performance;
 pub mod performance_analyzer;
-pub mod benchmark_suite;
 pub mod performance_optimizer;
 
 /// Represents a detected pattern match in a file.
@@ -132,6 +132,7 @@ impl Scanner {
 }
 
 // Re-export detectors and factory for convenience
+pub use benchmark_suite::*;
 pub use cache::*;
 pub use custom_detectors::*;
 pub use detector_factory::*;
@@ -142,9 +143,15 @@ pub use incremental::*;
 pub use llm_detectors::*;
 pub use monitoring::*;
 pub use optimized_scanner::*;
-pub use performance::{PerformanceProfiler, MemoryTracker, ScanStats, PerformanceMetrics as ScanPerformanceMetrics};
-pub use performance_analyzer::{PerformanceAnalyzer, PerformanceMetrics as AnalyzerPerformanceMetrics, MemoryMetrics, IoMetrics, CpuMetrics, CacheMetrics, PerformanceAnalysis, BottleneckSeverity, PerformanceRecommendation, RecommendationCategory, RecommendationPriority, ImplementationEffort, PerformanceTrends, PerformanceDataPoint};
-pub use benchmark_suite::*;
+pub use performance::{
+    MemoryTracker, PerformanceMetrics as ScanPerformanceMetrics, PerformanceProfiler, ScanStats,
+};
+pub use performance_analyzer::{
+    BottleneckSeverity, CacheMetrics, CpuMetrics, ImplementationEffort, IoMetrics, MemoryMetrics,
+    PerformanceAnalysis, PerformanceAnalyzer, PerformanceDataPoint,
+    PerformanceMetrics as AnalyzerPerformanceMetrics, PerformanceRecommendation, PerformanceTrends,
+    RecommendationCategory, RecommendationPriority,
+};
 pub use performance_optimizer::*;
 
 #[cfg(test)]

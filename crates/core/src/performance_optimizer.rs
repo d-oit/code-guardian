@@ -1,7 +1,7 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use anyhow::Result;
 
 /// Performance optimization engine for Code Guardian
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -83,6 +83,12 @@ pub struct PerformanceTargets {
     pub target_cache_hit_rate: f64,
 }
 
+impl Default for PerformanceOptimizer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PerformanceOptimizer {
     /// Create new performance optimizer with default optimizations
     pub fn new() -> Self {
@@ -92,7 +98,7 @@ impl PerformanceOptimizer {
             current_profile: "default".to_string(),
             auto_optimization: true,
         };
-        
+
         optimizer.initialize_default_optimizations();
         optimizer.initialize_default_profiles();
         optimizer
@@ -110,9 +116,18 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Active,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("cache_size".to_string(), OptimizationParameter::Integer(10000)),
-                        ("ttl_minutes".to_string(), OptimizationParameter::Integer(60)),
-                        ("enable_lru".to_string(), OptimizationParameter::Boolean(true)),
+                        (
+                            "cache_size".to_string(),
+                            OptimizationParameter::Integer(10000),
+                        ),
+                        (
+                            "ttl_minutes".to_string(),
+                            OptimizationParameter::Integer(60),
+                        ),
+                        (
+                            "enable_lru".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
                     ]),
                     auto_tune: true,
                     adaptive: true,
@@ -126,14 +141,19 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Active,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("pattern_cache_size".to_string(), OptimizationParameter::Integer(1000)),
-                        ("result_cache_size".to_string(), OptimizationParameter::Integer(50000)),
+                        (
+                            "pattern_cache_size".to_string(),
+                            OptimizationParameter::Integer(1000),
+                        ),
+                        (
+                            "result_cache_size".to_string(),
+                            OptimizationParameter::Integer(50000),
+                        ),
                     ]),
                     auto_tune: true,
                     adaptive: false,
                 },
             },
-            
             // Parallelization optimizations
             PerformanceOptimization {
                 name: "Multi-threaded File Processing".to_string(),
@@ -143,9 +163,18 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Active,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("thread_count".to_string(), OptimizationParameter::Integer(0)), // 0 = auto
-                        ("chunk_size".to_string(), OptimizationParameter::Integer(100)),
-                        ("work_stealing".to_string(), OptimizationParameter::Boolean(true)),
+                        (
+                            "thread_count".to_string(),
+                            OptimizationParameter::Integer(0),
+                        ), // 0 = auto
+                        (
+                            "chunk_size".to_string(),
+                            OptimizationParameter::Integer(100),
+                        ),
+                        (
+                            "work_stealing".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
                     ]),
                     auto_tune: true,
                     adaptive: true,
@@ -159,14 +188,19 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Available,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("parallel_detectors".to_string(), OptimizationParameter::Boolean(true)),
-                        ("detector_thread_pool_size".to_string(), OptimizationParameter::Integer(4)),
+                        (
+                            "parallel_detectors".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
+                        (
+                            "detector_thread_pool_size".to_string(),
+                            OptimizationParameter::Integer(4),
+                        ),
                     ]),
                     auto_tune: false,
                     adaptive: false,
                 },
             },
-            
             // Memory optimizations
             PerformanceOptimization {
                 name: "Streaming File Processing".to_string(),
@@ -176,9 +210,18 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Active,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("chunk_size_kb".to_string(), OptimizationParameter::Integer(64)),
-                        ("max_file_size_mb".to_string(), OptimizationParameter::Integer(100)),
-                        ("enable_mmap".to_string(), OptimizationParameter::Boolean(true)),
+                        (
+                            "chunk_size_kb".to_string(),
+                            OptimizationParameter::Integer(64),
+                        ),
+                        (
+                            "max_file_size_mb".to_string(),
+                            OptimizationParameter::Integer(100),
+                        ),
+                        (
+                            "enable_mmap".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
                     ]),
                     auto_tune: true,
                     adaptive: true,
@@ -192,14 +235,19 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Experimental,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("pool_size".to_string(), OptimizationParameter::Integer(1000)),
-                        ("buffer_size_kb".to_string(), OptimizationParameter::Integer(16)),
+                        (
+                            "pool_size".to_string(),
+                            OptimizationParameter::Integer(1000),
+                        ),
+                        (
+                            "buffer_size_kb".to_string(),
+                            OptimizationParameter::Integer(16),
+                        ),
                     ]),
                     auto_tune: false,
                     adaptive: false,
                 },
             },
-            
             // I/O optimizations
             PerformanceOptimization {
                 name: "Asynchronous File Reading".to_string(),
@@ -209,8 +257,14 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Available,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("async_readers".to_string(), OptimizationParameter::Integer(8)),
-                        ("read_ahead_kb".to_string(), OptimizationParameter::Integer(256)),
+                        (
+                            "async_readers".to_string(),
+                            OptimizationParameter::Integer(8),
+                        ),
+                        (
+                            "read_ahead_kb".to_string(),
+                            OptimizationParameter::Integer(256),
+                        ),
                     ]),
                     auto_tune: true,
                     adaptive: true,
@@ -224,14 +278,19 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Available,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("prefetch_enabled".to_string(), OptimizationParameter::Boolean(true)),
-                        ("sequential_access".to_string(), OptimizationParameter::Boolean(true)),
+                        (
+                            "prefetch_enabled".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
+                        (
+                            "sequential_access".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
                     ]),
                     auto_tune: false,
                     adaptive: false,
                 },
             },
-            
             // Algorithm optimizations
             PerformanceOptimization {
                 name: "Early Pattern Termination".to_string(),
@@ -241,8 +300,14 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Available,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("max_matches_per_file".to_string(), OptimizationParameter::Integer(100)),
-                        ("enable_early_exit".to_string(), OptimizationParameter::Boolean(false)),
+                        (
+                            "max_matches_per_file".to_string(),
+                            OptimizationParameter::Integer(100),
+                        ),
+                        (
+                            "enable_early_exit".to_string(),
+                            OptimizationParameter::Boolean(false),
+                        ),
                     ]),
                     auto_tune: false,
                     adaptive: false,
@@ -256,9 +321,18 @@ impl PerformanceOptimizer {
                 implementation_status: ImplementationStatus::Active,
                 configuration: OptimizationConfig {
                     parameters: HashMap::from([
-                        ("max_file_size_mb".to_string(), OptimizationParameter::Integer(50)),
-                        ("skip_binary_files".to_string(), OptimizationParameter::Boolean(true)),
-                        ("use_gitignore".to_string(), OptimizationParameter::Boolean(true)),
+                        (
+                            "max_file_size_mb".to_string(),
+                            OptimizationParameter::Integer(50),
+                        ),
+                        (
+                            "skip_binary_files".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
+                        (
+                            "use_gitignore".to_string(),
+                            OptimizationParameter::Boolean(true),
+                        ),
                     ]),
                     auto_tune: false,
                     adaptive: false,
@@ -270,97 +344,114 @@ impl PerformanceOptimizer {
     /// Initialize default optimization profiles
     fn initialize_default_profiles(&mut self) {
         // Fast profile for quick scans
-        self.profiles.insert("fast".to_string(), OptimizationProfile {
-            name: "Fast".to_string(),
-            description: "Optimized for speed, minimal memory usage".to_string(),
-            target_scenario: "Quick development scans".to_string(),
-            enabled_optimizations: vec![
-                "Smart File Filtering".to_string(),
-                "Multi-threaded File Processing".to_string(),
-                "Early Pattern Termination".to_string(),
-            ],
-            performance_targets: PerformanceTargets {
-                max_scan_time_seconds: 5.0,
-                max_memory_usage_mb: 100.0,
-                min_throughput_files_per_sec: 200.0,
-                target_cache_hit_rate: 0.5,
+        self.profiles.insert(
+            "fast".to_string(),
+            OptimizationProfile {
+                name: "Fast".to_string(),
+                description: "Optimized for speed, minimal memory usage".to_string(),
+                target_scenario: "Quick development scans".to_string(),
+                enabled_optimizations: vec![
+                    "Smart File Filtering".to_string(),
+                    "Multi-threaded File Processing".to_string(),
+                    "Early Pattern Termination".to_string(),
+                ],
+                performance_targets: PerformanceTargets {
+                    max_scan_time_seconds: 5.0,
+                    max_memory_usage_mb: 100.0,
+                    min_throughput_files_per_sec: 200.0,
+                    target_cache_hit_rate: 0.5,
+                },
             },
-        });
+        );
 
         // Balanced profile for general use
-        self.profiles.insert("default".to_string(), OptimizationProfile {
-            name: "Default".to_string(),
-            description: "Balanced performance and accuracy".to_string(),
-            target_scenario: "General purpose scanning".to_string(),
-            enabled_optimizations: vec![
-                "File Content Cache".to_string(),
-                "Pattern Match Cache".to_string(),
-                "Multi-threaded File Processing".to_string(),
-                "Streaming File Processing".to_string(),
-                "Smart File Filtering".to_string(),
-            ],
-            performance_targets: PerformanceTargets {
-                max_scan_time_seconds: 15.0,
-                max_memory_usage_mb: 300.0,
-                min_throughput_files_per_sec: 100.0,
-                target_cache_hit_rate: 0.7,
+        self.profiles.insert(
+            "default".to_string(),
+            OptimizationProfile {
+                name: "Default".to_string(),
+                description: "Balanced performance and accuracy".to_string(),
+                target_scenario: "General purpose scanning".to_string(),
+                enabled_optimizations: vec![
+                    "File Content Cache".to_string(),
+                    "Pattern Match Cache".to_string(),
+                    "Multi-threaded File Processing".to_string(),
+                    "Streaming File Processing".to_string(),
+                    "Smart File Filtering".to_string(),
+                ],
+                performance_targets: PerformanceTargets {
+                    max_scan_time_seconds: 15.0,
+                    max_memory_usage_mb: 300.0,
+                    min_throughput_files_per_sec: 100.0,
+                    target_cache_hit_rate: 0.7,
+                },
             },
-        });
+        );
 
         // Thorough profile for comprehensive analysis
-        self.profiles.insert("thorough".to_string(), OptimizationProfile {
-            name: "Thorough".to_string(),
-            description: "Maximum accuracy, comprehensive analysis".to_string(),
-            target_scenario: "Security audits and compliance".to_string(),
-            enabled_optimizations: vec![
-                "File Content Cache".to_string(),
-                "Pattern Match Cache".to_string(),
-                "Multi-threaded File Processing".to_string(),
-                "Parallel Pattern Matching".to_string(),
-                "Streaming File Processing".to_string(),
-                "Asynchronous File Reading".to_string(),
-            ],
-            performance_targets: PerformanceTargets {
-                max_scan_time_seconds: 60.0,
-                max_memory_usage_mb: 1000.0,
-                min_throughput_files_per_sec: 50.0,
-                target_cache_hit_rate: 0.8,
+        self.profiles.insert(
+            "thorough".to_string(),
+            OptimizationProfile {
+                name: "Thorough".to_string(),
+                description: "Maximum accuracy, comprehensive analysis".to_string(),
+                target_scenario: "Security audits and compliance".to_string(),
+                enabled_optimizations: vec![
+                    "File Content Cache".to_string(),
+                    "Pattern Match Cache".to_string(),
+                    "Multi-threaded File Processing".to_string(),
+                    "Parallel Pattern Matching".to_string(),
+                    "Streaming File Processing".to_string(),
+                    "Asynchronous File Reading".to_string(),
+                ],
+                performance_targets: PerformanceTargets {
+                    max_scan_time_seconds: 60.0,
+                    max_memory_usage_mb: 1000.0,
+                    min_throughput_files_per_sec: 50.0,
+                    target_cache_hit_rate: 0.8,
+                },
             },
-        });
+        );
 
         // Memory-efficient profile for large codebases
-        self.profiles.insert("memory_efficient".to_string(), OptimizationProfile {
-            name: "Memory Efficient".to_string(),
-            description: "Minimized memory usage for large projects".to_string(),
-            target_scenario: "Large codebases with memory constraints".to_string(),
-            enabled_optimizations: vec![
-                "Streaming File Processing".to_string(),
-                "Smart File Filtering".to_string(),
-                "Memory Pool".to_string(),
-                "Early Pattern Termination".to_string(),
-            ],
-            performance_targets: PerformanceTargets {
-                max_scan_time_seconds: 45.0,
-                max_memory_usage_mb: 150.0,
-                min_throughput_files_per_sec: 75.0,
-                target_cache_hit_rate: 0.6,
+        self.profiles.insert(
+            "memory_efficient".to_string(),
+            OptimizationProfile {
+                name: "Memory Efficient".to_string(),
+                description: "Minimized memory usage for large projects".to_string(),
+                target_scenario: "Large codebases with memory constraints".to_string(),
+                enabled_optimizations: vec![
+                    "Streaming File Processing".to_string(),
+                    "Smart File Filtering".to_string(),
+                    "Memory Pool".to_string(),
+                    "Early Pattern Termination".to_string(),
+                ],
+                performance_targets: PerformanceTargets {
+                    max_scan_time_seconds: 45.0,
+                    max_memory_usage_mb: 150.0,
+                    min_throughput_files_per_sec: 75.0,
+                    target_cache_hit_rate: 0.6,
+                },
             },
-        });
+        );
     }
 
     /// Apply optimization profile to scanner configuration
     pub fn apply_profile(&mut self, profile_name: &str) -> Result<OptimizationSettings> {
-        let profile = self.profiles.get(profile_name).ok_or_else(|| {
-            anyhow::anyhow!("Optimization profile '{}' not found", profile_name)
-        })?;
+        let profile = self
+            .profiles
+            .get(profile_name)
+            .ok_or_else(|| anyhow::anyhow!("Optimization profile '{}' not found", profile_name))?;
 
         self.current_profile = profile_name.to_string();
 
         let mut settings = OptimizationSettings::default();
-        
+
         // Apply optimizations enabled in the profile
         for optimization_name in &profile.enabled_optimizations {
-            if let Some(optimization) = self.optimizations.iter().find(|o| &o.name == optimization_name) {
+            if let Some(optimization) = self
+                .optimizations
+                .iter()
+                .find(|o| &o.name == optimization_name)
+            {
                 self.apply_optimization(&mut settings, optimization)?;
             }
         }
@@ -372,59 +463,51 @@ impl PerformanceOptimizer {
     }
 
     /// Apply individual optimization to settings
-    fn apply_optimization(&self, settings: &mut OptimizationSettings, optimization: &PerformanceOptimization) -> Result<()> {
+    fn apply_optimization(
+        &self,
+        settings: &mut OptimizationSettings,
+        optimization: &PerformanceOptimization,
+    ) -> Result<()> {
         match optimization.optimization_type {
-            OptimizationType::Caching => {
-                if let Some(cache_size) = optimization.configuration.parameters.get("cache_size") {
-                    if let OptimizationParameter::Integer(size) = cache_size {
-                        settings.cache_size = *size as usize;
-                    }
-                }
-                settings.enable_caching = true;
-            },
-            OptimizationType::Parallelization => {
-                if let Some(thread_count) = optimization.configuration.parameters.get("thread_count") {
-                    if let OptimizationParameter::Integer(count) = thread_count {
-                        settings.thread_count = if *count == 0 { 
-                            num_cpus::get() 
-                        } else { 
-                            *count as usize 
-                        };
-                    }
-                }
-                settings.enable_parallel_processing = true;
-            },
-            OptimizationType::MemoryOptimization => {
-                if let Some(chunk_size) = optimization.configuration.parameters.get("chunk_size_kb") {
-                    if let OptimizationParameter::Integer(size) = chunk_size {
-                        settings.streaming_chunk_size = (*size as usize) * 1024;
-                    }
-                }
-                settings.enable_streaming = true;
-            },
-            OptimizationType::IoOptimization => {
-                settings.enable_async_io = true;
-                if let Some(readers) = optimization.configuration.parameters.get("async_readers") {
-                    if let OptimizationParameter::Integer(count) = readers {
-                        settings.async_reader_count = *count as usize;
-                    }
-                }
-            },
-            OptimizationType::AlgorithmOptimization => {
-                if let Some(max_matches) = optimization.configuration.parameters.get("max_matches_per_file") {
-                    if let OptimizationParameter::Integer(max) = max_matches {
-                        settings.max_matches_per_file = Some(*max as usize);
-                    }
-                }
-            },
-            OptimizationType::PreprocessingOptimization => {
-                settings.enable_smart_filtering = true;
-                if let Some(max_size) = optimization.configuration.parameters.get("max_file_size_mb") {
-                    if let OptimizationParameter::Integer(size) = max_size {
-                        settings.max_file_size_mb = *size as usize;
-                    }
-                }
-            },
+             OptimizationType::Caching => {
+                 if let Some(OptimizationParameter::Integer(size)) = optimization.configuration.parameters.get("cache_size") {
+                     settings.cache_size = *size as usize;
+                 }
+                 settings.enable_caching = true;
+             }
+             OptimizationType::Parallelization => {
+                 if let Some(OptimizationParameter::Integer(count)) = optimization.configuration.parameters.get("thread_count") {
+                     settings.thread_count = if *count == 0 {
+                         num_cpus::get()
+                     } else {
+                         *count as usize
+                     };
+                 }
+                 settings.enable_parallel_processing = true;
+             }
+             OptimizationType::MemoryOptimization => {
+                 if let Some(OptimizationParameter::Integer(size)) = optimization.configuration.parameters.get("chunk_size_kb") {
+                     settings.streaming_chunk_size = (*size as usize) * 1024;
+                 }
+                 settings.enable_streaming = true;
+             }
+             OptimizationType::IoOptimization => {
+                 settings.enable_async_io = true;
+                 if let Some(OptimizationParameter::Integer(count)) = optimization.configuration.parameters.get("async_readers") {
+                     settings.async_reader_count = *count as usize;
+                 }
+             }
+             OptimizationType::AlgorithmOptimization => {
+                 if let Some(OptimizationParameter::Integer(max)) = optimization.configuration.parameters.get("max_matches_per_file") {
+                     settings.max_matches_per_file = Some(*max as usize);
+                 }
+             }
+             OptimizationType::PreprocessingOptimization => {
+                 settings.enable_smart_filtering = true;
+                 if let Some(OptimizationParameter::Integer(size)) = optimization.configuration.parameters.get("max_file_size_mb") {
+                     settings.max_file_size_mb = *size as usize;
+                 }
+             }
             _ => {} // Handle other optimization types as needed
         }
 
@@ -451,26 +534,37 @@ impl PerformanceOptimizer {
             match optimization.optimization_type {
                 OptimizationType::Parallelization => {
                     // Adjust thread count based on CPU cores
-                    if let Some(thread_param) = optimization.configuration.parameters.get_mut("thread_count") {
+                    if let Some(thread_param) = optimization
+                        .configuration
+                        .parameters
+                        .get_mut("thread_count")
+                    {
                         *thread_param = OptimizationParameter::Integer(cpu_count as i64);
                     }
-                },
+                }
                 OptimizationType::Caching => {
                     // Adjust cache size based on available memory
-                    if let Some(cache_param) = optimization.configuration.parameters.get_mut("cache_size") {
-                        let recommended_cache_size = ((available_memory * 0.1) as i64).max(1000).min(50000);
+                    if let Some(cache_param) =
+                        optimization.configuration.parameters.get_mut("cache_size")
+                    {
+                        let recommended_cache_size =
+                            ((available_memory * 0.1) as i64).clamp(1000, 50000);
                         *cache_param = OptimizationParameter::Integer(recommended_cache_size);
                     }
-                },
+                }
                 OptimizationType::MemoryOptimization => {
                     // Adjust streaming parameters based on memory
                     if available_memory < 1000.0 {
                         // Low memory system - use smaller chunks
-                        if let Some(chunk_param) = optimization.configuration.parameters.get_mut("chunk_size_kb") {
+                        if let Some(chunk_param) = optimization
+                            .configuration
+                            .parameters
+                            .get_mut("chunk_size_kb")
+                        {
                             *chunk_param = OptimizationParameter::Integer(32);
                         }
                     }
-                },
+                }
                 _ => {}
             }
         }
@@ -488,47 +582,77 @@ impl PerformanceOptimizer {
     /// Generate optimization report
     pub fn generate_optimization_report(&self) -> String {
         let mut report = String::new();
-        
+
         report.push_str("🚀 Performance Optimization Report\n");
         report.push_str("==================================\n\n");
-        
+
         report.push_str(&format!("Current Profile: {}\n", self.current_profile));
-        report.push_str(&format!("Auto-optimization: {}\n", if self.auto_optimization { "Enabled" } else { "Disabled" }));
-        report.push_str("\n");
-        
+        report.push_str(&format!(
+            "Auto-optimization: {}\n",
+            if self.auto_optimization {
+                "Enabled"
+            } else {
+                "Disabled"
+            }
+        ));
+        report.push('\n');
+
         // Active optimizations
-        let active_optimizations: Vec<_> = self.optimizations.iter()
+        let active_optimizations: Vec<_> = self
+            .optimizations
+            .iter()
             .filter(|o| matches!(o.implementation_status, ImplementationStatus::Active))
             .collect();
-            
-        report.push_str(&format!("Active Optimizations ({}): \n", active_optimizations.len()));
+
+        report.push_str(&format!(
+            "Active Optimizations ({}): \n",
+            active_optimizations.len()
+        ));
         for opt in active_optimizations {
-            report.push_str(&format!("  ✅ {} ({:?} impact)\n", opt.name, opt.impact_level));
+            report.push_str(&format!(
+                "  ✅ {} ({:?} impact)\n",
+                opt.name, opt.impact_level
+            ));
             report.push_str(&format!("     {}\n", opt.description));
         }
-        report.push_str("\n");
-        
+        report.push('\n');
+
         // Available optimizations
-        let available_optimizations: Vec<_> = self.optimizations.iter()
+        let available_optimizations: Vec<_> = self
+            .optimizations
+            .iter()
             .filter(|o| matches!(o.implementation_status, ImplementationStatus::Available))
             .collect();
-            
+
         if !available_optimizations.is_empty() {
-            report.push_str(&format!("Available Optimizations ({}): \n", available_optimizations.len()));
+            report.push_str(&format!(
+                "Available Optimizations ({}): \n",
+                available_optimizations.len()
+            ));
             for opt in available_optimizations {
-                report.push_str(&format!("  🔧 {} ({:?} impact)\n", opt.name, opt.impact_level));
+                report.push_str(&format!(
+                    "  🔧 {} ({:?} impact)\n",
+                    opt.name, opt.impact_level
+                ));
                 report.push_str(&format!("     {}\n", opt.description));
             }
-            report.push_str("\n");
+            report.push('\n');
         }
-        
+
         // Profiles
         report.push_str("Optimization Profiles:\n");
         for (name, profile) in &self.profiles {
-            let status = if name == &self.current_profile { "🔄 ACTIVE" } else { "⭕ Available" };
-            report.push_str(&format!("  {} {}: {}\n", status, profile.name, profile.description));
+            let status = if name == &self.current_profile {
+                "🔄 ACTIVE"
+            } else {
+                "⭕ Available"
+            };
+            report.push_str(&format!(
+                "  {} {}: {}\n",
+                status, profile.name, profile.description
+            ));
         }
-        
+
         report
     }
 }

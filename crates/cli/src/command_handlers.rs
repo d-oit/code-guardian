@@ -56,12 +56,14 @@ pub fn handle_benchmark(path: Option<PathBuf>, quick: bool) -> Result<()> {
 }
 
 /// Handle comprehensive benchmark command with suite selection
+#[allow(dead_code)]
 pub fn handle_comprehensive_benchmark(path: Option<PathBuf>, suite: String) -> Result<()> {
     let benchmark_path = path.unwrap_or_else(|| std::env::current_dir().unwrap());
     benchmark::run_comprehensive_benchmark(&benchmark_path, &suite)
 }
 
 /// Handle performance analysis command
+#[allow(dead_code)]
 pub fn handle_performance_analysis(path: Option<PathBuf>) -> Result<()> {
     let analysis_path = path.unwrap_or_else(|| std::env::current_dir().unwrap());
     benchmark::run_performance_analysis(&analysis_path)
