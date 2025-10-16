@@ -20,18 +20,20 @@ jobs:
        with:
          fetch-depth: 0
 
-     - name: Extract changelog for release notes
-       run: |
-         VERSION=$(echo ${{ github.ref_name }} | sed 's/^v//')
-         # Extract the changelog section for this version
-         CHANGELOG_CONTENT=$(sed -n "/## \[$VERSION\]/,/^## \[/p" CHANGELOG.md | sed '$d')
-         # If no content found, use a default message
-         if [ -z "$CHANGELOG_CONTENT" ]; then
-           CHANGELOG_CONTENT="Release ${{ github.ref_name }}"
-         fi
-         echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
-         echo "$CHANGELOG_CONTENT" >> $GITHUB_ENV
-         echo "EOF" >> $GITHUB_ENV
+      - name: Install git-cliff
+        run: cargo install git-cliff
+
+      - name: Generate release notes
+        run: |
+          git cliff --tag ${{ github.ref_name }} --strip header > release_notes.md
+          CHANGELOG_CONTENT=$(cat release_notes.md)
+          # If no content found, use a default message
+          if [ -z "$CHANGELOG_CONTENT" ]; then
+            CHANGELOG_CONTENT="Release ${{ github.ref_name }}"
+          fi
+          echo "CHANGELOG_CONTENT<<EOF" >> $GITHUB_ENV
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
 
      - name: Create Release
        run: |

@@ -1,16 +1,13 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
 ## [0.1.5] - 2025-10-16
 
 ### ⚙️ Miscellaneous Tasks
 
 - Bump version to 0.1.5 for patch release
+## [0.1.6] - 2025-10-16
 
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.1.6 for patch release
 ## [0.1.4] - 2025-10-16
 
 ### 🚀 Features
@@ -33,14 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation
 
 - Update agent documentation with GOAP coordination learnings
-
 ## [0.1.3] - 2025-10-12
 
 ### 🚀 Features
 
 - Add monitoring workflow to track recent workflow failures
 - Complete GitHub workflows and branch protection
-
 ## [0.1.3-test] - 2025-10-10
 
 ### 🚀 Features
@@ -63,13 +58,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### 📚 Documentation
 
 - Optimize ci-agent.md with orchestration workflow and agent handoffs
-
 ## [0.1.2] - 2025-10-09
 
 ### 💼 Other
 
 - Bump version to 0.1.2
-
 ## [0.1.1] - 2025-10-09
 
 ### 🚀 Features
@@ -82,7 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bump version to 0.1.1
 - Bump version to 0.1.1
 - Bump version to 0.1.1
-
 ## [0.2.0] - 2025-10-09
 
 ### 🚀 Features
@@ -110,7 +102,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add git integration demo example
 - Update CHANGELOG.md
 - Add atomic-commit command documentation
-
 ## [0.1.1-alpha] - 2025-10-07
 
 ### 🐛 Bug Fixes
@@ -127,7 +118,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update changelog for v0.1.0
 - Update workflow to use GitHub artifacts for coverage instead of external services
 - Prepare for release v0.1.1-alpha
-
 ## [0.1.0] - 2025-10-06
 
 ### 🐛 Bug Fixes
