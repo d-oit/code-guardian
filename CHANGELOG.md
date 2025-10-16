@@ -5,124 +5,131 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.6] - 2025-10-16
+## [0.1.5] - 2025-10-16
 
-### Fixed
-- Minor bug fixes and improvements
+### ⚙️ Miscellaneous Tasks
+
+- Bump version to 0.1.5 for patch release
 
 ## [0.1.4] - 2025-10-16
 
-### Added
-- Complete Phase 1 & 2 quality check implementation with comprehensive test coverage
-- Enhanced release-please configuration for automatic changelog generation
-- GOAP Phase 3 long-term CI/CD optimization system
-- GOAP Phase 1-2 quality check optimization framework
+### 🚀 Features
 
-### Fixed
-- Release workflow YAML formatting issues
-- Cross-workspace formatting inconsistencies
-- Test reference and integration test configuration
-- Clippy warnings and code quality issues
+- GOAP Phase 1-2 Quality Check Optimization
+- GOAP Phase 3 Complete - Long-term CI/CD Optimizations
+- Enhance release-please configuration for automatic changelog generation
+- Complete Phase 1 & 2 implementation - Quality checks and comprehensive test coverage
+- Complete Phase 1 & 2 implementation - Quality checks and comprehensive test coverage
+- Add Phase 3 optimization files and documentation
 
-### Changed
-- Updated agent documentation with GOAP coordination learnings
-- Improved project structure and cleanup of temporary files
+### 🐛 Bug Fixes
 
-## [0.1.3] - 2025-10-13
+- Update changelog for v0.1.3 and fix release workflow YAML formatting
 
-### Added
-- Complete GitHub workflows and branch protection configuration
-- Monitoring workflow to track recent workflow failures
-- Comprehensive development tooling with Makefile targets
-- Code quality automation with cross-platform CI compatibility
-- Incremental quality check script for faster development workflow
-- Branch protection setup script with quality gates enforcement
-- Issue and PR templates for better project management
-- Dev container configuration for consistent development environment
-- Cargo configuration for faster builds with optimized settings
-- GOAP coordination system for quality check optimization
+### 💼 Other
 
-### Fixed
-- YAML indentation issues in GitHub Actions workflows
-- Cross-platform compatibility in CI workflows
-- Invalid --fail-under option in cargo llvm-cov configuration
-- CI workflow formatting and code quality issues
-- Applied cargo fmt formatting to resolve CI issues
+- Remove temporary GOAP coordination files
 
-### Changed
-- Optimized development workflow with comprehensive tooling
-- Enhanced CI-agent documentation with orchestration workflow
-- Updated GitHub Actions workflows for better reliability
-- Improved code quality automation and validation processes
+### 📚 Documentation
+
+- Update agent documentation with GOAP coordination learnings
+
+## [0.1.3] - 2025-10-12
+
+### 🚀 Features
+
+- Add monitoring workflow to track recent workflow failures
+- Complete GitHub workflows and branch protection
+
+## [0.1.3-test] - 2025-10-10
+
+### 🚀 Features
+
+- Add comprehensive code quality automation
+- Optimize development workflow with comprehensive tooling
+- Enhance Makefile with comprehensive development targets
+
+### 🐛 Bug Fixes
+
+- Apply cargo fmt formatting
+- Apply formatting and improve CI workflow
+- Make CI workflow cross-platform compatible
+- Apply cargo fmt formatting to fix CI issues
+- Remove invalid --fail-under option from cargo llvm-cov
+- Update GitHub Actions workflows and code fixes
+- Correct YAML indentation in ci.yml
+- Correct indentation in coverage job
+
+### 📚 Documentation
+
+- Optimize ci-agent.md with orchestration workflow and agent handoffs
 
 ## [0.1.2] - 2025-10-09
 
-### Fixed
-- GitHub Actions release workflow binary name mismatch (code-guardian-cli vs code_guardian_cli)
-- Duplicate anyhow import in monitoring module
-- Syntax error in CLI main.rs tracing initialization
+### 💼 Other
 
-### Added
-- Automatic changelog integration in release workflow
-- Enhanced release descriptions from CHANGELOG.md
-- Comprehensive workflow issue analysis and documentation
-
-### Changed
-- Release workflow now extracts and uses proper changelog content
-- Improved error handling in release process
-- Updated existing v0.1.1 release with proper description
-- Bump version to 0.1.1
+- Bump version to 0.1.2
 
 ## [0.1.1] - 2025-10-09
 
-### Added
-- Git CLI commands and GitIntegration module for repository operations
-- Dev container configuration
+### 🚀 Features
 
-### Fixed
-- Text formatter for cross-platform compatibility
-- Test updates for match data checking
-- Removed enforce_styling from text formatter
+- Enhance CLI with advanced handlers and scan updates
+- Add core modules for caching and monitoring
 
-### Changed
-- CI agent tools updates and lib.rs cleanups
-- Documentation updates including atomic-commit command and git integration demo
+### 💼 Other
+
+- Bump version to 0.1.1
+- Bump version to 0.1.1
+- Bump version to 0.1.1
+
+## [0.2.0] - 2025-10-09
+
+### 🚀 Features
+
+- Enhance text formatter test with header assertions and add dev container configuration
+- Add GitIntegration module for repository operations
+- Add Git CLI commands and refactor stack preset handler
+
+### 🐛 Bug Fixes
+
+- Resolve CI and release workflow issues for v0.1.1-alpha
+- Remove insta snapshot test and add context7 mcp agent
+- Remove border assertions from text formatter test for cross-platform compatibility
+- Remove enforce_styling from text formatter
+- Update test to check match data instead of headers
+- Change text formatter to simple text output for cross-platform compatibility
+
+### 💼 Other
+
+- Update ci-agent tools and add lib.rs cleanups
+- Bump version to 0.2.0
+
+### 📚 Documentation
+
+- Add git integration demo example
+- Update CHANGELOG.md
+- Add atomic-commit command documentation
 
 ## [0.1.1-alpha] - 2025-10-07
 
-### Added
-- Add best practice GitHub Ruleset JSON
-- Update various components, add production handlers, examples, and remove plans file
+### 🐛 Bug Fixes
 
-### Fixed
-- Fix YAML indentation in docs workflow
-- Fix docs deployment: add index.html for workspace docs
-- Remove target from cache to fix stale docs builds
-- Add Codecov token to resolve rate limit issue
 - Address clippy warnings for len_zero and unused_variables
+- Add Codecov token to resolve rate limit issue
 
-### Changed
-- Update workflow to use GitHub artifacts for coverage instead of external services
+### 📚 Documentation
+
 - Enhance release command documentation with branch sync, dry-run, and best practices
-- Update project files and dependencies
 
-## [0.1.0-alpha] - 2025-10-06
+### ⚙️ Miscellaneous Tasks
 
-### Added
-- Initial alpha release of Code Guardian, a comprehensive code scanning and analysis tool.
-- **CLI Crate**: Command-line interface with handlers for scanning, reporting, benchmarking, and advanced operations.
-- **Core Crate**: Core scanning engine featuring:
-  - Built-in detectors for common code issues.
-  - Support for custom detectors via JSON configuration.
-  - Distributed scanning for large codebases.
-  - Incremental scanning to optimize performance.
-  - Enhanced configuration options.
-  - Performance monitoring and optimizations.
-- **Output Crate**: Multiple output formatters including CSV, HTML, JSON, Markdown, and plain text.
-- **Storage Crate**: Database-backed storage with initial schema migrations for persistent data management.
-- Comprehensive documentation including tutorials for getting started, advanced usage, automation, and custom detectors.
-- Example configurations and detector files to help users get started.
-- CI/CD workflows for continuous integration, documentation generation, and automated releases.
-- Agent-based development system for collaborative and automated code management.
-- Benchmarks and performance tests to ensure optimal scanning speed.
-- Test suites across crates for reliability and code quality.
+- Update changelog for v0.1.0
+- Update workflow to use GitHub artifacts for coverage instead of external services
+- Prepare for release v0.1.1-alpha
+
+## [0.1.0] - 2025-10-06
+
+### 🐛 Bug Fixes
+
+- Format code with cargo fmt
