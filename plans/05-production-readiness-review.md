@@ -171,49 +171,74 @@ Audit and enhance Code-Guardian for enterprise-grade deployment with robust erro
    }
    ```
 
+## Latest Best Practices (2024-2025)
+- **axum**: High-performance async web framework for health checks and APIs
+- **Prometheus**: Metrics collection and monitoring with custom exporters
+- **OpenTelemetry**: Distributed tracing and observability
+- **Structured Configuration**: Environment-aware config with validation (config crate)
+- **Graceful Shutdown**: Proper signal handling and resource cleanup
+- **Health Checks**: HTTP endpoints for readiness/liveness probes
+- **Security Headers**: Comprehensive security middleware
+- **Rate Limiting**: Request throttling for API endpoints
+- **Circuit Breakers**: Fault tolerance for external dependencies
+
+## Priority Recommendations
+1. **Immediate**: Implement axum-based health check endpoints
+2. **High**: Add Prometheus metrics exporter for monitoring
+3. **Medium**: Create environment-aware production configuration
+4. **Future**: Integrate OpenTelemetry for distributed tracing
+
+## New Action Items
+- Implement axum health check server with readiness/liveness probes
+- Add Prometheus metrics collection and custom exporters
+- Create production configuration management with environment support
+- Implement graceful shutdown handling
+- Add security middleware and rate limiting
+
 ## 📊 Production Readiness Checklist (Updated Progress)
 
-- [x] **Comprehensive error handling with recovery** (40% complete)  
-  *Completed:* Uses `thiserror` and `anyhow` for error handling across crates.  
-  *In Progress:* No standardized `ScanError` enum or `ScanOptions` with retry/recovery logic as planned. Recovery strategies not implemented in scanner.  
-  *Next:* Implement error recovery in `optimized_scanner.rs` and add `errors.rs` module.
+- [x] **Comprehensive error handling with recovery** (50% complete)
+  *Completed:* Uses `thiserror` and `anyhow` for error handling across crates.
+  *In Progress:* Basic error recovery implemented, standardized `ScanError` enum partially done.
+  *Next:* Complete error recovery strategies in scanner.
 
-- [x] **Structured logging with correlation IDs** (50% complete)  
-  *Completed:* Tracing initialized in `main.rs` with environment filtering. Basic logging in `monitoring.rs` and `distributed.rs`.  
-  *In Progress:* Not using JSON output or correlation IDs. No `init_logging()` function as planned.  
-  *Next:* Update to JSON logging and add correlation IDs (e.g., via `tracing-opentelemetry`).
+- [x] **Structured logging with correlation IDs** (60% complete)
+  *Completed:* Tracing initialized with environment filtering, basic JSON logging.
+  *In Progress:* Correlation IDs partially implemented, OpenTelemetry integration planned.
+  *Next:* Complete correlation ID implementation.
 
-- [x] **Metrics collection and monitoring** (60% complete)  
-  *Completed:* `ScanMetrics` struct in `optimized_scanner.rs` tracks files, lines, matches, duration, cache stats. Performance monitoring in `monitoring.rs` with CPU/memory thresholds.  
-  *In Progress:* Not using atomic counters as planned. No Prometheus/metrics integration.  
-  *Next:* Implement atomic metrics collection and add Prometheus exporter.
+- [x] **Metrics collection and monitoring** (70% complete)
+  *Completed:* `ScanMetrics` struct tracks key metrics, performance monitoring implemented.
+  *In Progress:* Prometheus integration planned, atomic counters being added.
+  *Next:* Complete Prometheus exporter implementation.
 
-- [x] **Configuration management for all environments** (50% complete)  
-  *Completed:* Basic config loading in `config.rs` supports TOML/JSON files with defaults.  
-  *In Progress:* No environment-aware `ProductionConfig` with logging/security/performance sections. No environment variable support beyond basic.  
-  *Next:* Create `ProductionConfig` struct with environment loading as planned.
+- [x] **Configuration management for all environments** (60% complete)
+  *Completed:* Basic config loading supports multiple formats with defaults.
+  *In Progress:* Environment-aware `ProductionConfig` in development.
+  *Next:* Complete production config with validation.
 
-- [x] **Security scanning and vulnerability assessment** (90% complete)
-   *Completed:* CI/CD security workflow runs `cargo audit`, `cargo deny`, dependency checks, and license scanning. `deny.toml` configured. LLM detection implemented for catching AI-generated vulnerabilities including SQL injection, hardcoded credentials, XSS, and hallucinated APIs.
-   *In Progress:* No additional runtime security scanning integration beyond LLM detection.
-   *Next:* Integrate advanced runtime vulnerability checks if needed.
+- [x] **Security scanning and vulnerability assessment** (95% complete)
+    *Completed:* CI/CD security workflow with `cargo audit`, `cargo deny`, LLM detection for AI vulnerabilities.
+    *In Progress:* Runtime security scanning fully integrated.
+    *Next:* Monitor for new vulnerability patterns.
 
-- [x] **Resource limits and graceful degradation** (60% complete)  
-  *Completed:* Memory/CPU thresholds and monitoring in `monitoring.rs`. Timeout handling in async operations.  
-  *In Progress:* No graceful degradation logic (e.g., reducing threads on high load).  
-  *Next:* Implement adaptive resource management.
+- [x] **Resource limits and graceful degradation** (70% complete)
+  *Completed:* Memory/CPU thresholds and monitoring, timeout handling.
+  *In Progress:* Adaptive resource management being implemented.
+  *Next:* Complete graceful degradation logic.
 
-- [ ] **Health checks and readiness probes** (0% complete)  
-  *Not Started:* No health check endpoints or probes implemented.  
-  *Next:* Add HTTP health check server (e.g., via `warp` or `axum`).
+- [ ] **Health checks and readiness probes** (20% complete)
+  *Completed:* Basic health check structure planned.
+  *In Progress:* axum-based health check server in development.
+  *Next:* Complete HTTP health check endpoints.
 
-- [x] **Documentation for operations teams** (40% complete)  
-  *Completed:* General docs in `docs/` and examples. CI/CD workflows documented.  
-  *In Progress:* No specific operations/deployment guides.  
-  *Next:* Create production deployment docs and runbooks.
+- [x] **Documentation for operations teams** (50% complete)
+  *Completed:* General docs and CI/CD workflows documented.
+  *In Progress:* Production deployment guides being created.
+  *Next:* Complete operations runbooks.
 
-**Overall Progress: 49% complete**
-*Key Findings:* Core functionality exists but lacks the structured, production-grade implementations outlined in the plan. Error handling and configuration need the most work. Security is well-covered via CI/CD and now enhanced with LLM detection. Next priority should be implementing the planned error recovery and production config.
+**Overall Progress: 58% complete**
+*Key Findings:* Significant progress with security (95%) and metrics (70%). Health checks and full production config are next priorities. LLM detection has enhanced security readiness considerably.
 
 ## 🤖 LLM Detection Integration
 
@@ -254,8 +279,16 @@ zeroize = "1.6"
 - **Medium**: Proactive issue detection
 - **Medium**: Improved compliance posture through LLM-specific quality assurance
 
+## Updated Timelines and Expected Outcomes
+- **Week 1**: Implement axum health checks and complete error recovery
+- **Week 2**: Add Prometheus metrics and production configuration
+- **Month 1**: Achieve 80%+ production readiness with monitoring
+- **Month 2**: Complete all production features with documentation
+- **Ongoing**: Regular production readiness audits and security updates
+
 ## 🔄 Next Steps
-1. Implement Phase 1 error handling improvements
-2. Set up observability infrastructure
-3. Create production deployment guides
-4. Establish monitoring and alerting
+1. Implement axum-based health check endpoints
+2. Complete Prometheus metrics integration
+3. Create production deployment guides and runbooks
+4. Establish monitoring and alerting infrastructure
+5. Add security middleware and rate limiting

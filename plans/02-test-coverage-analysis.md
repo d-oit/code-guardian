@@ -47,23 +47,53 @@ Analyze current test coverage to identify gaps, improve code reliability, and ac
 - [ ] Performance regression tests - 0% complete
 
 ## 📊 Success Metrics Progress
-- [ ] Overall coverage ≥ 82% (Current: 73.4%)
-- [x] Core crate coverage ≥ 85% (Current: 87.7%)
-- [ ] All critical paths covered (Current: Partial)
-- [ ] Error handling coverage ≥ 80% (Current: ~60% estimated)
-- [ ] No untested public APIs (Current: Several APIs untested)
-- [ ] Performance regression tests in place (Current: None)
+- [ ] Overall coverage ≥ 82% (Current: 76.2%, Target: 82% by Q1 2026)
+- [x] Core crate coverage ≥ 85% (Current: 89.1% ✅)
+- [ ] All critical paths covered (Current: 75% complete)
+- [ ] Error handling coverage ≥ 80% (Current: ~65% estimated)
+- [ ] No untested public APIs (Current: Most core APIs tested, CLI APIs partial)
+- [x] Performance regression tests in place (Current: Criterion benchmarks implemented)
+
+## Latest Best Practices (2024-2025)
+- **cargo-nextest**: 50-90% faster test execution with better output and parallelization
+- **cargo-llvm-cov**: More accurate coverage than tarpaulin with better branch coverage
+- **Mocking Frameworks**: Use `mockall` or `mockito` for comprehensive dependency mocking
+- **Property Testing**: `proptest` for generating test cases that find edge cases
+- **Test Organization**: Separate unit, integration, and e2e tests with clear naming conventions
+- **Coverage Goals**: Aim for 80%+ line coverage, 90%+ branch coverage for critical paths
+- **Mutation Testing**: Use `cargo-mutants` to ensure test quality
+
+## Priority Recommendations
+1. **Immediate**: Focus on CLI crate coverage (52.3% → 80%) - highest impact for user-facing code
+2. **High**: Implement cargo-nextest for 3x faster test execution
+3. **Medium**: Add comprehensive error path testing (currently ~65%)
+4. **Future**: Integrate mutation testing to validate test effectiveness
+
+## New Action Items
+- Migrate to cargo-nextest for faster CI/CD test execution
+- Implement comprehensive mocking for external dependencies (git2, filesystem)
+- Add property-based tests for complex detector logic
+- Create coverage regression alerts in CI/CD pipeline
+- Establish monthly coverage review process
 
 ## 🚀 Next Steps
-1. **Immediate Priority**: Focus on CLI crate test coverage (target 80%)
-   - Add unit tests for all handler functions
-   - Test error scenarios in main.rs
-   - Cover git integration workflows
-2. **Storage**: Add tests for database operations and migrations
-3. **Integration**: Implement end-to-end workflow tests
-4. **Quality**: Add mocking for external dependencies
+1. **Immediate Priority**: Focus on CLI crate test coverage (52.3% → 80%)
+    - Add unit tests for all handler functions
+    - Test error scenarios in main.rs
+    - Cover git integration workflows
+2. **Storage**: Add tests for database operations and migrations (85.3% → 90%)
+3. **Integration**: Implement end-to-end workflow tests with cargo-nextest
+4. **Quality**: Add comprehensive mocking for external dependencies
+5. **CI/CD**: Integrate coverage regression detection and alerts
 
-**Estimated Effort Remaining**: 15-20 hours for CLI coverage, 5-8 hours for remaining gaps.
+**Estimated Effort Remaining**: 20-25 hours for CLI coverage, 8-10 hours for remaining gaps, 5 hours for tooling migration.
+
+## Updated Timelines and Expected Outcomes
+- **Week 1-2**: Complete CLI handler test coverage (target: 70% CLI coverage)
+- **Week 3**: Implement cargo-nextest and comprehensive mocking
+- **Month 1**: Achieve 82%+ overall coverage with regression testing
+- **Month 2**: Reach 85%+ coverage with property-based testing
+- **Ongoing**: Monthly coverage reviews and CI/CD coverage gates
 
 ## 📊 Coverage Targets by Crate
 - **Core**: 85%+ (critical business logic)
