@@ -10,7 +10,10 @@ fn test_formatter_performance_with_large_datasets() {
             line_number: i,
             column: i % 100,
             pattern: format!("PATTERN_{}", i % 10),
-            message: format!("Message number {} with some additional text to make it longer", i),
+            message: format!(
+                "Message number {} with some additional text to make it longer",
+                i
+            ),
         })
         .collect();
 
@@ -26,16 +29,33 @@ fn test_formatter_performance_with_large_datasets() {
         let start = Instant::now();
         let output = formatter.format(&large_matches);
         let duration = start.elapsed();
-        
+
         // Performance should be reasonable (less than 1 second for 1000 matches)
-        assert!(duration.as_secs() < 1, "Formatter {} took too long: {:?}", name, duration);
-        
+        assert!(
+            duration.as_secs() < 1,
+            "Formatter {} took too long: {:?}",
+            name,
+            duration
+        );
+
         // Output should not be empty
-        assert!(!output.is_empty(), "Formatter {} produced empty output", name);
-        
+        assert!(
+            !output.is_empty(),
+            "Formatter {} produced empty output",
+            name
+        );
+
         // Should contain data from first and last match
-        assert!(output.contains("file_0.rs"), "Formatter {} missing first file", name);
-        assert!(output.contains("file_999.rs"), "Formatter {} missing last file", name);
+        assert!(
+            output.contains("file_0.rs"),
+            "Formatter {} missing first file",
+            name
+        );
+        assert!(
+            output.contains("file_999.rs"),
+            "Formatter {} missing last file",
+            name
+        );
     }
 }
 
@@ -62,18 +82,16 @@ fn test_memory_efficiency() {
 
 #[test]
 fn test_concurrent_usage() {
-    use std::thread;
     use std::sync::Arc;
+    use std::thread;
 
-    let matches = Arc::new(vec![
-        Match {
-            file_path: "concurrent_test.rs".to_string(),
-            line_number: 1,
-            column: 1,
-            pattern: "TODO".to_string(),
-            message: "Concurrent access test".to_string(),
-        }
-    ]);
+    let matches = Arc::new(vec![Match {
+        file_path: "concurrent_test.rs".to_string(),
+        line_number: 1,
+        column: 1,
+        pattern: "TODO".to_string(),
+        message: "Concurrent access test".to_string(),
+    }]);
 
     let handles: Vec<_> = (0..10)
         .map(|i| {
@@ -105,15 +123,13 @@ fn test_concurrent_usage() {
 
 #[test]
 fn test_formatter_consistency_across_runs() {
-    let matches = vec![
-        Match {
-            file_path: "consistency_test.rs".to_string(),
-            line_number: 42,
-            column: 10,
-            pattern: "TODO".to_string(),
-            message: "Consistency test message".to_string(),
-        }
-    ];
+    let matches = vec![Match {
+        file_path: "consistency_test.rs".to_string(),
+        line_number: 42,
+        column: 10,
+        pattern: "TODO".to_string(),
+        message: "Consistency test message".to_string(),
+    }];
 
     let formatters: Vec<Box<dyn Formatter>> = vec![
         Box::new(JsonFormatter),
@@ -128,7 +144,7 @@ fn test_formatter_consistency_across_runs() {
         let output1 = formatter.format(&matches);
         let output2 = formatter.format(&matches);
         let output3 = formatter.format(&matches);
-        
+
         assert_eq!(output1, output2, "Formatter should be deterministic");
         assert_eq!(output2, output3, "Formatter should be deterministic");
     }

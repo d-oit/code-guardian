@@ -118,8 +118,11 @@ impl IncrementalScanner {
                         files_modified += 1;
                     }
 
-                    // Scan the file
-                    let content = std::fs::read_to_string(&file_path)?;
+                    // Scan the file - skip if not valid UTF-8 (like binary files)
+                    let content = match std::fs::read_to_string(&file_path) {
+                        Ok(content) => content,
+                        Err(_) => continue, // Skip files that can't be read as UTF-8
+                    };
                     let file_matches: Vec<Match> = self
                         .detectors
                         .iter()

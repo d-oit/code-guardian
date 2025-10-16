@@ -1,0 +1,125 @@
+# Optimized build configurations for Code Guardian
+
+[build]
+# Enable incremental compilation for faster rebuilds
+incremental = true
+
+# Build cache settings
+target-dir = "target"
+
+# Enable parallel rustc
+# rustc-wrapper = "sccache"  # Optional: requires sccache installation
+
+# Use faster linker when available
+# [target.x86_64-unknown-linux-gnu]
+# linker = "clang"
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+# [target.x86_64-apple-darwin]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+# [target.x86_64-pc-windows-msvc]
+# linker = "rust-lld.exe"
+
+# Cargo aliases for common development tasks
+[alias]
+# Fast development check (no clippy)
+quick = "check --all-targets"
+
+# Fast test run (unit tests only)
+test-fast = "test --lib"
+
+# Fast build for development
+dev-build = "build --workspace"
+
+# Release build with full optimization
+release-build = "build --release --workspace"
+
+# Clean and rebuild everything
+fresh = ["clean", "build", "--workspace"]
+
+# Profile compilation times
+time = "build --timings"
+
+# Check dependencies for security issues
+audit = "audit"
+
+# Update dependencies
+update-deps = "update"
+
+# Format, lint, and test in sequence
+quality = ["fmt", "clippy", "test"]
+
+# Development profile optimizations
+[profile.dev]
+# Optimize dependencies but not our code for faster builds
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+lto = false
+panic = 'unwind'
+incremental = true
+codegen-units = 256  # More codegen units for parallel compilation
+
+# Optimize dependencies for better development experience
+[profile.dev.package."*"]
+opt-level = 2
+debug = false
+
+# Fast development profile (even faster builds)
+[profile.dev-fast]
+inherits = "dev"
+opt-level = 0
+debug = false  # No debug info for faster builds
+debug-assertions = false
+overflow-checks = false
+incremental = true
+codegen-units = 256
+
+# Test profile optimizations
+[profile.test]
+opt-level = 1  # Some optimization for faster test execution
+debug = true
+debug-assertions = true
+overflow-checks = true
+incremental = true
+
+# Release profile optimizations
+[profile.release]
+opt-level = 3      # Maximum optimization
+debug = false      # No debug info in release
+debug-assertions = false
+overflow-checks = false
+lto = "fat"        # Full link-time optimization
+panic = 'abort'    # Smaller binary size
+codegen-units = 1  # Better optimization
+strip = true       # Strip symbols for smaller binary
+
+# Production release profile
+[profile.release-prod]
+inherits = "release"
+opt-level = "s"    # Optimize for size
+lto = "fat"
+panic = 'abort'
+strip = true
+
+# Benchmark profile
+[profile.bench]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+lto = "fat"
+codegen-units = 1
+
+# Git fetch optimization
+[net]
+retry = 3
+git-fetch-with-cli = true
+
+# HTTP timeout settings
+[http]
+timeout = 30
+multiplexing = true
+user-agent = "code-guardian (rust-cargo)"

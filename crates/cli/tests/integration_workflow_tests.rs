@@ -574,7 +574,7 @@ fn metrics_test() {
 #[cfg(test)]
 mod cross_crate_integration_tests {
     use super::*;
-    use code_guardian_core::{Scanner, DetectorFactory};
+    use code_guardian_core::{DetectorFactory, Scanner};
     use code_guardian_output::formatters::{JsonFormatter, TextFormatter};
     use code_guardian_output::Formatter;
 
