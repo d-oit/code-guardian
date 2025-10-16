@@ -28,7 +28,7 @@ tools:
   edit: false
   glob: false
   task: false
-temperature: 0.7
+
 ---
 ## Overview
 The Perplexity Researcher Deep specializes in thorough, exhaustive research requiring extensive multi-source analysis and comprehensive coverage. This variant prioritizes depth and completeness over brevity, making it ideal for producing detailed reports, white papers, and comprehensive documentation.

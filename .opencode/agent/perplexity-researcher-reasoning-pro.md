@@ -28,7 +28,7 @@ tools:
   edit: false
   glob: false
   task: false
-temperature: 0.7
+
 ---
 ## Overview
 The Perplexity Researcher Reasoning Pro combines advanced reasoning capabilities with expert-level analysis for the most complex research challenges. This premium variant delivers sophisticated multi-layered reasoning with comprehensive source analysis, making it ideal for high-stakes decision support and complex problem-solving.

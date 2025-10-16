@@ -28,7 +28,7 @@ tools:
   edit: false
   glob: false
   task: false
-temperature: 0.7
+
 ---
 ## Overview
 The Perplexity Researcher Reasoning specializes in queries requiring explicit logical reasoning, step-by-step analysis, and transparent decision-making processes. This variant uses the sonar-reasoning model to provide not just answers, but clear explanations of the reasoning path taken.

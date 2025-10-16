@@ -28,7 +28,7 @@ tools:
   edit: false
   glob: false
   task: false
-temperature: 0.7
+
 ---
 ## Overview
 The Perplexity Researcher provides comprehensive search and analysis capabilities using Perplexity AI's sonar model. This agent excels at gathering information from multiple sources, synthesizing findings, and delivering well-structured answers with proper citations.

@@ -28,7 +28,7 @@ tools:
   edit: false
   glob: false
   task: false
-temperature: 0.7
+
 ---
 ## Overview
 The Perplexity Researcher Pro leverages the advanced sonar-pro model for complex research requiring deeper analysis, multi-step reasoning, and sophisticated source evaluation. This enhanced variant provides superior synthesis capabilities for technical, academic, and specialized domain queries.
