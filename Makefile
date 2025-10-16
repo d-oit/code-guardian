@@ -110,7 +110,14 @@ release: ## Create a new release (requires version argument)
 		echo "❌ Error: Please specify version with 'make release version=X.Y.Z'"; \
 		exit 1; \
 	fi
+	@echo "Installing git-cliff..."
+	cargo install git-cliff
+	@echo "Updating CHANGELOG.md..."
+	git cliff --latest --tag v$(version) --prepend CHANGELOG.md
+	git add CHANGELOG.md
+	git commit -m "chore: update changelog for v$(version)" || echo "No changes to commit"
 	git tag -a v$(version) -m "Release v$(version)"
+	git push origin HEAD
 	git push origin v$(version)
 	@echo "✅ Release v$(version) created"
 
