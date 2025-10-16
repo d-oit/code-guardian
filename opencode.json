@@ -1,8 +1,6 @@
 {
     "$schema": "https://opencode.ai/config.json",
-    "agent": {
-      
-    },
+    "agent": {},
     "provider": {
         "nvidia": {
             "models": {
@@ -10,7 +8,19 @@
                     "name": "deepseek-v3.1-terminus"
                 }
             }
-        }        
+        },
+        "perplexity": {
+            "npm": "@ai-sdk/perplexity",
+            "name": "Perplexity AI",
+            "options": {
+                "baseURL": "https://api.perplexity.ai"
+            },
+            "models": {
+                "sonar-deep-research": {
+                    "name": "Perplexity Sonar Deep Research",
+                },
+            }
+        }
     },
     "mcp": {
         "context7": {
