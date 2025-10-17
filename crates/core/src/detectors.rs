@@ -1,4 +1,5 @@
 use crate::{Match, PatternDetector};
+use aho_corasick::AhoCorasick;
 use anyhow::Result;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -47,7 +48,7 @@ fn detect_pattern_with_context(
     pattern_name: &str,
     re: &Regex,
 ) -> Vec<Match> {
-    let mut matches = Vec::new();
+    let mut matches = smallvec::SmallVec::<[Match; 4]>::new();
     for (line_idx, line) in content.lines().enumerate() {
         for mat in re.find_iter(line) {
             // Extract more context around the match
@@ -64,7 +65,7 @@ fn detect_pattern_with_context(
             });
         }
     }
-    matches
+    matches.into_vec()
 }
 
 /// Default detector for TODO comments (case-insensitive)
@@ -424,6 +425,85 @@ impl CustomPatternDetector {
 impl PatternDetector for CustomPatternDetector {
     fn detect(&self, content: &str, file_path: &Path) -> Vec<Match> {
         detect_pattern_with_context(content, file_path, &self.name, &self.regex)
+    }
+}
+
+/// High-performance detector using Aho-Corasick algorithm for multiple pattern matching
+pub struct HighPerformanceDetector {
+    pattern_names: Vec<String>,
+    ac: AhoCorasick,
+}
+
+impl HighPerformanceDetector {
+    /// Creates a new high-performance detector with the given patterns
+    pub fn new(patterns: Vec<(&str, &str)>) -> Result<Self> {
+        let (pattern_names, pattern_strings): (Vec<String>, Vec<String>) = patterns
+            .into_iter()
+            .map(|(name, pattern)| (name.to_string(), pattern.to_string()))
+            .unzip();
+
+        let ac = AhoCorasick::new(&pattern_strings)?;
+
+        Ok(Self { pattern_names, ac })
+    }
+
+    /// Creates a detector for common TODO/FIXME patterns
+    pub fn for_common_patterns() -> Self {
+        let patterns = vec![
+            ("TODO", r"(?i)todo"),
+            ("FIXME", r"(?i)fixme"),
+            ("HACK", r"(?i)hack"),
+            ("BUG", r"(?i)bug"),
+            ("XXX", r"XXX"),
+            ("NOTE", r"(?i)note"),
+            ("WARNING", r"(?i)warning"),
+            ("PANIC", r"panic!"),
+            ("UNWRAP", r"\.unwrap\(\)"),
+            ("UNSAFE", r"unsafe\s+\{"),
+            ("DEBUG", r"(?i)debug"),
+            ("TEST", r"(?i)test"),
+            ("PHASE", r"(?i)phase\s*[0-9]+"),
+            ("CONSOLE_LOG", r"console\.(log|debug|info|warn|error)"),
+            ("PRINT", r"print|println|echo"),
+            ("ALERT", r"alert\(|confirm\(|prompt\("),
+            ("DEBUGGER", r"debugger|pdb\.set_trace"),
+        ];
+
+        Self::new(patterns).unwrap()
+    }
+}
+
+impl PatternDetector for HighPerformanceDetector {
+    fn detect(&self, content: &str, file_path: &Path) -> Vec<Match> {
+        let mut matches = Vec::new();
+
+        for mat in self.ac.find_iter(content) {
+            let pattern_id = mat.pattern();
+            let pattern_name = &self.pattern_names[pattern_id.as_usize()];
+
+            // Extract context around the match
+            let start = mat.start().saturating_sub(15);
+            let end = (mat.end() + 25).min(content.len());
+            let context = &content[start..end];
+
+            // Find the line number
+            let line_start = content[..mat.start()]
+                .rfind('\n')
+                .map(|pos| pos + 1)
+                .unwrap_or(0);
+            let line_number = content[..line_start].lines().count() + 1;
+            let column = mat.start() - line_start + 1;
+
+            matches.push(Match {
+                file_path: file_path.to_string_lossy().to_string(),
+                line_number,
+                column,
+                pattern: pattern_name.clone(),
+                message: format!("{}: {}", pattern_name, context.trim()),
+            });
+        }
+
+        matches
     }
 }
 
