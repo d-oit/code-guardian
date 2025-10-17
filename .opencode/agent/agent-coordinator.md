@@ -361,7 +361,7 @@ For example:
   </commentary>
 </example>
 
-- **hive-mind-orchestrator**: Use this agent when coordinating multiple specialized agents for complex, multi-step tasks requiring swarm intelligence, such as collaborative problem-solving, dynamic handoffs between agents, or adaptive workflow orchestration. This includes scenarios where tasks involve interdependent subtasks that benefit from collective decision-making and real-time adjustments. Examples include: <example> Context: The user is developing a multi-agent system for automated code generation and review. user: "Generate a full-stack web app with user authentication and database integration, then review the code." assistant: "I'll launch the hive-mind-orchestrator agent to coordinate the code-generator, database-agent, and code-reviewer agents for this complex task." <commentary> Since the task requires coordination of multiple agents with handoffs (e.g., generate code, integrate database, then review), use the hive-mind-orchestrator to manage the swarm and ensure seamless transitions. </commentary> </example> <example> Context: User is building an AI-driven project management tool that needs proactive agent interactions. user: "Set up a project plan for a new software release." assistant: "To handle this, I'll use the Task tool to launch the hive-mind-orchestrator agent, which will coordinate the goap-planner, build-agent, and testing-agent in a swarm for adaptive planning." <commentary> The orchestrator should proactively initiate handoffs, such as from planning to building, using swarm intelligence to optimize the workflow based on agent outputs. </commentary> </example> <example> Context: Handling a failed agent handoff in a code review process. user: "Review the generated code and fix issues." assistant: "If the reviewer agent fails, relaunch with adjusted parameters or escalate." <commentary> Edge case: Implement retry mechanisms for failed handoffs. </commentary> </example> <example> Context: Optimizing a workflow with conflicting agent outputs. user: "Optimize the code for performance." assistant: "Aggregate suggestions from multiple agents and resolve conflicts via consensus." <commentary> More examples: Handle conflicts in swarm intelligence. </commentary> </example>
+- **hive-mind-orchestrator**: Use this agent when coordinating multiple specialized agents for complex, multi-step tasks requiring swarm intelligence, such as collaborative problem-solving, dynamic handoffs between agents, or adaptive workflow orchestration. This includes scenarios where tasks involve interdependent subtasks that benefit from collective decision-making and real-time adjustments. Examples include: <example> Context: The user is developing a multi-agent system for automated code generation and review. user: "Generate a full-stack web app with user authentication and database integration, then review the code." assistant: "I'll launch the hive-mind-orchestrator agent to coordinate the code-generator, database-agent, and code-reviewer agents for this complex task." <commentary> Since the task requires coordination of multiple agents with handoffs (e.g., generate code, integrate database, then review), use the hive-mind-orchestrator to manage the swarm and ensure seamless transitions. </commentary> </example> <example> Context: User is building an AI-driven project management tool that needs proactive agent interactions. user: "Set up a project plan for a new software release." assistant: "To handle this, I'll use the Task tool to launch the hive-mind-orchestrator agent, which will coordinate the goap-planner, build-agent, and testing-agent in a swarm for adaptive planning." <commentary> The orchestrator should proactively initiate handoffs, such as from planning to building, using swarm intelligence to optimize the workflow based on agent outputs. </commentary> </example> <example> Context: Handling a failed agent handoff in a code review process. user: "Review the generated code and fix issues." assistant: "If the reviewer agent fails, relaunch with adjusted parameters or escalate." <commentary> Edge case: Implement retry mechanisms for failed handoffs. </commentary> </example> <example> Context: Optimizing a workflow with conflicting agent outputs. us...
 
 - **opencode-agent-manager**: Use this agent when you need to update existing .md files or create new ones in the .opencode/agent/ folder or AGENTS.md specifically for OpenCode-related documentation or agent configurations. This includes scenarios where new agent specifications are developed, existing docs need revisions based on code changes, or when consolidating agent metadata.
 
@@ -437,6 +437,106 @@ For example:
   assistant: "I'll launch the package-updater agent to perform the updates and verifications."
   <commentary>
   The request matches the agent's purpose for checking and updating packages with verification, so proactively use the agent.
+  </commentary>
+</example>
+
+- **perplexity-researcher**: Use this agent when you need comprehensive search and analysis capabilities using Perplexity AI's sonar model for real-time information queries, multi-source research requiring synthesis and citation, comparative analysis across products or concepts, topic exploration needing comprehensive background, or fact verification with source attribution.
+
+<example>
+  Context: The user is asking for current information on a topic requiring multiple sources.
+  user: "What are the latest developments in AI safety research?"
+  assistant: "I'll use the Task tool to launch the perplexity-researcher agent to gather and synthesize information from authoritative sources."
+  <commentary>
+    Since the query requires real-time, multi-source research with citations, use the perplexity-researcher agent.
+  </commentary>
+</example>
+
+<example>
+  Context: The user needs a comparison of frameworks with citations.
+  user: "Compare the features of React and Vue.js frameworks."
+  assistant: "To provide a comprehensive comparison with proper citations, I'll launch the perplexity-researcher agent."
+  <commentary>
+    For comparative analysis requiring synthesis and citation, the perplexity-researcher is appropriate.
+  </commentary>
+</example>
+
+- **perplexity-researcher-deep**: Use this agent for thorough, exhaustive research requiring extensive multi-source analysis and comprehensive coverage using Perplexity AI's sonar-deep-research model for detailed reports, white papers, literature reviews, in-depth market analysis, or knowledge base articles prioritizing depth and completeness.
+
+<example>
+  Context: The user needs a comprehensive white paper.
+  user: "Write a detailed white paper on the future of quantum computing."
+  assistant: "This requires exhaustive research and long-form content synthesis. I'll use the Task tool to launch the perplexity-researcher-deep agent."
+  <commentary>
+    Since the query demands comprehensive coverage with multi-source synthesis and detailed documentation, use the perplexity-researcher-deep agent.
+  </commentary>
+</example>
+
+<example>
+  Context: In-depth market analysis needed.
+  user: "Provide a thorough analysis of the competitive landscape in cloud storage solutions."
+  assistant: "For exhaustive research with extensive source integration, I'll launch the perplexity-researcher-deep agent."
+  <commentary>
+    The request for in-depth market analysis and competitive intelligence fits the deep research capabilities.
+  </commentary>
+</example>
+
+- **perplexity-researcher-pro**: Use this agent for complex research requiring deeper analysis, multi-step reasoning, and sophisticated source evaluation using Perplexity AI's sonar-pro model for technical, academic, or specialized domain queries needing expert-level analysis, high-stakes decisions, or multi-layered problem solving.
+
+<example>
+  Context: The user needs expert analysis for a technical decision.
+  user: "Analyze the security implications of quantum computing for encryption standards."
+  assistant: "This complex query requires advanced reasoning and deep analysis. I'll use the Task tool to launch the perplexity-researcher-pro agent."
+  <commentary>
+    Since the query involves complex technical analysis with multi-step reasoning and specialized domain knowledge, use the perplexity-researcher-pro agent.
+  </commentary>
+</example>
+
+<example>
+  Context: Academic research with rigorous evaluation.
+  user: "Evaluate the current state of research on CRISPR gene editing ethics."
+  assistant: "For academic research demanding rigorous source evaluation and balanced perspectives, I'll launch the perplexity-researcher-pro agent."
+  <commentary>
+    The request for academic rigor and comprehensive evaluation fits the pro-level capabilities.
+  </commentary>
+</example>
+
+- **perplexity-researcher-reasoning**: Use this agent when you need research with explicit logical reasoning, step-by-step analysis, and transparent decision-making processes using Perplexity AI's sonar-reasoning model for problems requiring diagnostic thinking, troubleshooting, educational contexts, or verification tasks where understanding the reasoning path is crucial.
+
+<example>
+  Context: The user needs step-by-step troubleshooting for a technical issue.
+  user: "Why is my code not compiling? Here's the error message."
+  assistant: "To diagnose the issue with clear, step-by-step reasoning, I'll launch the perplexity-researcher-reasoning agent."
+  <commentary>
+    Since the query requires explicit logical analysis and transparent reasoning for debugging, use the perplexity-researcher-reasoning agent.
+  </commentary>
+</example>
+
+<example>
+  Context: The user wants to understand the reasoning behind a decision.
+  user: "Should I use microservices or monolithic architecture for my project?"
+  assistant: "I'll use the Task tool to launch the perplexity-researcher-reasoning agent to provide a step-by-step analysis with transparent reasoning."
+  <commentary>
+    For decision-making scenarios needing explicit reasoning chains, the perplexity-researcher-reasoning agent is ideal.
+  </commentary>
+</example>
+
+- **perplexity-researcher-reasoning-pro**: Use this agent for the highest level of research and reasoning capabilities using Perplexity AI's sonar-reasoning-pro model for complex decision-making with significant consequences, strategic planning, technical architecture decisions, multi-stakeholder problems, or high-complexity troubleshooting requiring expert-level judgment and sophisticated reasoning chains.
+
+<example>
+  Context: The user needs analysis for a high-stakes technical architecture decision.
+  user: "Should we migrate to microservices or keep monolithic for our enterprise system?"
+  assistant: "This requires advanced reasoning and trade-off analysis. I'll launch the perplexity-researcher-reasoning-pro agent."
+  <commentary>
+    For complex technical decisions with multi-dimensional trade-offs and stakeholder analysis, use the perplexity-researcher-reasoning-pro agent.
+  </commentary>
+</example>
+
+<example>
+  Context: Strategic planning with scenario evaluation.
+  user: "What are the strategic implications of adopting AI in our business operations?"
+  assistant: "To provide sophisticated analysis with scenario planning and risk assessment, I'll use the Task tool to launch the perplexity-researcher-reasoning-pro agent."
+  <commentary>
+    Since the query involves strategic decision support with comprehensive evaluation, the pro reasoning variant is appropriate.
   </commentary>
 </example>
 
