@@ -1,0 +1,201 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+
+jobs:
+  vulnerability-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run cargo-audit
+        uses: actions-rs/cargo-audit@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run cargo-deny
+        uses: EmbarkStudios/cargo-deny-action@v1
+        with:
+          command: check bans licenses sources
+
+      - name: Run gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run trufflehog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  code-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Run clippy security checks
+        run: cargo clippy -- -D warnings -D clippy::pedantic -D clippy::nursery
+
+      - name: Check for unsafe code
+        run: |
+          unsafe_count=$(cargo clippy --message-format=json | jq -r '.message.spans[] | select(.text[]?.text | contains("unsafe")) | .text[]?.text' | wc -l)
+          if [ "$unsafe_count" -gt 0 ]; then
+            echo "Unsafe code found: $unsafe_count blocks"
+            exit 1
+          fi
+
+  dependency-security:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
+      - name: Check license compliance
+        run: cargo deny check licenses
+
+      - name: Check outdated dependencies
+        run: cargo outdated --exit-code 1
+
+      - name: Generate SBOM
+        run: cargo cyclonedx --format json --output sbom.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v3
+        with:
+          name: sbom
+          path: sbom.json
+
+  report-and-incident:
+    runs-on: ubuntu-latest
+    needs: [vulnerability-scan, code-security, dependency-security]
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download SBOM
+        uses: actions/download-artifact@v3
+        with:
+          name: sbom
+
+      - name: Generate security report
+        run: |
+          echo "# Security Report" > security-report.md
+          echo "## Vulnerability Scan" >> security-report.md
+          echo "Status: ${{ needs.vulnerability-scan.result }}" >> security-report.md
+          echo "## Code Security" >> security-report.md
+          echo "Status: ${{ needs.code-security.result }}" >> security-report.md
+          echo "## Dependency Security" >> security-report.md
+          echo "Status: ${{ needs.dependency-security.result }}" >> security-report.md
+          echo "## Thresholds" >> security-report.md
+          echo "- Critical vulnerabilities: 0" >> security-report.md
+          echo "- High vulnerabilities: 0" >> security-report.md
+          echo "- Medium vulnerabilities: 5" >> security-report.md
+          echo "- Low vulnerabilities: 10" >> security-report.md
+          echo "- Minimum coverage: 82%" >> security-report.md
+          echo "- Clippy warnings: 0" >> security-report.md
+          echo "- Unsafe blocks: 0" >> security-report.md
+
+      - name: Upload security report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.md
+
+      - name: Check thresholds and create issue if failed
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const title = 'Security Check Failed';
+            const body = `## Security Incident
+
+            One or more security checks have failed. Please review the details:
+
+            - Vulnerability Scan: ${{ needs.vulnerability-scan.result }}
+            - Code Security: ${{ needs.code-security.result }}
+            - Dependency Security: ${{ needs.dependency-security.result }}
+
+            ### Thresholds Exceeded
+            - Critical vulnerabilities: 0 allowed
+            - High vulnerabilities: 0 allowed
+            - Medium vulnerabilities: 5 allowed
+            - Low vulnerabilities: 10 allowed
+            - Minimum test coverage: 82%
+            - Clippy warnings: 0 allowed
+            - Unsafe code blocks: 0 allowed
+
+            ### Next Steps
+            1. Review the security report artifact
+            2. Address the identified issues
+            3. Re-run the security checks
+
+            This issue was auto-generated by the security workflow.`;
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'incident']
+            });

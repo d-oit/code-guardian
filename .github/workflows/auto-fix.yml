@@ -1,13 +1,19 @@
 name: Auto-fix Code Quality Issues
 
+# Least privilege permissions for auto-fix
+permissions:
+  contents: write
+  pull-requests: write
+
 on:
   push:
     branches: [main, develop]
   workflow_dispatch:  # Allow manual triggering
 
-permissions:
-  contents: write
-  pull-requests: write
+# Prevent cancellation during auto-fix operations
+concurrency:
+  group: auto-fix-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   auto-fix:

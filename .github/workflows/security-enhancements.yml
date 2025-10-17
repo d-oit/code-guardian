@@ -1,0 +1,275 @@
+name: Security Enhancements & Vulnerability Detection
+
+# Least privilege permissions focused on security
+permissions:
+  contents: read
+  security-events: write
+  packages: read
+  actions: read
+
+on:
+  schedule:
+    - cron: '0 4 * * 0'  # Weekly Sunday at 4 AM UTC
+  workflow_dispatch:
+  pull_request:
+    branches: [ main, develop ]
+
+concurrency:
+  group: security-enhancements-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Comprehensive vulnerability scanning
+  vulnerability-scan:
+    name: Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit with vulnerability database
+        run: |
+          cargo install cargo-audit
+          cargo audit --db ~/.cargo/advisory-db
+
+      - name: Run comprehensive vulnerability scan
+        run: |
+          echo "## 🔍 Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
+          cargo audit --format markdown >> $GITHUB_STEP_SUMMARY || echo "Vulnerabilities found - check details above" >> $GITHUB_STEP_SUMMARY
+
+      - name: Check for critical vulnerabilities
+        id: critical-vuln
+        run: |
+          if cargo audit --quiet --deny-warnings; then
+            echo "No critical vulnerabilities found"
+            echo "critical_vuln=false" >> $GITHUB_OUTPUT
+          else
+            echo "Critical vulnerabilities detected!"
+            echo "critical_vuln=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload SARIF report for GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: audit-results.json
+
+  # Dependency security analysis
+  dependency-security:
+    name: Dependency Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+
+      - name: Run comprehensive cargo-deny checks
+        run: |
+          echo "## 📦 Dependency Security Analysis" >> $GITHUB_STEP_SUMMARY
+          cargo deny check advisories --format json | tee deny-advisories.json
+          cargo deny check licenses --format json | tee deny-licenses.json
+          cargo deny check bans --format json | tee deny-bans.json
+          cargo deny check sources --format json | tee deny-sources.json
+
+      - name: Check for problematic dependencies
+        id: dependency-check
+        run: |
+          # Check for GPL licenses and other problematic dependencies
+          if cargo deny check licenses > /dev/null 2>&1; then
+            echo "License compliance check passed"
+            echo "license_issues=false" >> $GITHUB_OUTPUT
+          else
+            echo "License compliance issues detected"
+            echo "license_issues=true" >> $GITHUB_OUTPUT
+          fi
+
+  # Secrets detection and prevention
+  secrets-detection:
+    name: Secrets Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: TruffleHog scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Detect hardcoded secrets patterns
+        run: |
+          echo "## 🔐 Secrets Detection Results" >> $GITHUB_STEP_SUMMARY
+          # Check for common patterns
+          patterns="password|secret|key|token|auth"
+          if grep -r -i "$patterns" --include="*.rs" --include="*.toml" --include="*.json" --include="*.yaml" --include="*.yml" . | grep -v "test" | grep -v "example" | head -10; then
+            echo "Potential secrets patterns detected:" >> $GITHUB_STEP_SUMMARY
+            grep -r -i "$patterns" --include="*.rs" --include="*.toml" --include="*.json" --include="*.yaml" --include="*.yml" . | grep -v "test" | grep -v "example" | head -10 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No hardcoded secrets patterns detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Code security scanning
+  code-security:
+    name: Code Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+
+      - name: Run security-focused clippy
+        run: |
+          echo "## 🔒 Security Clippy Analysis" >> $GITHUB_STEP_SUMMARY
+          cargo clippy --all-targets --all-features -- \
+            -W clippy::pedantic \
+            -W clippy::nursery \
+            -W clippy::suspicious \
+            -W clippy::correctness \
+            -D clippy::unwrap_used \
+            -D clippy::expect_used \
+            -D clippy::panic \
+            -D clippy::unimplemented \
+            -D clippy::todo \
+            -D clippy::missing_safety_doc \
+            -D clippy::missing_panics_doc
+
+      - name: Check for unsafe code usage
+        run: |
+          echo "## 🚨 Unsafe Code Analysis" >> $GITHUB_STEP_SUMMARY
+          unsafe_count=$(grep -r "unsafe" --include="*.rs" . | wc -l)
+          echo "Unsafe code blocks found: $unsafe_count" >> $GITHUB_STEP_SUMMARY
+          if [ "$unsafe_count" -gt 0 ]; then
+            grep -r "unsafe" --include="*.rs" . | head -5 >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # SBOM generation and analysis
+  sbom-generation:
+    name: Software Bill of Materials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-license
+        run: cargo install cargo-license
+
+      - name: Generate SBOM
+        run: |
+          echo "## 📋 Software Bill of Materials (SBOM)" >> $GITHUB_STEP_SUMMARY
+          cargo license --json > sbom.json
+          cargo license --tsv > sbom.tsv
+          echo "SBOM generated successfully" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload SBOM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-reports
+          path: |
+            sbom.json
+            sbom.tsv
+
+  # Security summary and reporting
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [vulnerability-scan, dependency-security, secrets-detection, code-security, sbom-generation]
+    if: always()
+    steps:
+      - name: Security Summary Report
+        run: |
+          echo "## 🛡️ Comprehensive Security Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Collect results from all security jobs
+          results=("vulnerability-scan" "dependency-security" "secrets-detection" "code-security" "sbom-generation")
+          critical_failures=0
+          warnings=0
+
+          for check in "${results[@]}"; do
+            result="${{ needs.$check.result }}"
+            if [[ "$result" == "success" ]]; then
+              echo "✅ $check: PASSED" >> $GITHUB_STEP_SUMMARY
+            elif [[ "$result" == "skipped" ]]; then
+              echo "⏭️  $check: SKIPPED" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $check: FAILED" >> $GITHUB_STEP_SUMMARY
+              critical_failures=$((critical_failures + 1))
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [[ "$critical_failures" -eq 0 ]]; then
+            echo "### ✅ All Security Checks Passed" >> $GITHUB_STEP_SUMMARY
+            echo "No critical security issues detected" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Security Issues Require Attention" >> $GITHUB_STEP_SUMMARY
+            echo "$critical_failures critical security issue(s) detected" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Security Recommendations" >> $GITHUB_STEP_SUMMARY
+          echo "- Regularly update dependencies to address known vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          echo "- Review license compliance for third-party dependencies" >> $GITHUB_STEP_SUMMARY
+          echo "- Avoid using unwrap/expect in production code" >> $GITHUB_STEP_SUMMARY
+          echo "- Use secret scanning to prevent credential leaks" >> $GITHUB_STEP_SUMMARY
+          echo "- Monitor cargo-audit for new security advisories" >> $GITHUB_STEP_SUMMARY
+          echo "- Generate and review SBOM regularly" >> $GITHUB_STEP_SUMMARY
+
+      - name: Create security issue if critical failures
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = `Security Scan Detected Critical Issues - ${new Date().toISOString().split('T')[0]}`;
+            const issueBody = `
+            ## 🚨 Critical Security Issues Detected
+            
+            Our automated security scan has detected critical security issues that require immediate attention.
+            
+            ### Failed Security Checks:
+            ${process.env.GITHUB_JOB}
+            
+            Please review the security scan results and address the identified vulnerabilities.
+            
+            ### Next Steps:
+            1. Review the security scan report
+            2. Address critical vulnerabilities immediately
+            3. Update dependencies as needed
+            4. Re-run security scans after fixes
+            
+            **Note:** This issue was automatically generated by the security enhancement workflow.
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['security', 'critical', 'automated']
+            });

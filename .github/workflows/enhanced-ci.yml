@@ -21,12 +21,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Least privilege permissions
+# Least privilege permissions with security focus
 permissions:
   contents: read
   pull-requests: write
   checks: write
   actions: read
+  security-events: write
+  packages: read
 
 env:
   CARGO_TERM_COLOR: always
