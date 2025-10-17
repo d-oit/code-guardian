@@ -11,9 +11,12 @@ pub mod detector_factory;
 pub mod detectors;
 pub mod distributed;
 pub mod enhanced_config;
+pub mod health_server;
 pub mod incremental;
 pub mod llm_detectors;
+pub mod metrics;
 pub mod monitoring;
+pub mod observability;
 pub mod optimized_scanner;
 pub mod performance;
 
