@@ -1,6 +1,6 @@
 [package]
 name = "code-guardian-core"
-version = "0.1.5"
+version = "0.1.6"
 edition = "2021"
 
 [dependencies]
@@ -21,11 +21,15 @@ config = { workspace = true }
 toml = "0.8"
 uuid = { version = "1.0", features = ["v4"] }
 memmap2 = "0.9"
-smallvec = { version = "1.13", features = ["union"] }
+ smallvec = { version = "1.13", features = ["union"] }
+ aho-corasick = "1.1"
 
  tracing = "0.1"
  sysinfo = "0.30"
- tokio = { workspace = true }
+ tokio = { workspace = true, features = ["signal"] }
+axum = "0.7"
+prometheus = "0.14"
+async-trait = "0.1"
 
 [dev-dependencies]
 tempfile = { workspace = true }
@@ -34,6 +38,7 @@ rstest = "0.18"
 mockall = "0.12"
 insta = "1.39"
 proptest = "1.0"
+tokio-test = "0.4"
 
 [[bench]]
 name = "scanner_benchmark"
