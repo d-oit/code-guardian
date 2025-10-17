@@ -6,6 +6,8 @@ A fast, modular CLI tool for scanning codebases to detect non-productive code.
 
 - [Features](#features)
 - [Installation](#installation)
+- [System Requirements](#system-requirements)
+- [Performance Benchmarks](#performance-benchmarks)
 - [Usage](#usage)
 - [Advanced Usage](#advanced-usage)
 - [Supported Patterns](#supported-patterns)
@@ -30,7 +32,7 @@ A fast, modular CLI tool for scanning codebases to detect non-productive code.
 - 🛠️ **Custom Detectors**: JSON-configurable custom pattern detectors
 - ⚙️ **Advanced Scanning Options**: Streaming, optimized, and metrics-based scanning
 - 🏷️ **Technology Stack Presets**: Presets for web, backend, fullstack, mobile, and systems
-- 🌍 **Multi-Language Support**: Scanning for 30+ programming languages
+- 🌍 **Multi-Language Support**: Scanning for Rust, JavaScript, TypeScript, Python, Go, Java, C#, PHP and 20+ other programming languages
 
 ## Installation
 
@@ -42,39 +44,65 @@ cd code-guardian
 cargo build --release
 ```
 
-The binary will be available at `target/release/code_guardian_cli`.
+The binary will be available at `target/release/code-guardian-cli`.
+
+### Using Cargo Install
+
+```bash
+cargo install code-guardian-cli
+```
+
+This will download, compile, and install the binary to your Cargo bin directory (usually `~/.cargo/bin/`).
+
+### System Requirements
+
+- **Minimum Rust Version**: 1.70.0 (Rust 2021 edition)
+- **Supported Platforms**: Linux, macOS, Windows
+- **Memory**: 50MB+ recommended for large codebases
+
+### Performance Benchmarks
+
+Code-Guardian is optimized for speed and efficiency. Here are typical performance metrics:
+
+| Metric | Small Project (1k files) | Medium Project (10k files) | Large Project (100k files) |
+|--------|--------------------------|----------------------------|----------------------------|
+| Scan Duration | ~2.3 seconds | ~18.7 seconds | ~2.6 minutes |
+| Memory Usage | ~45MB | ~67MB | ~87MB |
+| Throughput | ~434 files/second | ~535 files/second | ~641 files/second |
+
+For detailed performance data and optimization recommendations, see [Performance Benchmarks](docs/performance/latest.md).
 
 ## Usage
 
 ### Scan a Directory
 
 ```bash
-code-guardian scan /path/to/your/project
+code-guardian-cli scan /path/to/your/project
 ```
 
 ### View Scan History
 
 ```bash
-code-guardian history
+code-guardian-cli history
 ```
 
 ### Generate Reports
 
 ```bash
 # Text format (default)
-code-guardian report 1
+code-guardian-cli report 1
 
 # JSON format
-code-guardian report 1 --format json
+code-guardian-cli report 1 --format json
 
 # HTML format
-code-guardian report 1 --format html
+code-guardian-cli report 1 --format html
 ```
 
 ### Compare Scans
 
 ```bash
-code-guardian compare 1 2 --format markdown
+code-guardian-cli compare 1 2 --format markdown
 ```
 
 ## Advanced Usage
@@ -84,9 +112,9 @@ code-guardian compare 1 2 --format markdown
 By default, scans are stored in `data/code-guardian.db`. You can specify a custom database path:
 
 ```bash
-code-guardian scan /path/to/project --db /custom/path/my-scans.db
-code-guardian history --db /custom/path/my-scans.db
-code-guardian report 1 --db /custom/path/my-scans.db --format json
+code-guardian-cli scan /path/to/project --db /custom/path/my-scans.db
+code-guardian-cli history --db /custom/path/my-scans.db
+code-guardian-cli report 1 --db /custom/path/my-scans.db --format json
 ```
 
 ### Piping and Redirecting Output
@@ -95,13 +123,13 @@ Redirect reports to files for further processing:
 
 ```bash
 # Save HTML report to file
-code-guardian report 1 --format html > scan-report.html
+code-guardian-cli report 1 --format html > scan-report.html
 
 # Pipe JSON output to jq for filtering
-code-guardian report 1 --format json | jq '.matches[] | select(.pattern == "TODO")'
+code-guardian-cli report 1 --format json | jq '.matches[] | select(.pattern == "TODO")'
 
 # Export CSV for spreadsheet analysis
-code-guardian report 1 --format csv > scan-results.csv
+code-guardian-cli report 1 --format csv > scan-results.csv
 ```
 
 ### Automating Scans with Scripts
@@ -115,12 +143,12 @@ PROJECT_DIR="/path/to/your/project"
 DB_PATH="$HOME/code-guardian-scans.db"
 
 echo "Running daily code scan..."
-code-guardian scan "$PROJECT_DIR" --db "$DB_PATH"
-SCAN_ID=$(code-guardian history --db "$DB_PATH" | tail -1 | awk '{print $2}' | tr -d ',')
+code-guardian-cli scan "$PROJECT_DIR" --db "$DB_PATH"
+SCAN_ID=$(code-guardian-cli history --db "$DB_PATH" | tail -1 | awk '{print $2}' | tr -d ',')
 
 echo "Generating reports..."
-code-guardian report "$SCAN_ID" --db "$DB_PATH" --format html > "scan-$(date +%Y%m%d).html"
-code-guardian report "$SCAN_ID" --db "$DB_PATH" --format json > "scan-$(date +%Y%m%d).json"
+code-guardian-cli report "$SCAN_ID" --db "$DB_PATH" --format html > "scan-$(date +%Y%m%d).html"
+code-guardian-cli report "$SCAN_ID" --db "$DB_PATH" --format json > "scan-$(date +%Y%m%d).json"
 
 echo "Scan complete. Reports saved."
 ```
@@ -131,23 +159,34 @@ Track progress by comparing scans:
 
 ```bash
 # Compare last two scans
-LATEST_ID=$(code-guardian history | tail -1 | awk '{print $2}' | tr -d ',')
-PREVIOUS_ID=$(code-guardian history | tail -2 | head -1 | awk '{print $2}' | tr -d ',')
+LATEST_ID=$(code-guardian-cli history | tail -1 | awk '{print $2}' | tr -d ',')
+PREVIOUS_ID=$(code-guardian-cli history | tail -2 | head -1 | awk '{print $2}' | tr -d ',')
 
-code-guardian compare "$PREVIOUS_ID" "$LATEST_ID" --format markdown
+code-guardian-cli compare "$PREVIOUS_ID" "$LATEST_ID" --format markdown
 ```
 
 ### Integrating with CI/CD
 
-Add to your CI pipeline to fail builds with too many TODOs:
+The project includes an enhanced CI/CD pipeline that combines the best features from multiple workflows:
+
+- **Enhanced CI/CD Workflow** (`enhanced-ci.yml`): Combines features from `ci.yml`, `optimized-ci.yml`, `security.yml`, `performance.yml`, and `auto-fix.yml`
+- **Concurrency Controls**: Prevents overlapping runs
+- **Least Privilege Permissions**: Enhanced security
+- **Auto-fix Capabilities**: Automatically fixes formatting and clippy issues
+- **Comprehensive Testing**: Cross-platform testing with incremental builds
+- **Security Scanning**: Cargo audit, deny, and security-focused clippy
+- **Performance Benchmarking**: Build time and binary size optimization
+- **Coverage Thresholds**: Enforces 82%+ test coverage
+
+Example integration for scanning TODOs in CI:
 
 ```yaml
-# .github/workflows/ci.yml
+# .github/workflows/enhanced-ci.yml
 - name: Scan for TODOs
   run: |
-    ./code-guardian scan . --db /tmp/scans.db
-    SCAN_ID=$(./code-guardian history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-    COUNT=$(./code-guardian report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
+    ./code-guardian-cli scan . --db /tmp/scans.db
+    SCAN_ID=$(./code-guardian-cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+    COUNT=$(./code-guardian-cli report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
     if [ "$COUNT" -gt 10 ]; then
       echo "Too many TODOs found: $COUNT"
       exit 1
@@ -159,7 +198,7 @@ Add to your CI pipeline to fail builds with too many TODOs:
 Run performance benchmarks to assess scanning speed and receive optimization recommendations:
 
 ```bash
-code-guardian benchmark --quick
+code-guardian-cli benchmark --quick
 ```
 
 ### Production Readiness Checks
@@ -167,7 +206,7 @@ code-guardian benchmark --quick
 Perform production readiness checks with configurable severity levels:
 
 ```bash
-code-guardian production-check --severity high
+code-guardian-cli production-check --severity high
 ```
 
 ### Incremental Scanning
@@ -175,7 +214,7 @@ code-guardian production-check --severity high
 Efficiently rescan only changed files for faster subsequent scans:
 
 ```bash
-code-guardian scan /path --incremental
+code-guardian-cli scan /path --incremental
 ```
 
 ### Distributed Scanning
@@ -183,7 +222,7 @@ code-guardian scan /path --incremental
 Distribute scanning across multiple processes for large codebases:
 
 ```bash
-code-guardian scan /path --distributed
+code-guardian-cli scan /path --distributed
 ```
 
 ## Supported Patterns
@@ -204,13 +243,13 @@ Code-Guardian supports custom pattern detectors for detecting project-specific i
 
 ```bash
 # Create example custom detectors
-code-guardian custom-detectors create-examples
+code-guardian-cli custom-detectors create-examples
 
 # Scan with custom detectors
-code-guardian scan /path/to/project --custom-detectors custom_detectors.json
+code-guardian-cli scan /path/to/project --custom-detectors custom_detectors.json
 
 # List available custom detectors
-code-guardian custom-detectors list
+code-guardian-cli custom-detectors list
 ```
 
 Custom detectors can detect security vulnerabilities, code quality issues, and more. See the [Custom Detectors Guide](docs/tutorials/custom-detectors.md) for details.
