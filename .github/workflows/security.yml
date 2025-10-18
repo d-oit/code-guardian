@@ -61,7 +61,7 @@ jobs:
         cargo deny check sources
 
     - name: Upload security reports
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@v4
       with:
         name: security-audit-reports
         path: |
@@ -167,7 +167,7 @@ jobs:
         fi
 
     - name: Upload license reports
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@v4
       with:
         name: license-reports
         path: |
