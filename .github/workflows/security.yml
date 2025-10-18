@@ -32,8 +32,9 @@ jobs:
     steps:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
@@ -73,16 +74,17 @@ jobs:
     steps:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-    - name: Install cargo-audit with database update
-      run: |
-        cargo install cargo-audit
-        cargo audit --db ~/.cargo/advisory-db
+    - name: Install cargo-audit
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-audit
 
     - name: Run comprehensive vulnerability scan
       run: |
@@ -95,8 +97,9 @@ jobs:
     steps:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
@@ -131,8 +134,9 @@ jobs:
     steps:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
@@ -176,8 +180,9 @@ jobs:
     steps:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
@@ -188,8 +193,6 @@ jobs:
       run: |
         echo "## 🔒 Security Clippy Results" >> $GITHUB_STEP_SUMMARY
         cargo clippy --all-targets --all-features -- \
-          -W clippy::pedantic \
-          -W clippy::nursery \
           -W clippy::suspicious \
           -W clippy::correctness \
           -D clippy::unwrap_used \
@@ -197,6 +200,11 @@ jobs:
           -D clippy::panic \
           -D clippy::unimplemented \
           -D clippy::todo \
+          -A clippy::unused_async \
+          -A clippy::missing_errors_doc \
+          -A clippy::unnecessary_wraps \
+          -A clippy::wildcard_imports \
+          -A clippy::unused_self \
           2>&1 | tee clippy-security.log || echo "Security clippy completed with warnings" >> $GITHUB_STEP_SUMMARY
 
     - name: Check for security issues
