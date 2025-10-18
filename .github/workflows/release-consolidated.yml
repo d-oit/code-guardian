@@ -1,0 +1,269 @@
+name: Release Management
+
+# Comprehensive release workflow with multi-platform builds
+permissions:
+  contents: write
+  packages: read
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g., v1.0.0)'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark as prerelease'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # Never cancel releases
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Create the GitHub release with enhanced notes
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag }}
+      is_prerelease: ${{ steps.release-type.outputs.prerelease }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      with:
+        fetch-depth: 0
+
+    - name: Determine tag
+      id: tag
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+        else
+          echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Determine release type
+      id: release-type
+      run: |
+        TAG="${{ steps.tag.outputs.tag }}"
+        if [[ "$TAG" == *"-"* ]] || [[ "${{ inputs.prerelease }}" == "true" ]]; then
+          echo "prerelease=true" >> $GITHUB_OUTPUT
+          echo "🚧 Prerelease detected"
+        else
+          echo "prerelease=false" >> $GITHUB_OUTPUT
+          echo "🚀 Stable release detected"
+        fi
+
+    - name: Install git-cliff
+      run: cargo install git-cliff
+
+    - name: Generate release notes
+      run: |
+        TAG="${{ steps.tag.outputs.tag }}"
+        
+        # Generate base changelog
+        git cliff --tag "$TAG" --strip header > base_notes.md
+        
+        # Create enhanced release notes
+        cat > enhanced_notes.md << EOF
+        ## Code Guardian $TAG 🛡️
+        
+        $(cat base_notes.md)
+        
+        ### 📦 Installation
+        
+        #### Download Binary
+        Download the appropriate binary for your platform from the assets below:
+        - **Linux (x86_64)**: \`code-guardian-x86_64-unknown-linux-gnu.tar.gz\`
+        - **macOS (Intel)**: \`code-guardian-x86_64-apple-darwin.tar.gz\`
+        - **macOS (Apple Silicon)**: \`code-guardian-aarch64-apple-darwin.tar.gz\`
+        - **Windows**: \`code-guardian-x86_64-pc-windows-msvc.zip\`
+        
+        #### Using Cargo
+        \`\`\`bash
+        cargo install --git https://github.com/d-oit/code-guardian --tag $TAG
+        \`\`\`
+        
+        ### 🚀 Quick Start
+        \`\`\`bash
+        # Basic scan
+        ./code_guardian_cli scan /path/to/project
+        
+        # With custom config
+        ./code_guardian_cli scan /path/to/project --config config.toml
+        
+        # Generate HTML report
+        ./code_guardian_cli scan /path/to/project --format html --output report.html
+        \`\`\`
+        
+        ### 🔗 Links
+        - [Documentation](https://github.com/d-oit/code-guardian/tree/main/docs)
+        - [Configuration Guide](https://github.com/d-oit/code-guardian/blob/main/docs/configuration/schema.md)
+        - [Tutorials](https://github.com/d-oit/code-guardian/tree/main/docs/tutorials)
+        
+        EOF
+        
+        # If no changelog content, add default message
+        if ! grep -q "###\|##\|feat\|fix\|BREAKING" enhanced_notes.md; then
+          cat >> enhanced_notes.md << EOF
+        
+        ### Changes
+        - Version bump to $TAG
+        - See commit history for detailed changes
+        EOF
+        fi
+        
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+        cat enhanced_notes.md >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Create or update release
+      run: |
+        TAG="${{ steps.tag.outputs.tag }}"
+        PRERELEASE="${{ steps.release-type.outputs.prerelease }}"
+        
+        # Check if release exists
+        if gh release view "$TAG" >/dev/null 2>&1; then
+          echo "📝 Release $TAG already exists, updating..."
+          gh release edit "$TAG" --notes "$RELEASE_NOTES"
+        else
+          echo "🎉 Creating new release $TAG..."
+          if [[ "$PRERELEASE" == "true" ]]; then
+            gh release create "$TAG" \
+              --title "Code Guardian $TAG" \
+              --notes "$RELEASE_NOTES" \
+              --prerelease
+          else
+            gh release create "$TAG" \
+              --title "Code Guardian $TAG" \
+              --notes "$RELEASE_NOTES"
+          fi
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build release binaries for all platforms
+  build-release:
+    name: Build Release (${{ matrix.target }})
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: code_guardian_cli
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: code_guardian_cli.exe
+            archive: zip
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: code_guardian_cli
+            archive: tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary: code_guardian_cli
+            archive: tar.gz
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+
+    - name: Setup Rust
+      uses: ./.github/actions/setup-rust
+      with:
+        toolchain: stable
+        targets: ${{ matrix.target }}
+
+    - name: Setup Cache
+      uses: ./.github/actions/setup-cache
+      with:
+        cache-key-suffix: release-${{ matrix.target }}
+
+    - name: Build release binary
+      run: |
+        cargo build --release --target ${{ matrix.target }} --locked
+        echo "✅ Built binary for ${{ matrix.target }}"
+
+    - name: Run tests (native targets only)
+      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-pc-windows-msvc' || (matrix.target == 'x86_64-apple-darwin' && runner.arch == 'X64')
+      run: cargo test --release --target ${{ matrix.target }}
+
+    - name: Create release archive
+      shell: bash
+      run: |
+        TAG="${{ needs.create-release.outputs.tag_name }}"
+        TARGET="${{ matrix.target }}"
+        BINARY="${{ matrix.binary }}"
+        
+        # Create staging directory
+        mkdir -p staging
+        
+        # Copy binary
+        cp "target/$TARGET/release/$BINARY" staging/
+        
+        # Copy additional files
+        cp README.md staging/
+        cp LICENSE staging/
+        cp -r docs/ staging/ 2>/dev/null || echo "No docs directory"
+        cp -r examples/ staging/ 2>/dev/null || echo "No examples directory"
+        
+        # Create archive
+        cd staging
+        if [[ "${{ matrix.archive }}" == "zip" ]]; then
+          ARCHIVE_NAME="code-guardian-$TARGET.zip"
+          7z a "../$ARCHIVE_NAME" *
+        else
+          ARCHIVE_NAME="code-guardian-$TARGET.tar.gz"
+          tar czf "../$ARCHIVE_NAME" *
+        fi
+        cd ..
+        
+        echo "ARCHIVE_NAME=$ARCHIVE_NAME" >> $GITHUB_ENV
+        echo "📦 Created archive: $ARCHIVE_NAME"
+
+    - name: Upload release asset
+      run: |
+        TAG="${{ needs.create-release.outputs.tag_name }}"
+        gh release upload "$TAG" "$ARCHIVE_NAME" --clobber
+        echo "⬆️ Uploaded $ARCHIVE_NAME to release $TAG"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Post-release tasks
+  post-release:
+    name: Post-Release Tasks
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    if: always() && needs.create-release.result == 'success'
+    steps:
+    - name: Release summary
+      run: |
+        TAG="${{ needs.create-release.outputs.tag_name }}"
+        PRERELEASE="${{ needs.create-release.outputs.is_prerelease }}"
+        
+        echo "## 🎉 Release Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Tag:** $TAG" >> $GITHUB_STEP_SUMMARY
+        echo "**Type:** $([ "$PRERELEASE" = "true" ] && echo "Prerelease" || echo "Stable Release")" >> $GITHUB_STEP_SUMMARY
+        echo "**Builds:** ${{ strategy.job-total }} platforms" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Assets Built" >> $GITHUB_STEP_SUMMARY
+        echo "- Linux (x86_64)" >> $GITHUB_STEP_SUMMARY
+        echo "- Windows (x86_64)" >> $GITHUB_STEP_SUMMARY  
+        echo "- macOS Intel (x86_64)" >> $GITHUB_STEP_SUMMARY
+        echo "- macOS Apple Silicon (aarch64)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "🔗 [View Release](https://github.com/${{ github.repository }}/releases/tag/$TAG)" >> $GITHUB_STEP_SUMMARY
