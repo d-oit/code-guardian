@@ -175,19 +175,21 @@ jobs:
     - name: Install sccache
       uses: mozilla-actions/sccache-action@v0.0.4
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+     - name: Install Rust
+       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache target
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+     - name: Cache target
+       uses: actions/cache@v4
+       with:
+         path: target
+         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Run partitioned tests
+     - name: Run partitioned tests
       run: |
         cargo nextest run --workspace --all-features \
           --partition count:${{ matrix.partition }}/4 \
@@ -208,16 +210,18 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache target
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+     - name: Cache target
+       uses: actions/cache@v4
+       with:
+         path: target
+         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Test CLI crate
+     - name: Test CLI crate
       run: cargo nextest run -p code_guardian_cli --all-features --verbose
 
   test-core:
@@ -234,16 +238,18 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache target
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+     - name: Cache target
+       uses: actions/cache@v4
+       with:
+         path: target
+         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Test Core crate
+     - name: Test Core crate
       run: cargo nextest run -p code_guardian_core --all-features --verbose
 
   test-output:
@@ -260,16 +266,18 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache target
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+     - name: Cache target
+       uses: actions/cache@v4
+       with:
+         path: target
+         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Test Output crate
+     - name: Test Output crate
       run: cargo nextest run -p code_guardian_output --all-features --verbose
 
   test-storage:
@@ -286,16 +294,18 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache target
-      uses: actions/cache@v4
-      with:
-        path: target
-        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+     - name: Cache target
+       uses: actions/cache@v4
+       with:
+         path: target
+         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Test Storage crate
+     - name: Test Storage crate
       run: cargo nextest run -p code_guardian_storage --all-features --verbose
 
   # Cross-platform testing
@@ -313,10 +323,12 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-nextest
-      uses: taiki-e/install-action@cargo-nextest
+     - name: Install cargo-nextest
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-nextest
 
-    - name: Cache cargo registry
+     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
         path: |
@@ -350,10 +362,12 @@ jobs:
       with:
         components: llvm-tools-preview
 
-    - name: Install cargo-llvm-cov
-      uses: taiki-e/install-action@cargo-llvm-cov
+     - name: Install cargo-llvm-cov
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-llvm-cov
 
-    - name: Cache target
+     - name: Cache target
       uses: actions/cache@v4
       with:
         path: target
@@ -459,13 +473,17 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
 
-    - name: Install cargo-audit
-      uses: taiki-e/install-action@cargo-audit
+     - name: Install cargo-audit
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-audit
 
-    - name: Install cargo-deny
-      uses: taiki-e/install-action@cargo-deny
+     - name: Install cargo-deny
+       uses: taiki-e/install-action@v2
+       with:
+         tool: cargo-deny
 
-    - name: Run security audit
+     - name: Run security audit
       run: cargo audit --format json | tee audit-results.json
 
     - name: Run cargo-deny

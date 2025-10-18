@@ -5,7 +5,20 @@
         "nvidia": {
             "models": {
                 "deepseek-ai/deepseek-v3.1-terminus": {
-                    "name": "deepseek-v3.1-terminus"
+                    "name": "DeepSeek V3.1 Terminus",
+                    "release_date": "2025-09-22",
+                    "attachment": false,
+                    "reasoning": true,
+                    "temperature": true,
+                    "tool_call": true,
+                    "cost": {
+                        "input": 0.0,
+                        "output": 0.0
+                    },
+                    "limit": {
+                        "context": 128000,
+                        "output": 8192
+                    }
                 }
             }
         },
@@ -18,7 +31,20 @@
             "models": {
                 "sonar-deep-research": {
                     "name": "Perplexity Sonar Deep Research",
-                },
+                    "release_date": "2025-02-01",
+                    "attachment": false,
+                    "reasoning": true,
+                    "temperature": false,
+                    "tool_call": false,
+                    "cost": {
+                        "input": 2.0,
+                        "output": 8.0                       
+                    },
+                    "limit": {
+                        "context": 127072,
+                        "output": 32768
+                    }                   
+                }
             }
         }
     },

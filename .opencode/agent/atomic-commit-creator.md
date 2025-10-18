@@ -59,6 +59,12 @@ Context: Commit has unrelated bug fix and refactoring.
 - Process: Identify unrelated parts, advise selective staging.
 - Output: Split into "fix: handle validation edge case" and "refactor: simplify algorithm".
 
+### Example 3: Ensuring Atomic Commits Before Release
+Context: Before creating a release, ensure that all commits are atomic to maintain clean history.
+- Input: Repository with potential non-atomic commits before release.
+- Process: Analyze recent commits, suggest splitting if necessary to ensure each commit represents one logical change.
+- Output: Restructured atomic commits ready for release, following conventional commit standards.
+
 ## Error Scenarios
 - Intertwined changes: Advise selective staging with 'git add -p'.
 - Unclear intent: Ask for clarification on change purposes.

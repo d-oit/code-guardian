@@ -72,10 +72,12 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-deny
-        uses: taiki-e/install-action@cargo-deny
+       - name: Install cargo-deny
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-deny
 
-      - name: Run comprehensive cargo-deny checks
+       - name: Run comprehensive cargo-deny checks
         run: |
           echo "## 📦 Dependency Security Analysis" >> $GITHUB_STEP_SUMMARY
           cargo deny check advisories --format json | tee deny-advisories.json

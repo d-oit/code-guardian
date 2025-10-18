@@ -1,0 +1,32 @@
+name: 'Run Clippy'
+description: 'Run cargo clippy with configurable options'
+
+inputs:
+  args:
+    description: 'Additional arguments to pass to clippy'
+    required: false
+    default: '--all-targets --all-features -- -D warnings'
+  fix:
+    description: 'Whether to apply fixes automatically'
+    required: false
+    default: 'false'
+  allow-dirty:
+    description: 'Allow clippy to make changes to dirty working directory'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run clippy
+      shell: bash
+      run: |
+        if [[ "${{ inputs.fix }}" == "true" ]]; then
+          if [[ "${{ inputs.allow-dirty }}" == "true" ]]; then
+            cargo clippy ${{ inputs.args }} --fix --allow-dirty
+          else
+            cargo clippy ${{ inputs.args }} --fix
+          fi
+        else
+          cargo clippy ${{ inputs.args }}
+        fi

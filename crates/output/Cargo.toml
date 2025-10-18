@@ -1,7 +1,8 @@
 [package]
 name = "code-guardian-output"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 code-guardian-core = { path = "../core" }

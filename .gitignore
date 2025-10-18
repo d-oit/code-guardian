@@ -32,3 +32,6 @@ node_modules
 # Archived plans
 /plans/archive
 clippy_output.json
+
+# Development workflow logs
+dev-workflow.log

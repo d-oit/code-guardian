@@ -1,0 +1,107 @@
+# Comprehensive CI Pipeline Template
+# Use this template for production-ready Rust projects with full CI/CD features
+
+name: Comprehensive CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Weekly security scans
+    - cron: '0 2 * * 0'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+  packages: read
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Change detection
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+
+  # Quality checks with auto-fix
+  quality:
+    uses: ./.github/workflows/reusable/_quality-checks.yml
+    with:
+      auto-fix: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      fail-on-warnings: true
+
+  # Cross-platform testing
+  test:
+    uses: ./.github/workflows/reusable/_test.yml
+    needs: [changes, quality]
+    if: needs.changes.outputs.src == 'true'
+    with:
+      coverage: true
+      coverage-threshold: 80
+
+  # Security scanning
+  security:
+    uses: ./.github/workflows/reusable/_security-scan.yml
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
+
+  # Build artifacts
+  build:
+    runs-on: ubuntu-latest
+    needs: [quality, test]
+    if: needs.test.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-rust
+      - uses: ./.github/actions/setup-cache
+      - uses: ./.github/actions/build-workspace
+        with:
+          release: true
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: target/release/
+
+  # Final status check
+  ci-success:
+    runs-on: ubuntu-latest
+    needs: [quality, test, security, build]
+    if: always()
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ needs.quality.result }}" != "success" ]]; then
+            echo "❌ Quality checks failed"
+            exit 1
+          fi
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "❌ Tests failed"
+            exit 1
+          fi
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "❌ Security scan failed"
+            exit 1
+          fi
+          echo "✅ All CI checks passed!"

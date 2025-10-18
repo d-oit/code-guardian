@@ -5,8 +5,15 @@ agent: rust-security-auditor
 
 # Security Audit Command
 
+## Overview
+The Security Audit Command performs a comprehensive security analysis of the Rust codebase to identify potential vulnerabilities, unsafe code usage, and other security risks.
+
 ## Purpose
 To ensure the codebase is secure by analyzing for common security issues such as unsafe code usage, input validation flaws, and other risks.
+
+## Inputs/Outputs
+- **Inputs**: Rust codebase path, optional configuration for audit scope.
+- **Outputs**: Detailed security report with identified vulnerabilities, severity levels, and remediation recommendations.
 
 ## Agent Assignment
 rust-security-auditor

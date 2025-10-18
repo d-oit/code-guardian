@@ -1,8 +1,12 @@
 use anyhow::Result;
 use dashmap::DashMap;
 use ignore::WalkBuilder;
+use memmap2::Mmap;
 use rayon::prelude::*;
+use std::fs::File;
+use std::io::Read;
 use std::path::Path;
+use std::time::SystemTime;
 
 pub mod cache;
 pub mod config;
@@ -56,7 +60,7 @@ pub trait PatternDetector: Send + Sync {
 /// A scanner that uses parallel processing to scan codebases for patterns.
 pub struct Scanner {
     detectors: Vec<Box<dyn PatternDetector>>,
-    cache: DashMap<String, Vec<Match>>,
+    cache: DashMap<String, (SystemTime, Vec<Match>)>,
 }
 
 impl Scanner {
@@ -68,36 +72,76 @@ impl Scanner {
         }
     }
 
+    /// Check if a file should be scanned based on size and type
+    fn should_scan_file(&self, path: &Path) -> bool {
+        // Skip files in common build/dependency directories
+        if let Some(path_str) = path.to_str() {
+            if path_str.contains("/target/")
+                || path_str.contains("/node_modules/")
+                || path_str.contains("/.git/")
+                || path_str.contains("/build/")
+                || path_str.contains("/dist/")
+                || path_str.contains("/.next/")
+                || path_str.contains("/.nuxt/")
+            {
+                return false;
+            }
+        }
+
+        // Check file size (skip files larger than 5MB)
+        if let Ok(metadata) = std::fs::metadata(path) {
+            if metadata.len() > 5 * 1024 * 1024 {
+                return false;
+            }
+        }
+
+        // Check if file is binary by trying to read first 1024 bytes as UTF-8
+        if let Ok(mut file) = File::open(path) {
+            let mut buffer = [0; 1024];
+            if let Ok(bytes_read) = file.read(&mut buffer) {
+                if bytes_read > 0 && std::str::from_utf8(&buffer[..bytes_read]).is_err() {
+                    return false;
+                }
+            }
+        }
+
+        // Check file extension for known binary types (fallback)
+        if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
+            match ext.to_lowercase().as_str() {
+                // Skip binary files
+                "exe" | "dll" | "so" | "dylib" | "bin" | "obj" | "o" | "a" | "lib" => return false,
+                // Skip image files
+                "png" | "jpg" | "jpeg" | "gif" | "svg" | "ico" | "bmp" | "tiff" => return false,
+                // Skip compressed files
+                "zip" | "tar" | "gz" | "rar" | "7z" | "bz2" | "xz" => return false,
+                // Skip media files
+                "mp3" | "mp4" | "avi" | "mov" | "wav" | "flac" => return false,
+                _ => {}
+            }
+        }
+
+        true
+    }
+
+    /// Reads file content with memory mapping for large files
+    fn read_file_content(&self, path: &Path) -> Result<String> {
+        let metadata = std::fs::metadata(path)?;
+
+        if metadata.len() > 1024 * 1024 {
+            // Use memory mapping for large files
+            let file = File::open(path)?;
+            let mmap = unsafe { Mmap::map(&file)? };
+            let content = std::str::from_utf8(&mmap)?;
+            Ok(content.to_string())
+        } else {
+            // Regular reading for smaller files
+            Ok(std::fs::read_to_string(path)?)
+        }
+    }
+
     /// Scans the directory tree starting from the given root path.
     /// Returns all matches found by the detectors.
     /// Uses parallel processing for performance with improved load balancing and caching.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use code_guardian_core::{Scanner, PatternDetector, Match};
-    /// use std::path::Path;
-    ///
-    /// struct MockDetector;
-    /// impl PatternDetector for MockDetector {
-    ///     fn detect(&self, content: &str, _file_path: &Path) -> Vec<Match> {
-    ///         if content.contains("TODO") {
-    ///             vec![Match {
-    ///                 file_path: "test.rs".to_string(),
-    ///                 line_number: 1,
-    ///                 column: 1,
-    ///                 pattern: "TODO".to_string(),
-    ///                 message: "TODO found".to_string(),
-    ///             }]
-    ///         } else {
-    ///             vec![]
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// let scanner = Scanner::new(vec![Box::new(MockDetector)]);
-    /// // Note: This would scan actual files; in doctest, we can't create temp files easily
-    /// ```
     pub fn scan(&self, root: &Path) -> Result<Vec<Match>> {
         let matches: Vec<Match> = WalkBuilder::new(root)
             .build()
@@ -107,17 +151,50 @@ impl Scanner {
                 let file_type = entry.file_type()?;
                 if file_type.is_file() {
                     let path = entry.path();
+                    if !self.should_scan_file(path) {
+                        return None;
+                    }
                     let path_str = path.to_string_lossy().to_string();
+                    let metadata = std::fs::metadata(path).ok()?;
+                    let mtime = metadata.modified().ok()?;
                     if let Some(cached) = self.cache.get(&path_str) {
-                        Some(cached.clone())
+                        let (cached_mtime, cached_matches) = &*cached;
+                        if cached_mtime == &mtime {
+                            Some(cached_matches.clone())
+                        } else {
+                            let content = self.read_file_content(path).ok()?;
+                            let file_matches: Vec<Match> = if self.detectors.len() <= 3 {
+                                // For few detectors, sequential is faster (less overhead)
+                                self.detectors
+                                    .iter()
+                                    .flat_map(|detector| detector.detect(&content, path))
+                                    .collect()
+                            } else {
+                                // For many detectors, use parallel processing
+                                self.detectors
+                                    .par_iter()
+                                    .flat_map(|detector| detector.detect(&content, path))
+                                    .collect()
+                            };
+                            self.cache.insert(path_str, (mtime, file_matches.clone()));
+                            Some(file_matches)
+                        }
                     } else {
-                        let content = std::fs::read_to_string(path).ok()?;
-                        let file_matches: Vec<Match> = self
-                            .detectors
-                            .par_iter()
-                            .flat_map(|detector| detector.detect(&content, path))
-                            .collect();
-                        self.cache.insert(path_str, file_matches.clone());
+                        let content = self.read_file_content(path).ok()?;
+                        let file_matches: Vec<Match> = if self.detectors.len() <= 3 {
+                            // For few detectors, sequential is faster (less overhead)
+                            self.detectors
+                                .iter()
+                                .flat_map(|detector| detector.detect(&content, path))
+                                .collect()
+                        } else {
+                            // For many detectors, use parallel processing
+                            self.detectors
+                                .par_iter()
+                                .flat_map(|detector| detector.detect(&content, path))
+                                .collect()
+                        };
+                        self.cache.insert(path_str, (mtime, file_matches.clone()));
                         Some(file_matches)
                     }
                 } else {

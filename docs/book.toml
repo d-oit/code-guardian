@@ -1,0 +1,32 @@
+[book]
+title = "Code-Guardian Documentation"
+author = "Code-Guardian Team"
+description = "Comprehensive documentation for Code-Guardian security scanner"
+
+[build]
+build-dir = "book"
+create-missing = true
+
+[output.html]
+git-repository-url = "https://github.com/d-oit/code-guardian"
+edit-url-template = "https://github.com/d-oit/code-guardian/edit/main/{path}"
+additional-css = ["custom.css"]
+
+[output.html.search]
+limit-results = 20
+use-boolean-and = true
+boost-title = 2
+boost-hierarchy = 2
+boost-paragraph = 1
+expand = true
+heading-split-level = 2
+
+[preprocessor.toc]
+command = "mdbook-toc"
+renderer = ["html"]
+
+[preprocessor.links]
+
+[preprocessor.index]
+
+[output.linkcheck]

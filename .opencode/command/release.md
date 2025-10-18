@@ -49,7 +49,9 @@ First, ensure branch synchronization:
 - Check if develop branch is up to date with main. If not, merge main into develop to sync changes.
 - Switch to develop branch if not already on it.
 
-Then, run quality checks. Stop on any errors or warnings.
+Then, use the atomic-commit-creator agent to ensure all commits are atomic (each representing a single, complete change). This is necessary to prevent issues with non-atomic commits during releases, such as partial changes that could introduce bugs or inconsistencies. Atomic commits make rollbacks easier and ensure releases are reliable.
+
+After that, run quality checks. Stop on any errors or warnings.
 
 Build check: !`cargo build`
 If build fails, report errors. If not dry-run, stop.

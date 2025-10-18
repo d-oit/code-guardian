@@ -1,0 +1,10 @@
+{
+  "os": ["ubuntu-latest", "windows-latest", "macos-latest"],
+  "rust": ["stable"],
+  "include": [
+    {
+      "os": "ubuntu-latest",
+      "rust": "beta"
+    }
+  ]
+}

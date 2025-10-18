@@ -14,17 +14,17 @@ lazy_static! {
     pub static ref SCANS_TOTAL: IntCounter = IntCounter::new(
         "code_guardian_scans_total",
         "Total number of scans performed"
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref FILES_SCANNED_TOTAL: IntCounter = IntCounter::new(
         "code_guardian_files_scanned_total",
         "Total number of files scanned"
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref ISSUES_FOUND_TOTAL: IntCounter = IntCounter::new(
         "code_guardian_issues_found_total",
         "Total number of issues found"
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Performance metrics
     pub static ref SCAN_DURATION: Histogram = Histogram::with_opts(
@@ -32,59 +32,59 @@ lazy_static! {
             "code_guardian_scan_duration_seconds",
             "Time spent scanning in seconds"
         ).buckets(vec![0.1, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0])
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref FILE_SCAN_DURATION: Histogram = Histogram::with_opts(
         HistogramOpts::new(
             "code_guardian_file_scan_duration_seconds",
             "Time spent scanning individual files in seconds"
         ).buckets(vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0])
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Resource metrics
     pub static ref MEMORY_USAGE: Gauge = Gauge::new(
         "code_guardian_memory_usage_bytes",
         "Current memory usage in bytes"
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref CPU_USAGE: Gauge = Gauge::new(
         "code_guardian_cpu_usage_percent",
         "Current CPU usage percentage"
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Detector metrics
     pub static ref DETECTOR_EXECUTIONS: IntCounter = IntCounter::new(
         "code_guardian_detector_executions_total",
         "Total number of detector executions"
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref LLM_DETECTIONS: IntCounter = IntCounter::new(
         "code_guardian_llm_detections_total",
         "Total number of LLM-specific detections"
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Cache metrics
     pub static ref CACHE_HITS: IntCounter = IntCounter::new(
         "code_guardian_cache_hits_total",
         "Total number of cache hits"
-    ).expect("metric can be created");
+    ).unwrap();
 
     pub static ref CACHE_MISSES: IntCounter = IntCounter::new(
         "code_guardian_cache_misses_total",
         "Total number of cache misses"
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Error metrics
     pub static ref ERRORS_TOTAL: IntCounter = IntCounter::new(
         "code_guardian_errors_total",
         "Total number of errors encountered"
-    ).expect("metric can be created");
+    ).unwrap();
 
     // Current state metrics
     pub static ref ACTIVE_SCANS: IntGauge = IntGauge::new(
         "code_guardian_active_scans",
         "Number of currently active scans"
-    ).expect("metric can be created");
+    ).unwrap();
 }
 
 pub fn init_metrics() -> Result<(), prometheus::Error> {

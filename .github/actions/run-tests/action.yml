@@ -1,0 +1,51 @@
+name: 'Run Tests'
+description: 'Run cargo tests with configurable options'
+
+inputs:
+  package:
+    description: 'Specific package to test (leave empty for workspace)'
+    required: false
+    default: ''
+  features:
+    description: 'Features to enable'
+    required: false
+    default: '--all-features'
+  test-args:
+    description: 'Additional arguments for cargo test'
+    required: false
+    default: ''
+  nextest:
+    description: 'Use cargo-nextest instead of cargo test'
+    required: false
+    default: 'true'
+  install-nextest:
+    description: 'Install cargo-nextest if using it'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install cargo-nextest
+      if: inputs.nextest == 'true' && inputs.install-nextest == 'true'
+      uses: taiki-e/install-action@cargo-nextest
+
+    - name: Run tests with nextest
+      if: inputs.nextest == 'true'
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.package }}" ]]; then
+          cargo nextest run -p ${{ inputs.package }} ${{ inputs.features }} ${{ inputs.test-args }}
+        else
+          cargo nextest run ${{ inputs.features }} ${{ inputs.test-args }}
+        fi
+
+    - name: Run tests with cargo
+      if: inputs.nextest == 'false'
+      shell: bash
+      run: |
+        if [[ -n "${{ inputs.package }}" ]]; then
+          cargo test -p ${{ inputs.package }} ${{ inputs.features }} ${{ inputs.test-args }}
+        else
+          cargo test ${{ inputs.features }} ${{ inputs.test-args }}
+        fi

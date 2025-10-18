@@ -1,9 +1,12 @@
 #!/bin/bash
-
 # Performance Monitoring Dashboard for Code Guardian
-# Monitors build times, runtime performance, and resource usage
+# Monitors build times, runtime performance, and resource usage with enhanced error handling
 
-set -e
+set -euo pipefail
+
+# Load common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
 # Configuration
 PERF_DIR="performance"
@@ -18,18 +21,14 @@ TEST_THRESHOLD=60    # 1 minute
 CLIPPY_THRESHOLD=30  # 30 seconds
 BENCH_THRESHOLD=10   # 10 seconds for benchmarks
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
 # Ensure directories exist
-mkdir -p "$PERF_DIR" "$REPORTS_DIR" "$DASHBOARD_DIR" "$BENCHMARKS_DIR"
+create_dir "$PERF_DIR"
+create_dir "$REPORTS_DIR"
+create_dir "$DASHBOARD_DIR"
+create_dir "$BENCHMARKS_DIR"
 
-echo -e "${BLUE}⚡ Code Guardian Performance Monitor${NC}"
-echo "========================================"
+log $LOG_INFO "⚡ Code Guardian Performance Monitor"
+log $LOG_INFO "======================================="
 
 # Function to measure command execution time
 measure_time() {
@@ -37,37 +36,37 @@ measure_time() {
     local label="$2"
     local start_time=$(date +%s.%N)
     
-    echo -e "${BLUE}🔄 Running: $label${NC}"
+    log $LOG_INFO "🔄 Running: $label"
     
-    if eval "$cmd" > /dev/null 2>&1; then
+    if execute "$cmd" "$label"; then
         local end_time=$(date +%s.%N)
         local duration=$(echo "$end_time - $start_time" | bc -l)
-        echo -e "${GREEN}✅ $label completed in ${duration}s${NC}"
+        log $LOG_INFO "✅ $label completed in ${duration}s"
         echo "$duration"
     else
         local end_time=$(date +%s.%N)
         local duration=$(echo "$end_time - $start_time" | bc -l)
-        echo -e "${RED}❌ $label failed after ${duration}s${NC}"
+        log $LOG_ERROR "❌ $label failed after ${duration}s"
         echo "$duration"
     fi
 }
 
 # Function to run performance benchmarks
 run_benchmarks() {
-    echo -e "${BLUE}🏃 Running performance benchmarks...${NC}"
+    log $LOG_INFO "🏃 Running performance benchmarks..."
     
     local benchmark_results="$BENCHMARKS_DIR/latest_results.json"
     local start_time=$(date +%s.%N)
     
     # Run criterion benchmarks
-    if cargo bench --bench scanner_benchmark > "$BENCHMARKS_DIR/benchmark_output.txt" 2>&1; then
+    if execute "cargo bench --bench scanner_benchmark > \"$BENCHMARKS_DIR/benchmark_output.txt\"" "Run benchmarks"; then
         local end_time=$(date +%s.%N)
         local duration=$(echo "$end_time - $start_time" | bc -l)
         
         # Parse benchmark results (simplified)
         cat > "$benchmark_results" << EOF
 {
-    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "timestamp": "$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
     "duration": $duration,
     "benchmarks": {
         "small_file_scan": {
@@ -94,13 +93,13 @@ run_benchmarks() {
     "status": "pass"
 }
 EOF
-        echo -e "${GREEN}✅ Benchmarks completed in ${duration}s${NC}"
+        log $LOG_INFO "✅ Benchmarks completed in ${duration}s"
     else
-        echo -e "${YELLOW}⚠️  Benchmarks failed, using placeholder data${NC}"
+        log $LOG_WARN "⚠️  Benchmarks failed, using placeholder data"
         # Create placeholder data
         cat > "$benchmark_results" << EOF
 {
-    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "timestamp": "$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
     "duration": 0,
     "benchmarks": {},
     "status": "failed"
@@ -111,10 +110,10 @@ EOF
 
 # Function to measure build performance
 measure_build_performance() {
-    echo -e "${BLUE}🔨 Measuring build performance...${NC}"
+    log $LOG_INFO "🔨 Measuring build performance..."
     
     # Clean build
-    cargo clean > /dev/null 2>&1
+    execute "cargo clean > /dev/null" "Clean build"
     
     local build_time=$(measure_time "cargo build --workspace" "Full Build")
     local test_time=$(measure_time "cargo test --workspace --no-run" "Test Compilation")
@@ -126,7 +125,7 @@ measure_build_performance() {
     
     cat > "$REPORTS_DIR/build_performance.json" << EOF
 {
-    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "timestamp": "$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
     "build_times": {
         "full_build": $build_time,
         "test_compilation": $test_time,
@@ -140,9 +139,9 @@ measure_build_performance() {
         "clippy": $CLIPPY_THRESHOLD
     },
     "status": {
-        "build": $([ $(echo "$build_time < $BUILD_THRESHOLD" | bc -l) -eq 1 ] && echo '"pass"' || echo '"fail"'),
-        "test": $([ $(echo "$test_time < $TEST_THRESHOLD" | bc -l) -eq 1 ] && echo '"pass"' || echo '"fail"'),
-        "clippy": $([ $(echo "$clippy_time < $CLIPPY_THRESHOLD" | bc -l) -eq 1 ] && echo '"pass"' || echo '"fail"')
+        "build": $([ $(echo \"$build_time < $BUILD_THRESHOLD\" | bc -l) -eq 1 ] && echo '\"pass\"' || echo '\"fail\"'),
+        "test": $([ $(echo \"$test_time < $TEST_THRESHOLD\" | bc -l) -eq 1 ] && echo '\"pass\"' || echo '\"fail\"'),
+        "clippy": $([ $(echo \"$clippy_time < $CLIPPY_THRESHOLD\" | bc -l) -eq 1 ] && echo '\"pass\"' || echo '\"fail\"')
     }
 }
 EOF
@@ -150,29 +149,31 @@ EOF
 
 # Function to measure runtime performance
 measure_runtime_performance() {
-    echo -e "${BLUE}🚀 Measuring runtime performance...${NC}"
+    log $LOG_INFO "🚀 Measuring runtime performance..."
     
     # Create test data
-    local test_dir=$(mktemp -d)
+    local test_dir
+    test_dir=$(mktemp -d)
+    
     for i in {1..10}; do
         cat > "$test_dir/test_$i.rs" << EOF
 fn main() {
     // TODO: Implement functionality
-    println!("Hello, world!");
+    println!(\"Hello, world!\");
     let result = dangerous_operation().unwrap();
     // FIXME: Add error handling
-    println!("Result: {}", result);
+    println!(\"Result: {}\", result);
 }
 
 fn dangerous_operation() -> Result<String, &'static str> {
-    Ok("success".to_string())
+    Ok(\"success\".to_string())
 }
 EOF
     done
     
     # Measure scanning performance
     local scan_start=$(date +%s.%N)
-    if cargo run -- scan "$test_dir" --format json > "$REPORTS_DIR/scan_output.json" 2>/dev/null; then
+    if execute "cargo run -- scan \"$test_dir\" --format json > \"$REPORTS_DIR/scan_output.json\"" "Run scan"; then
         local scan_end=$(date +%s.%N)
         local scan_time=$(echo "$scan_end - $scan_start" | bc -l)
         local scan_status="pass"
@@ -190,7 +191,7 @@ EOF
     
     cat > "$REPORTS_DIR/runtime_performance.json" << EOF
 {
-    "timestamp": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+    "timestamp": "$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")",
     "runtime_metrics": {
         "scan_time": $scan_time,
         "files_scanned": 10,
@@ -204,20 +205,24 @@ EOF
 EOF
     
     # Cleanup
-    rm -rf "$test_dir"
+    cleanup "$test_dir"
     
-    echo -e "${GREEN}✅ Runtime performance measured: ${scan_time}s${NC}"
+    log $LOG_INFO "✅ Runtime performance measured: ${scan_time}s"
 }
 
 # Function to update performance history
 update_performance_history() {
-    echo -e "${BLUE}📈 Updating performance history...${NC}"
+    log $LOG_INFO "📈 Updating performance history..."
     
-    local build_data=$(cat "$REPORTS_DIR/build_performance.json")
-    local runtime_data=$(cat "$REPORTS_DIR/runtime_performance.json")
-    local benchmark_data=$(cat "$BENCHMARKS_DIR/latest_results.json")
+    local build_data
+    build_data=$(cat "$REPORTS_DIR/build_performance.json")
+    local runtime_data
+    runtime_data=$(cat "$REPORTS_DIR/runtime_performance.json")
+    local benchmark_data
+    benchmark_data=$(cat "$BENCHMARKS_DIR/latest_results.json")
     
-    local combined_data=$(jq -n \
+    local combined_data
+    combined_data=$(jq -n \
         --argjson build "$build_data" \
         --argjson runtime "$runtime_data" \
         --argjson benchmark "$benchmark_data" \
@@ -236,16 +241,19 @@ update_performance_history() {
     jq ". += [$combined_data] | if length > 50 then .[1:] else . end" "$HISTORY_FILE" > "$HISTORY_FILE.tmp"
     mv "$HISTORY_FILE.tmp" "$HISTORY_FILE"
     
-    echo -e "${GREEN}✅ Performance history updated${NC}"
+    log $LOG_INFO "✅ Performance history updated"
 }
 
 # Function to generate performance dashboard
 generate_performance_dashboard() {
-    echo -e "${BLUE}🎨 Generating performance dashboard...${NC}"
+    log $LOG_INFO "🎨 Generating performance dashboard..."
     
-    local build_data=$(cat "$REPORTS_DIR/build_performance.json")
-    local runtime_data=$(cat "$REPORTS_DIR/runtime_performance.json")
-    local timestamp=$(date)
+    local build_data
+    build_data=$(cat "$REPORTS_DIR/build_performance.json")
+    local runtime_data
+    runtime_data=$(cat "$REPORTS_DIR/runtime_performance.json")
+    local timestamp
+    timestamp=$(date)
     
     cat > "$DASHBOARD_DIR/index.html" << 'EOF'
 <!DOCTYPE html>
@@ -626,37 +634,44 @@ EOF
 </html>
 EOF
 
-    echo -e "${GREEN}✅ Performance dashboard generated${NC}"
+    log $LOG_INFO "✅ Performance dashboard generated"
 }
 
 # Function to check performance regressions
 check_performance_regressions() {
-    echo -e "${BLUE}🔍 Checking for performance regressions...${NC}"
+    log $LOG_INFO "🔍 Checking for performance regressions..."
     
-    if [ ! -f "$HISTORY_FILE" ] || [ "$(jq length "$HISTORY_FILE")" -lt 2 ]; then
-        echo -e "${YELLOW}⚠️  Insufficient history for regression analysis${NC}"
+    if [ ! -f "$HISTORY_FILE" ] || [ "$(jq length \"$HISTORY_FILE\")" -lt 2 ]; then
+        log $LOG_WARN "⚠️  Insufficient history for regression analysis"
         return 0
     fi
     
-    local current_build_time=$(jq -r '.[-1].build.build_times.full_build' "$HISTORY_FILE")
-    local previous_build_time=$(jq -r '.[-2].build.build_times.full_build' "$HISTORY_FILE")
+    local current_build_time
+    current_build_time=$(jq -r '.[-1].build.build_times.full_build' "$HISTORY_FILE")
+    local previous_build_time
+    previous_build_time=$(jq -r '.[-2].build.build_times.full_build' "$HISTORY_FILE")
     
     local regression_threshold=1.2  # 20% increase considered regression
     local improvement_threshold=0.9  # 10% decrease considered improvement
     
-    local ratio=$(echo "scale=2; $current_build_time / $previous_build_time" | bc -l)
+    local ratio
+    ratio=$(echo "scale=2; $current_build_time / $previous_build_time" | bc -l)
     
     if (( $(echo "$ratio > $regression_threshold" | bc -l) )); then
-        echo -e "${RED}📉 Performance regression detected!${NC}"
+        log $LOG_ERROR "📉 Performance regression detected!"
         echo "  Build time increased from ${previous_build_time}s to ${current_build_time}s"
-        echo "  Increase: $(echo "scale=1; ($ratio - 1) * 100" | bc -l)%"
+        local increase_pct
+        increase_pct=$(echo "scale=1; ($ratio - 1) * 100" | bc -l)
+        echo "  Increase: ${increase_pct}%"
         return 1
     elif (( $(echo "$ratio < $improvement_threshold" | bc -l) )); then
-        echo -e "${GREEN}📈 Performance improvement detected!${NC}"
+        log $LOG_INFO "📈 Performance improvement detected!"
         echo "  Build time decreased from ${previous_build_time}s to ${current_build_time}s"
-        echo "  Improvement: $(echo "scale=1; (1 - $ratio) * 100" | bc -l)%"
+        local improvement_pct
+        improvement_pct=$(echo "scale=1; (1 - $ratio) * 100" | bc -l)
+        echo "  Improvement: ${improvement_pct}%"
     else
-        echo -e "${GREEN}✅ No significant performance changes${NC}"
+        log $LOG_INFO "✅ No significant performance changes"
     fi
     
     return 0
@@ -664,7 +679,7 @@ check_performance_regressions() {
 
 # Function to generate performance report
 generate_performance_report() {
-    echo -e "${BLUE}📄 Generating performance report...${NC}"
+    log $LOG_INFO "📄 Generating performance report..."
     
     cat > "$REPORTS_DIR/performance_summary.md" << EOF
 # Performance Report
@@ -726,7 +741,7 @@ Generated: $(date)
 
 EOF
 
-    echo -e "${GREEN}✅ Performance report generated${NC}"
+    log $LOG_INFO "✅ Performance report generated"
 }
 
 # Main execution
@@ -740,8 +755,8 @@ main() {
             generate_performance_dashboard
             check_performance_regressions
             generate_performance_report
-            echo -e "\n${GREEN}🎉 Performance monitoring complete!${NC}"
-            echo -e "📊 View dashboard: file://$(pwd)/$DASHBOARD_DIR/index.html"
+            log $LOG_INFO "🎉 Performance monitoring complete!"
+            log $LOG_INFO "📊 View dashboard: file://$(pwd)/$DASHBOARD_DIR/index.html"
             ;;
         "build")
             measure_build_performance
@@ -769,7 +784,7 @@ main() {
             echo "  help:      Show this help"
             ;;
         *)
-            echo "Unknown command: $1"
+            log $LOG_ERROR "Unknown command: $1"
             echo "Use '$0 help' for usage information"
             exit 1
             ;;

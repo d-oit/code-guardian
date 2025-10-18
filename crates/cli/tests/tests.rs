@@ -110,7 +110,8 @@ fn test_cli_parse_report_missing_id() {
 #[test]
 fn test_handle_history_invalid_db() {
     use code_guardian_cli::command_handlers::handle_history;
-    let invalid_db = PathBuf::from("nonexistent/db.db");
+    // Use a path that SQLite cannot create (e.g., a directory that doesn't exist)
+    let invalid_db = PathBuf::from("/nonexistent_directory/db.db");
     let result = handle_history(Some(invalid_db));
     assert!(result.is_err());
 }

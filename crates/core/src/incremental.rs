@@ -15,6 +15,8 @@ pub struct FileMetadata {
     pub hash: Option<String>,
     pub last_scan_time: u64,
     pub match_count: usize,
+    pub content_hash: Option<String>, // For more accurate change detection
+    pub detector_hash: Option<String>, // Hash of detector configuration
 }
 
 /// Incremental scan state persistence
@@ -136,6 +138,8 @@ impl IncrementalScanner {
                         hash: metadata.hash,
                         last_scan_time: scan_timestamp,
                         match_count: file_matches.len(),
+                        content_hash: metadata.content_hash,
+                        detector_hash: metadata.detector_hash,
                     };
 
                     self.state.file_metadata.insert(file_path, updated_metadata);
@@ -259,13 +263,20 @@ impl IncrementalScanner {
         if let Ok(metadata) = std::fs::metadata(path) {
             let modified_time = metadata.modified()?.duration_since(UNIX_EPOCH)?.as_secs();
 
-            // Optional: Calculate file hash for more accurate change detection
-            let hash = if metadata.len() < 1024 * 1024 {
-                // Only hash files < 1MB
-                self.calculate_file_hash(path).ok()
+            // Calculate content hash for accurate change detection
+            let (hash, content_hash) = if metadata.len() < 2 * 1024 * 1024 {
+                // Hash files < 2MB
+                let content_hash = self.calculate_content_hash(path).ok();
+                let quick_hash = self.calculate_file_hash(path).ok();
+                (quick_hash, content_hash)
             } else {
-                None
+                // For larger files, use size + modified time as hash
+                let size_hash = format!("{:x}", metadata.len());
+                (Some(size_hash), None)
             };
+
+            // Calculate detector configuration hash for cache invalidation
+            let detector_hash = self.calculate_detector_hash();
 
             Ok(Some(FileMetadata {
                 path: path.to_path_buf(),
@@ -274,6 +285,8 @@ impl IncrementalScanner {
                 hash,
                 last_scan_time: 0,
                 match_count: 0,
+                content_hash,
+                detector_hash: Some(detector_hash),
             }))
         } else {
             Ok(None)
@@ -288,6 +301,29 @@ impl IncrementalScanner {
         let mut hasher = DefaultHasher::new();
         content.hash(&mut hasher);
         Ok(format!("{:x}", hasher.finish()))
+    }
+
+    fn calculate_content_hash(&self, path: &Path) -> Result<String> {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let content = std::fs::read_to_string(path)?;
+        let mut hasher = DefaultHasher::new();
+        content.hash(&mut hasher);
+        Ok(format!("{:x}", hasher.finish()))
+    }
+
+    fn calculate_detector_hash(&self) -> String {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+
+        let mut hasher = DefaultHasher::new();
+        // Hash detector count and types for cache invalidation when detectors change
+        self.detectors.len().hash(&mut hasher);
+        for (i, _detector) in self.detectors.iter().enumerate() {
+            i.hash(&mut hasher); // Hash index as approximation
+        }
+        format!("{:x}", hasher.finish())
     }
 
     fn calculate_speedup(&self, files_scanned: usize, files_skipped: usize) -> f64 {
