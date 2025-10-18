@@ -145,14 +145,14 @@ fn detect_pattern_with_context(
         for mat in re.find_iter(line) {
             let context_start = mat.start().saturating_sub(15);
             let context_end = (mat.end() + 25).min(line.len());
-            let context = &line[context_start..context_end];
+            let match_context = &line[context_start..context_end];
 
             matches.push(Match {
                 file_path: file_path.to_string_lossy().to_string(),
                 line_number: line_idx + 1,
                 column: mat.start() + 1,
                 pattern: pattern_name.to_string(),
-                message: format!("{}: {}", pattern_name, context.trim()),
+                message: format!("{}: {}", pattern_name, match_context.trim()),
             });
         }
     }

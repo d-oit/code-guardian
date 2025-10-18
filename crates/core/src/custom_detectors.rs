@@ -159,7 +159,7 @@ impl CustomDetectorManager {
         let configs: Vec<CustomDetectorConfig> =
             match config_file.extension().and_then(|s| s.to_str()) {
                 Some("json") => serde_json::from_str(&content)?,
-                Some("yaml") | Some("yml") => serde_yaml::from_str(&content)?,
+                Some("yaml" | "yml") => serde_yaml::from_str(&content)?,
                 Some("toml") => toml::from_str(&content)?,
                 _ => return Err(anyhow::anyhow!("Unsupported config file format")),
             };
@@ -190,7 +190,7 @@ impl CustomDetectorManager {
         let config_file = config_file.as_ref();
         let content = match config_file.extension().and_then(|s| s.to_str()) {
             Some("json") => serde_json::to_string_pretty(&configs)?,
-            Some("yaml") | Some("yml") => serde_yaml::to_string(&configs)?,
+            Some("yaml" | "yml") => serde_yaml::to_string(&configs)?,
             Some("toml") => toml::to_string_pretty(&configs)?,
             _ => return Err(anyhow::anyhow!("Unsupported config file format")),
         };
@@ -291,7 +291,7 @@ impl CustomDetectorManager {
             CustomDetectorConfig {
                 name: "LARGE_FUNCTION".to_string(),
                 description: "Detect functions that might be too large".to_string(),
-                pattern: r#"fn\s+\w+[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]{500,}\}"#.to_string(),
+                pattern: r"fn\s+\w+[^{]*\{(?:[^{}]*\{[^{}]*\})*[^{}]{500,}\}".to_string(),
                 file_extensions: vec!["rs".to_string()],
                 case_sensitive: true,
                 multiline: true,
@@ -534,8 +534,8 @@ mod tests {
         assert_eq!(matches_rs.len(), 1);
 
         // Should not match .js file
-        let matches_js = detector.detect(content, Path::new("test.js"));
-        assert_eq!(matches_js.len(), 0);
+        let js_matches = detector.detect(content, Path::new("test.js"));
+        assert_eq!(js_matches.len(), 0);
     }
 
     #[test]

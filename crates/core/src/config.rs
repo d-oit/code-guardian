@@ -103,9 +103,9 @@ max_file_size = 20971520
         assert_eq!(config.output_formats, vec!["json", "csv"]);
         assert_eq!(config.database_path, "test.db");
         assert_eq!(config.max_threads, 4);
-        assert_eq!(config.cache_size, 100000);
+        assert_eq!(config.cache_size, 100_000);
         assert_eq!(config.batch_size, 200);
-        assert_eq!(config.max_file_size, 20971520);
+        assert_eq!(config.max_file_size, 20_971_520);
     }
 
     #[test]
@@ -130,7 +130,7 @@ max_file_size = 20971520
         assert_eq!(config.max_threads, 8);
         assert_eq!(config.cache_size, 75000);
         assert_eq!(config.batch_size, 150);
-        assert_eq!(config.max_file_size, 15728640);
+        assert_eq!(config.max_file_size, 15_728_640);
     }
 
     #[test]

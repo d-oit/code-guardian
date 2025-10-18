@@ -54,14 +54,14 @@ fn detect_pattern_with_context(
             // Extract more context around the match
             let context_start = mat.start().saturating_sub(10);
             let context_end = (mat.end() + 20).min(line.len());
-            let context = &line[context_start..context_end];
+            let match_context = &line[context_start..context_end];
 
             matches.push(Match {
                 file_path: file_path.to_string_lossy().to_string(),
                 line_number: line_idx + 1,
                 column: mat.start() + 1,
                 pattern: pattern_name.to_string(),
-                message: format!("{}: {}", pattern_name, context.trim()),
+                message: format!("{}: {}", pattern_name, match_context.trim()),
             });
         }
     }
@@ -484,7 +484,7 @@ impl PatternDetector for HighPerformanceDetector {
             // Extract context around the match
             let start = mat.start().saturating_sub(15);
             let end = (mat.end() + 25).min(content.len());
-            let context = &content[start..end];
+            let match_context = &content[start..end];
 
             // Find the line number
             let line_start = content[..mat.start()]
@@ -499,7 +499,7 @@ impl PatternDetector for HighPerformanceDetector {
                 line_number,
                 column,
                 pattern: pattern_name.clone(),
-                message: format!("{}: {}", pattern_name, context.trim()),
+                message: format!("{}: {}", pattern_name, match_context.trim()),
             });
         }
 

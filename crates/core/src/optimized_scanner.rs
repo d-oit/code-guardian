@@ -40,13 +40,13 @@ impl OptimizedScanner {
         }
     }
 
-    /// Set maximum cache size
+    /// Set cache size
     pub fn with_cache_size(mut self, size: usize) -> Self {
         self.max_cache_size = size;
         self
     }
 
-    /// Gets the relevant detectors for a specific file extension
+    /// Check if a file should be scanned based on size and type
     /// This optimizes performance by only running detectors that are likely to match
     fn get_relevant_detectors(&self, path: &Path) -> Vec<&dyn PatternDetector> {
         let ext = path.extension().and_then(|e| e.to_str());
@@ -56,11 +56,11 @@ impl OptimizedScanner {
                 // For Rust files, prioritize Rust-specific detectors but include general ones
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("js") | Some("ts") | Some("jsx") | Some("tsx") | Some("vue") | Some("svelte") => {
+            Some("js" | "ts" | "jsx" | "tsx" | "vue" | "svelte") => {
                 // For JS/TS files, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("py") | Some("pyw") | Some("pyx") => {
+            Some("py" | "pyw" | "pyx") => {
                 // For Python files, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
@@ -68,7 +68,7 @@ impl OptimizedScanner {
                 // For Java files, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("c") | Some("cpp") | Some("cc") | Some("cxx") | Some("h") | Some("hpp") => {
+            Some("c" | "cpp" | "cc" | "cxx" | "h" | "hpp") => {
                 // For C/C++ files, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
@@ -84,12 +84,11 @@ impl OptimizedScanner {
                 // For Ruby files, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("sh") | Some("bash") | Some("zsh") => {
+            Some("sh" | "bash" | "zsh") => {
                 // For shell scripts, include all detectors
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("json") | Some("yaml") | Some("yml") | Some("toml") | Some("xml")
-            | Some("ini") | Some("cfg") => {
+            Some("json" | "yaml" | "yml" | "toml" | "xml" | "ini" | "cfg") => {
                 // For config files, include general detectors (TODO, FIXME, etc.)
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
@@ -331,24 +330,17 @@ impl StreamingScanner {
 
         match ext {
             Some("rs") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("js") | Some("ts") | Some("jsx") | Some("tsx") | Some("vue") | Some("svelte") => {
+            Some("js" | "ts" | "jsx" | "tsx" | "vue" | "svelte") => {
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("py") | Some("pyw") | Some("pyx") => {
+            Some("py" | "pyw" | "pyx") => self.detectors.iter().map(|d| d.as_ref()).collect(),
+            Some("c" | "cpp" | "cc" | "cxx" | "h" | "hpp") => {
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("java") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("c") | Some("cpp") | Some("cc") | Some("cxx") | Some("h") | Some("hpp") => {
+            Some("sh" | "bash" | "zsh") => self.detectors.iter().map(|d| d.as_ref()).collect(),
+            Some("json" | "yaml" | "yml" | "toml" | "xml" | "ini" | "cfg") => {
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("go") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("php") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("rb") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("sh") | Some("bash") | Some("zsh") => {
-                self.detectors.iter().map(|d| d.as_ref()).collect()
-            }
-            Some("json") | Some("yaml") | Some("yml") | Some("toml") | Some("xml")
-            | Some("ini") | Some("cfg") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             _ => self.detectors.iter().map(|d| d.as_ref()).collect(),
         }
     }
@@ -546,22 +538,18 @@ impl AdvancedScanner {
 
         match ext {
             Some("rs") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("js") | Some("ts") | Some("jsx") | Some("tsx") | Some("vue") | Some("svelte") => {
+            Some("js" | "ts" | "jsx" | "tsx" | "vue" | "svelte") => {
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
-            Some("py") | Some("pyw") | Some("pyx") => {
-                self.detectors.iter().map(|d| d.as_ref()).collect()
-            }
+            Some("py" | "pyw" | "pyx") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             Some("java") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("c") | Some("cpp") | Some("cc") | Some("cxx") | Some("h") | Some("hpp") => {
+            Some("c" | "cpp" | "cc" | "cxx" | "h" | "hpp") => {
                 self.detectors.iter().map(|d| d.as_ref()).collect()
             }
             Some("go") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             Some("php") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             Some("rb") => self.detectors.iter().map(|d| d.as_ref()).collect(),
-            Some("sh") | Some("bash") | Some("zsh") => {
-                self.detectors.iter().map(|d| d.as_ref()).collect()
-            }
+            Some("sh" | "bash" | "zsh") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             Some("json") | Some("yaml") | Some("yml") | Some("toml") | Some("xml")
             | Some("ini") | Some("cfg") => self.detectors.iter().map(|d| d.as_ref()).collect(),
             _ => self.detectors.iter().map(|d| d.as_ref()).collect(),
