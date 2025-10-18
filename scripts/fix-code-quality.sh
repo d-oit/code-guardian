@@ -1,57 +1,32 @@
 #!/bin/bash
 # Code Quality Auto-Fix Script for Code Guardian
-# This script applies formatting and clippy fixes automatically
+# This script applies formatting and clippy fixes automatically with enhanced error handling
 
-set -e
+set -euo pipefail
 
-echo "🔧 Code Guardian - Auto-fix Code Quality Issues"
-echo "=============================================="
+# Load common utilities
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Function to print colored output
-print_status() {
-    local status=$1
-    local message=$2
-    case $status in
-        "success")
-            echo -e "${GREEN}✅ $message${NC}"
-            ;;
-        "warning")
-            echo -e "${YELLOW}⚠️  $message${NC}"
-            ;;
-        "error")
-            echo -e "${RED}❌ $message${NC}"
-            ;;
-        "info")
-            echo -e "${BLUE}ℹ️  $message${NC}"
-            ;;
-        *)
-            echo "$message"
-            ;;
-    esac
-}
+log $LOG_INFO "🔧 Code Guardian - Auto-fix Code Quality Issues"
+log $LOG_INFO "=============================================="
 
 # Check if we're in a git repository
-if ! git rev-parse --git-dir > /dev/null 2>&1; then
-    print_status error "Not in a git repository"
+if ! is_git_repo; then
+    log $LOG_ERROR "Not in a git repository"
     exit 1
 fi
 
 # Function to check if there are uncommitted changes
 check_git_status() {
-    if ! git diff --quiet || ! git diff --staged --quiet; then
-        print_status warning "You have uncommitted changes."
+    if has_uncommitted_changes; then
+        log $LOG_WARN "You have uncommitted changes."
         echo "   Consider committing or stashing them before running auto-fix."
-        read -p "   Continue anyway? (y/N): " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            print_status error "Aborted."
+        
+        if confirm "Continue anyway?" "n"; then
+            log $LOG_INFO "Proceeding with uncommitted changes"
+        else
+            log $LOG_ERROR "Aborted."
             exit 1
         fi
     fi
@@ -59,48 +34,48 @@ check_git_status() {
 
 # Function to apply formatting
 apply_formatting() {
-    print_status info "Checking code formatting..."
+    log $LOG_INFO "Checking code formatting..."
 
-    if cargo fmt --all -- --check > /dev/null 2>&1; then
-        print_status success "Code formatting is already correct."
+    if execute "cargo fmt --all -- --check" "Check code formatting"; then
+        log $LOG_INFO "Code formatting is already correct."
         return 0
     else
-        print_status info "Applying formatting fixes..."
-        cargo fmt --all
-        print_status success "Formatting applied."
+        log $LOG_INFO "Applying formatting fixes..."
+        execute "cargo fmt --all" "Apply formatting fixes"
+        log $LOG_INFO "Formatting applied."
         return 1
     fi
 }
 
 # Function to apply clippy fixes
 apply_clippy() {
-    print_status info "Checking clippy issues..."
+    log $LOG_INFO "Checking clippy issues..."
 
-    if cargo clippy --all-targets --all-features -- -D warnings > /dev/null 2>&1; then
-        print_status success "No clippy issues found."
+    if execute "cargo clippy --all-targets --all-features -- -D warnings" "Check clippy issues"; then
+        log $LOG_INFO "No clippy issues found."
         return 0
     else
-        print_status info "Applying clippy fixes..."
-        cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged
-        print_status success "Clippy fixes applied."
+        log $LOG_INFO "Applying clippy fixes..."
+        execute "cargo clippy --all-targets --all-features --fix --allow-dirty --allow-staged" "Apply clippy fixes"
+        log $LOG_INFO "Clippy fixes applied."
         return 1
     fi
 }
 
 # Function to commit changes
 commit_changes() {
-    if ! git diff --quiet; then
-        print_status info "Committing auto-fix changes..."
-        git add .
-        git commit -m "auto-fix: apply code quality fixes
+    if has_uncommitted_changes; then
+        log $LOG_INFO "Committing auto-fix changes..."
+        execute "git add ." "Stage changes"
+        execute "git commit -m \"auto-fix: apply code quality fixes
 
 - Apply cargo fmt formatting
 - Apply clippy suggestions
 
-[automated commit]"
-        print_status success "Changes committed."
+[automated commit]\"" "Commit changes"
+        log $LOG_INFO "Changes committed."
     else
-        print_status info "No changes to commit."
+        log $LOG_INFO "No changes to commit."
     fi
 }
 
@@ -128,7 +103,7 @@ main() {
                 exit 0
                 ;;
             *)
-                echo "❌ Unknown option: $1"
+                log $LOG_ERROR "Unknown option: $1"
                 echo "Use --help for usage information."
                 exit 1
                 ;;
@@ -150,7 +125,7 @@ main() {
     
     # Summary
     echo ""
-    print_status info "Summary:"
+    log $LOG_INFO "Summary:"
     if [ "$format_changed" = true ]; then
         echo "  🎨 Formatting: Fixed"
     else
@@ -170,7 +145,7 @@ main() {
     fi
 
     echo ""
-    print_status success "Code quality check complete!"
+    log $LOG_INFO "Code quality check complete!"
 
     if [ "$format_changed" = true ] || [ "$clippy_changed" = true ]; then
         if [ "$auto_commit" = false ]; then
@@ -179,4 +154,5 @@ main() {
     fi
 }
 
+# Run main function
 main "$@"

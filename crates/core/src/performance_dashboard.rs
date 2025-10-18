@@ -437,11 +437,19 @@ impl PerformanceDashboard {
         }
     }
 
-    /// Get current memory usage (simplified)
+    /// Get current memory usage
     fn get_memory_usage(&self) -> u64 {
-        // In a real implementation, this would use system calls
-        // For now, return a placeholder value
-        64 // MB
+        use sysinfo::System;
+
+        let mut sys = System::new_all();
+        sys.refresh_all();
+
+        // Get current process memory usage
+        if let Some(process) = sys.process(sysinfo::get_current_pid().unwrap()) {
+            (process.memory() / 1024 / 1024) as u64 // Convert to MB
+        } else {
+            64 // Fallback
+        }
     }
 
     /// Get current CPU usage (simplified)

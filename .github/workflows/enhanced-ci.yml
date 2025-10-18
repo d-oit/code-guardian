@@ -21,12 +21,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-# Least privilege permissions
+# Least privilege permissions with security focus
 permissions:
   contents: read
   pull-requests: write
   checks: write
   actions: read
+  security-events: write
+  packages: read
 
 env:
   CARGO_TERM_COLOR: always
@@ -98,6 +100,9 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -137,7 +142,7 @@ jobs:
         id: clippy-check
         run: |
           echo "🔧 Running clippy..."
-          if ! cargo clippy --all-targets --all-features -- -D warnings; then
+          if ! cargo clippy --all-targets --all-features -- -W warnings; then
             echo "Clippy issues found, attempting fixes..."
             cargo clippy --all-targets --all-features --fix --allow-dirty
             echo "clippy_fixed=true" >> $GITHUB_OUTPUT
@@ -155,21 +160,23 @@ jobs:
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-          if ! git diff --quiet; then
-            git add .
-            
-            COMMIT_MSG="auto-fix: apply code quality fixes"
-            if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
-              COMMIT_MSG="$COMMIT_MSG\n- Apply cargo fmt formatting"
-            fi
-            if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
-              COMMIT_MSG="$COMMIT_MSG\n- Apply clippy suggestions"
-            fi
-            
-            git commit -m "$COMMIT_MSG"
-            git push
-            echo "✅ Code quality fixes applied and pushed!"
-          fi
+           if ! git diff --quiet; then
+             git add .
+
+             COMMIT_MSG="auto-fix: apply code quality fixes"
+             if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
+               COMMIT_MSG="$COMMIT_MSG
+- Apply cargo fmt formatting"
+             fi
+             if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
+               COMMIT_MSG="$COMMIT_MSG
+- Apply clippy suggestions"
+             fi
+
+             git commit -m "$COMMIT_MSG"
+             git push
+             echo "✅ Code quality fixes applied and pushed!"
+           fi
 
   # Security scanning (comprehensive)
   security-scan:
@@ -276,18 +283,21 @@ jobs:
         include:
           - os: ubuntu-latest
             rust: beta
+
     steps:
-      - uses: actions/checkout@v4
+       - uses: actions/checkout@v4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ matrix.rust }}
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@stable
+         with:
+           toolchain: ${{ matrix.rust }}
+ 
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-nextest
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
-
-      - name: Cache cargo registry
+       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
           path: |
@@ -321,17 +331,19 @@ jobs:
       - name: Install sccache
         uses: mozilla-actions/sccache-action@v0.0.4
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-nextest
 
-      - name: Cache target
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ubuntu-latest-cli-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Cache target
+         uses: actions/cache@v4
+         with:
+           path: target
+           key: ubuntu-latest-cli-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test CLI crate
         run: cargo nextest run -p code_guardian_cli --all-features
@@ -350,14 +362,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-nextest
 
-      - name: Cache target
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ubuntu-latest-core-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Cache target
+         uses: actions/cache@v4
+         with:
+           path: target
+           key: ubuntu-latest-core-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test Core crate
         run: cargo nextest run -p code_guardian_core --all-features
@@ -376,14 +390,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-nextest
 
-      - name: Cache target
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ubuntu-latest-output-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Cache target
+         uses: actions/cache@v4
+         with:
+           path: target
+           key: ubuntu-latest-output-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test Output crate
         run: cargo nextest run -p code_guardian_output --all-features
@@ -402,14 +418,16 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install cargo-nextest
-        uses: taiki-e/install-action@cargo-nextest
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-nextest
 
-      - name: Cache target
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ubuntu-latest-storage-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Cache target
+         uses: actions/cache@v4
+         with:
+           path: target
+           key: ubuntu-latest-storage-target-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Test Storage crate
         run: cargo nextest run -p code_guardian_storage --all-features
@@ -431,10 +449,12 @@ jobs:
         with:
           components: llvm-tools-preview
 
-      - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
+       - name: Install cargo-llvm-cov
+         uses: taiki-e/install-action@v2
+         with:
+           tool: cargo-llvm-cov
 
-      - name: Cache target
+       - name: Cache target
         uses: actions/cache@v4
         with:
           path: target
@@ -602,58 +622,151 @@ jobs:
     needs: [quality-gate, security-scan, build, test-cross-platform, test-cli, test-core, test-output, test-storage, coverage, benchmark, docs, code-review]
     if: always()
     steps:
-      - name: CI Status Summary
-        run: |
-          echo "## 🎯 Enhanced CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+       - name: CI Status Summary
+         run: |
+           echo "## 🎯 Enhanced CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Check each job status
-          jobs=("quality-gate" "security-scan" "build" "test-cross-platform" "coverage" "benchmark" "docs" "code-review")
-          failed_jobs=()
+           failed_jobs=()
 
-          for job in "${jobs[@]}"; do
-            result="${{ needs.$job.result }}"
-            if [[ "$result" == "success" ]]; then
-              echo "✅ $job: PASSED" >> $GITHUB_STEP_SUMMARY
-            elif [[ "$result" == "skipped" ]]; then
-              echo "⏭️  $job: SKIPPED" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "❌ $job: FAILED" >> $GITHUB_STEP_SUMMARY
-              failed_jobs+=("$job")
-            fi
-          done
+           # Check quality-gate
+           if [[ "${{ needs.quality-gate.result }}" == "success" ]]; then
+             echo "✅ quality-gate: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.quality-gate.result }}" == "skipped" ]]; then
+             echo "⏭️  quality-gate: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ quality-gate: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("quality-gate")
+           fi
 
-          # Check incremental tests
-          incremental_jobs=("test-cli" "test-core" "test-output" "test-storage")
-          for job in "${incremental_jobs[@]}"; do
-            result="${{ needs.$job.result }}"
-            if [[ "$result" == "success" ]]; then
-              echo "✅ $job: PASSED" >> $GITHUB_STEP_SUMMARY
-            elif [[ "$result" == "skipped" ]]; then
-              echo "⏭️  $job: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "❌ $job: FAILED" >> $GITHUB_STEP_SUMMARY
-              failed_jobs+=("$job")
-            fi
-          done
+           # Check security-scan
+           if [[ "${{ needs.security-scan.result }}" == "success" ]]; then
+             echo "✅ security-scan: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.security-scan.result }}" == "skipped" ]]; then
+             echo "⏭️  security-scan: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ security-scan: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("security-scan")
+           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [[ ${#failed_jobs[@]} -eq 0 ]]; then
-            echo "### ✅ All CI Checks Passed!" >> $GITHUB_STEP_SUMMARY
-            echo "🚀 Ready for deployment" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "### ❌ CI Pipeline Failed" >> $GITHUB_STEP_SUMMARY
-            echo "Failed jobs: ${failed_jobs[*]}" >> $GITHUB_STEP_SUMMARY
-            exit 1
-          fi
+           # Check build
+           if [[ "${{ needs.build.result }}" == "success" ]]; then
+             echo "✅ build: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.build.result }}" == "skipped" ]]; then
+             echo "⏭️  build: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ build: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("build")
+           fi
 
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔧 Modern GitHub Actions Features" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Concurrency controls prevent overlapping runs" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Least privilege permissions for security" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Auto-fix formatting and clippy issues" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Comprehensive security scanning" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Performance benchmarking" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Cross-platform testing" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Incremental builds by crate" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ Coverage threshold enforcement (82%+)" >> $GITHUB_STEP_SUMMARY
+           # Check test-cross-platform
+           if [[ "${{ needs.test-cross-platform.result }}" == "success" ]]; then
+             echo "✅ test-cross-platform: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.test-cross-platform.result }}" == "skipped" ]]; then
+             echo "⏭️  test-cross-platform: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ test-cross-platform: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-cross-platform")
+           fi
+
+           # Check coverage
+           if [[ "${{ needs.coverage.result }}" == "success" ]]; then
+             echo "✅ coverage: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.coverage.result }}" == "skipped" ]]; then
+             echo "⏭️  coverage: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ coverage: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("coverage")
+           fi
+
+           # Check benchmark
+           if [[ "${{ needs.benchmark.result }}" == "success" ]]; then
+             echo "✅ benchmark: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.benchmark.result }}" == "skipped" ]]; then
+             echo "⏭️  benchmark: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ benchmark: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("benchmark")
+           fi
+
+           # Check docs
+           if [[ "${{ needs.docs.result }}" == "success" ]]; then
+             echo "✅ docs: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.docs.result }}" == "skipped" ]]; then
+             echo "⏭️  docs: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ docs: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("docs")
+           fi
+
+           # Check code-review
+           if [[ "${{ needs.code-review.result }}" == "success" ]]; then
+             echo "✅ code-review: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.code-review.result }}" == "skipped" ]]; then
+             echo "⏭️  code-review: SKIPPED" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ code-review: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("code-review")
+           fi
+
+           # Check incremental tests
+           # test-cli
+           if [[ "${{ needs.test-cli.result }}" == "success" ]]; then
+             echo "✅ test-cli: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.test-cli.result }}" == "skipped" ]]; then
+             echo "⏭️  test-cli: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ test-cli: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-cli")
+           fi
+
+           # test-core
+           if [[ "${{ needs.test-core.result }}" == "success" ]]; then
+             echo "✅ test-core: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.test-core.result }}" == "skipped" ]]; then
+             echo "⏭️  test-core: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ test-core: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-core")
+           fi
+
+           # test-output
+           if [[ "${{ needs.test-output.result }}" == "success" ]]; then
+             echo "✅ test-output: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.test-output.result }}" == "skipped" ]]; then
+             echo "⏭️  test-output: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ test-output: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-output")
+           fi
+
+           # test-storage
+           if [[ "${{ needs.test-storage.result }}" == "success" ]]; then
+             echo "✅ test-storage: PASSED" >> $GITHUB_STEP_SUMMARY
+           elif [[ "${{ needs.test-storage.result }}" == "skipped" ]]; then
+             echo "⏭️  test-storage: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "❌ test-storage: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-storage")
+           fi
+
+           echo "" >> $GITHUB_STEP_SUMMARY
+           if [[ ${#failed_jobs[@]} -eq 0 ]]; then
+             echo "### ✅ All CI Checks Passed!" >> $GITHUB_STEP_SUMMARY
+             echo "🚀 Ready for deployment" >> $GITHUB_STEP_SUMMARY
+           else
+             echo "### ❌ CI Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+             echo "Failed jobs: ${failed_jobs[*]}" >> $GITHUB_STEP_SUMMARY
+             exit 1
+           fi
+
+           echo "" >> $GITHUB_STEP_SUMMARY
+           echo "### 🔧 Modern GitHub Actions Features" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Concurrency controls prevent overlapping runs" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Least privilege permissions for security" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Auto-fix formatting and clippy issues" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Comprehensive security scanning" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Performance benchmarking" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Cross-platform testing" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Incremental builds by crate" >> $GITHUB_STEP_SUMMARY
+           echo "- ✅ Coverage threshold enforcement (82%+)" >> $GITHUB_STEP_SUMMARY

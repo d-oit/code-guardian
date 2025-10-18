@@ -1,0 +1,69 @@
+name: Quality Checks
+
+on:
+  workflow_call:
+    inputs:
+      auto-fix:
+        description: 'Automatically fix formatting and clippy issues'
+        type: boolean
+        default: false
+      fail-on-warnings:
+        description: 'Fail the workflow on warnings'
+        type: boolean
+        default: true
+
+jobs:
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          components: rustfmt,clippy
+
+      - uses: ./.github/actions/setup-cache
+
+      - name: Check and auto-fix formatting
+        id: fmt-check
+        if: inputs.auto-fix
+        run: |
+          echo "🔧 Checking formatting..."
+          if ! cargo fmt --all -- --check; then
+            echo "Formatting issues found, applying fixes..."
+            cargo fmt --all
+            echo "format_fixed=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Formatting is correct"
+            echo "format_fixed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check formatting (no auto-fix)
+        if: !inputs.auto-fix
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        uses: ./.github/actions/run-clippy
+        with:
+          args: ${{ inputs.fail-on-warnings && '--all-targets --all-features -- -D warnings' || '--all-targets --all-features' }}
+          fix: ${{ inputs.auto-fix }}
+          allow-dirty: ${{ inputs.auto-fix }}
+
+      - name: Check workspace
+        run: cargo check --workspace
+
+      - name: Commit auto-fixes
+        if: inputs.auto-fix && steps.fmt-check.outputs.format_fixed == 'true'
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if ! git diff --quiet; then
+            git add .
+            git commit -m "auto-fix: apply code quality fixes
+
+- Applied cargo fmt formatting
+- Applied clippy suggestions"
+            git push
+          fi

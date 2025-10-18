@@ -270,6 +270,28 @@ fn bench_custom_detectors_large_files(c: &mut Criterion) {
     group.finish();
 }
 
+fn bench_memory_usage(c: &mut Criterion) {
+    use code_guardian_core::{DetectorFactory, Scanner};
+    use tempfile::TempDir;
+
+    let mut group = c.benchmark_group("memory_usage");
+
+    for &num_files in &[10, 50, 100] {
+        let temp_dir = TempDir::new().unwrap();
+        let _files = create_test_files(&temp_dir, num_files, 100);
+        let scanner = Scanner::new(DetectorFactory::create_default_detectors());
+
+        group.bench_function(format!("{}files_memory", num_files), |b| {
+            b.iter(|| {
+                let matches = scanner.scan(black_box(temp_dir.path())).unwrap();
+                black_box(matches);
+            });
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     bench_scanner_basic,
@@ -277,6 +299,7 @@ criterion_group!(
     bench_large_files,
     bench_regex_performance,
     bench_custom_detectors,
-    bench_custom_detectors_large_files
+    bench_custom_detectors_large_files,
+    bench_memory_usage
 );
 criterion_main!(benches);

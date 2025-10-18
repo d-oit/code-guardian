@@ -13,6 +13,9 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
+# Default log file
+DEFAULT_LOG_FILE="logs/dev-workflow.log"
+
 # Function to print colored output
 print_status() {
     local status=$1
@@ -302,6 +305,8 @@ show_info() {
 }
 
 # Main script logic
+mkdir -p logs
+exec > "$DEFAULT_LOG_FILE" 2>&1
 case "${1:-help}" in
     "setup")
         setup_dev

@@ -78,6 +78,12 @@ opt-level = 3
 debug = false
 strip = true
 
+[profile.dev]
+opt-level = 1
+codegen-units = 16
+debug = true
+incremental = true
+
 [profile.bench]
 lto = true
 codegen-units = 1

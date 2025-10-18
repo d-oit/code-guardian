@@ -367,27 +367,30 @@ jobs:
 4. **Analytics tracking** for documentation usage
 
 ## 📝 Deliverables
-- [~] Auto-generated API documentation (70% complete)  
-  *Completed items*: `cargo doc` generation via CI/CD, deployment to GitHub Pages, well-documented public APIs in core crates with examples.  
+- [~] Auto-generated API documentation (75% complete)
+  *Completed items*: `cargo doc` generation via CI/CD, deployment to GitHub Pages, well-documented public APIs in core crates with examples.
   *Remaining*: mdbook site setup, doctest inclusion, deadlinks checking, full docs/api/ structure.
-- [~] Comprehensive tutorial suite (75% complete)  
-  *Completed items*: `docs/tutorials/` with 4 guides (getting-started, advanced-usage, custom-detectors, automation).  
+- [~] Comprehensive tutorial suite (80% complete)
+  *Completed items*: `docs/tutorials/` with 4 guides (getting-started, advanced-usage, custom-detectors, automation), LLM detection demo added.
   *Remaining*: Interactive tutorials, `docs/tutorials/integration/` subdirectory.
-- [ ] Architectural decision records (0% complete)  
-  *Remaining*: Create `docs/architecture/decisions/` with ADRs (e.g., modular crate structure).
-- [x] Live examples and demos (100% complete)  
+- [ ] Architectural decision records (10% complete)
+  *Completed items*: Basic ADR structure planned.
+  *Remaining*: Create `docs/architecture/decisions/` with ADRs (e.g., modular crate structure, LLM integration).
+- [x] Live examples and demos (100% complete)
   *Completed items*: `examples/` directory with multiple demos, configs, and README.
-- [ ] Configuration schema documentation (0% complete)  
+- [ ] Configuration schema documentation (5% complete)
+  *Completed items*: Basic config documentation started.
   *Remaining*: Generate `docs/configuration/schema.md` from config structs.
-- [ ] Performance benchmarking reports (0% complete)  
+- [~] Performance benchmarking reports (20% complete)
+  *Completed items*: Benchmark suite documented, basic performance notes.
   *Remaining*: Create `docs/performance/` with latest.md and historical data.
-- [x] Contributing guidelines (100% complete)  
+- [x] Contributing guidelines (100% complete)
   *Completed items*: `CONTRIBUTING.md` in root with setup, workflow, and release guidelines.
-- [~] Documentation automation pipeline (40% complete)  
-  *Completed items*: `docs.yml` workflow for generation and deployment.  
+- [~] Documentation automation pipeline (50% complete)
+  *Completed items*: `docs.yml` workflow for generation and deployment, LLM doc generation.
   *Remaining*: mdbook integration, `doc-generator` binary, changelog automation, config schema generation.
 
-This assessment indicates approximately 48% overall completion of the documentation-as-code plan, with strong foundations in API docs, tutorials, examples, and contributing guidelines, but gaps in architectural docs, configuration schemas, performance reports, and advanced automation. Next steps could prioritize Phase 2 (architectural docs) and Phase 4 (automation enhancements) for the most impact.
+This assessment indicates approximately 55% overall completion of the documentation-as-code plan, with strong foundations in API docs, tutorials, examples, contributing guidelines, and LLM documentation, but gaps in architectural docs, configuration schemas, performance reports, and advanced automation. Next steps could prioritize Phase 2 (architectural docs) and Phase 4 (automation enhancements) for the most impact.
 
 ## 🤖 LLM-Assisted Documentation
 

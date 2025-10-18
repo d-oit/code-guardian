@@ -1,0 +1,39 @@
+name: 'Setup Cargo Cache'
+description: 'Configure caching for Cargo registry and target directories'
+
+inputs:
+  cache-target:
+    description: 'Whether to cache the target directory'
+    required: false
+    default: 'true'
+  cache-registry:
+    description: 'Whether to cache the cargo registry'
+    required: false
+    default: 'true'
+  cache-key-suffix:
+    description: 'Additional suffix for cache keys'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Cache cargo registry
+      if: inputs.cache-registry == 'true'
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.cache-key-suffix }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Cache target directory
+      if: inputs.cache-target == 'true'
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}-${{ inputs.cache-key-suffix }}
+        restore-keys: |
+          ${{ runner.os }}-target-

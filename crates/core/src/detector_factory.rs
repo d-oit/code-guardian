@@ -216,6 +216,23 @@ impl DetectorFactory {
             DetectorType::LLMPythonIssues => Ok(Some(Box::new(PythonLLMIssuesDetector))),
             DetectorType::LLMGeneratedComments => Ok(Some(Box::new(LLMGeneratedCommentsDetector))),
 
+            // Advanced LLM-specific patterns
+            DetectorType::LLMAIModelHallucination => {
+                Ok(Some(Box::new(AIModelHallucinationDetector)))
+            }
+            DetectorType::LLMIncorrectAsync => Ok(Some(Box::new(IncorrectAsyncDetector))),
+            DetectorType::LLMSecurityAntipattern => {
+                Ok(Some(Box::new(LLMSecurityAntipatternDetector)))
+            }
+            DetectorType::LLMDBAntipattern => Ok(Some(Box::new(LLMDBAntipatternDetector))),
+            DetectorType::LLMErrorHandlingMistake => {
+                Ok(Some(Box::new(LLMErrorHandlingMistakesDetector)))
+            }
+            DetectorType::LLMPerformanceMistake => {
+                Ok(Some(Box::new(LLMPerformanceMistakesDetector)))
+            }
+            DetectorType::LLMTypeMistake => Ok(Some(Box::new(LLMTypeMistakesDetector))),
+
             // Comprehensive LLM detector
             DetectorType::LLMComprehensive => Ok(Some(Box::new(ComprehensiveLLMDetector::new()))),
 

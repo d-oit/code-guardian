@@ -1,0 +1,35 @@
+# Basic CI Pipeline Template
+# Use this template for simple Rust projects that need basic quality checks and testing
+
+name: Basic CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  # Quality checks
+  quality:
+    uses: ./.github/workflows/reusable/_quality-checks.yml
+
+  # Basic testing
+  test:
+    uses: ./.github/workflows/reusable/_test.yml
+    with:
+      os: '["ubuntu-latest"]'
+      rust-version: '["stable"]'
+      include-beta: false
+      coverage: true
+
+  # Security scan (optional)
+  security:
+    uses: ./.github/workflows/reusable/_security-scan.yml
+    if: github.event_name == 'pull_request'

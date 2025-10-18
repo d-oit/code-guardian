@@ -1,0 +1,81 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: 'Specific package to test (leave empty for workspace)'
+        type: string
+        default: ''
+      os:
+        description: 'Operating system matrix'
+        type: string
+        default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+      rust-version:
+        description: 'Rust version matrix'
+        type: string
+        default: '["stable"]'
+      include-beta:
+        description: 'Include beta Rust version'
+        type: boolean
+        default: true
+      nextest:
+        description: 'Use cargo-nextest'
+        type: boolean
+        default: true
+      coverage:
+        description: 'Generate coverage reports'
+        type: boolean
+        default: false
+      coverage-threshold:
+        description: 'Coverage threshold percentage'
+        type: number
+        default: 82
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ${{ fromJSON(inputs.os) }}
+        rust: ${{ fromJSON(inputs.rust-version) }}
+        include:
+          - os: ubuntu-latest
+            rust: beta
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: ${{ matrix.rust }}
+
+      - uses: ./.github/actions/setup-cache
+        with:
+          cache-key-suffix: ${{ matrix.os }}-${{ matrix.rust }}
+
+      - uses: ./.github/actions/build-workspace
+
+      - uses: ./.github/actions/run-tests
+        with:
+          package: ${{ inputs.package }}
+          nextest: ${{ inputs.nextest }}
+          install-nextest: true
+
+      - name: Run doc tests
+        run: cargo test --doc --workspace
+
+      - uses: ./.github/actions/generate-coverage
+        if: inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        with:
+          threshold: ${{ inputs.coverage-threshold }}
+          install-llvm-cov: true
+
+      - name: Upload coverage reports
+        if: inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            lcov.info
+            coverage/

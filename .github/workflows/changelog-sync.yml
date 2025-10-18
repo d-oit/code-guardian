@@ -1,0 +1,281 @@
+name: Changelog Sync
+
+on:
+  release:
+    types: [published, edited]
+  workflow_dispatch:
+    inputs:
+      sync_all:
+        description: 'Sync all releases to changelog'
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: changelog-sync-${{ github.ref || 'workflow-dispatch' }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync-changelog:
+    name: Sync Changelog with Releases
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: Setup Git
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+
+    - name: Sync single release
+      if: github.event_name == 'release'
+      run: |
+        TAG_NAME="${{ github.event.release.tag_name }}"
+        RELEASE_NAME="${{ github.event.release.name }}"
+        RELEASE_BODY="${{ github.event.release.body }}"
+        RELEASE_DATE=$(date -u +"%Y-%m-%d")
+        VERSION=${TAG_NAME#v}
+        
+        echo "Syncing release $TAG_NAME to changelog..."
+        
+        # Check if this version already exists in changelog
+        if grep -q "## \[$VERSION\]" CHANGELOG.md; then
+          echo "Version $VERSION already exists in changelog, updating..."
+          
+            # Extract the current entry and replace it
+            python3 << 'EOF'
+            import re
+            import sys
+            
+            tag_name = "$TAG_NAME"
+            version = "$VERSION"
+            release_date = "$RELEASE_DATE"
+            release_body = """$RELEASE_BODY"""
+
+            # Read current changelog
+            with open('CHANGELOG.md', 'r') as f:
+                content = f.read()
+            
+            # Parse release body to extract sections
+            sections = {}
+            current_section = None
+            lines = release_body.split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                if line.startswith('### '):
+                    # Extract section name (remove emoji and ###)
+                    section_match = re.match(r'### [^A-Za-z]*([A-Za-z][^$]*)', line)
+                    if section_match:
+                        current_section = section_match.group(1).strip()
+                        sections[current_section] = []
+                elif line.startswith('- ') and current_section:
+                    sections[current_section].append(line)
+
+            # Create changelog entry
+            changelog_entry = f"## [{version}] - {release_date}\n\n"
+
+            # Map sections to changelog format
+            section_mapping = {
+                'Added': 'Added',
+                'Fixed': 'Fixed', 
+                'Changed': 'Changed',
+                'Performance': 'Performance',
+                'Documentation': 'Documentation',
+                'Style': 'Style',
+                'Refactor': 'Refactor',
+                'Tests': 'Tests',
+                'Maintenance': 'Maintenance',
+                'Breaking Changes': 'Breaking Changes'
+            }
+
+            for section_name, changelog_section in section_mapping.items():
+                if section_name in sections and sections[section_name]:
+                    changelog_entry += f"### {changelog_section}\n"
+                    for item in sections[section_name]:
+                        changelog_entry += f"{item}\n"
+                    changelog_entry += "\n"
+
+            # Find and replace the existing entry or add new one
+            version_pattern = rf"## \[{re.escape(version)}\]..*?(?=## \[|\Z)"
+            if re.search(version_pattern, content, re.DOTALL):
+                # Replace existing entry
+                content = re.sub(version_pattern, changelog_entry.rstrip() + "\n\n", content, flags=re.DOTALL)
+            else:
+                # Add new entry after [Unreleased]
+                unreleased_pattern = r"(## \[Unreleased\].*?\n\n)"
+                if re.search(unreleased_pattern, content, re.DOTALL):
+                    content = re.sub(unreleased_pattern, r"\1" + changelog_entry, content, flags=re.DOTALL)
+                else:
+                    # Insert after the header
+                    header_end = content.find('\n## ')
+        if header_end != -1:
+            content = content[:header_end] + "\n\n" + changelog_entry + content[header_end:]
+
+            # Write updated changelog
+            with open('CHANGELOG.md', 'w') as f:
+                f.write(content)
+
+            print(f"Updated changelog for version {version}")
+            EOF
+        else
+          echo "Adding new version $VERSION to changelog..."
+          
+          # Add new entry after [Unreleased] section
+          python3 << 'EOF'
+          import re
+          
+          tag_name = "$TAG_NAME"
+          version = "$VERSION"
+          release_date = "$RELEASE_DATE"
+          release_body = """$RELEASE_BODY"""
+
+          # Read current changelog
+          with open('CHANGELOG.md', 'r') as f:
+              content = f.read()
+
+          # Create new changelog entry (similar logic as above)
+          changelog_entry = f"## [{version}] - {release_date}\n\n### Added\n- Release {version}\n\n"
+
+          # Insert after [Unreleased]
+          unreleased_pattern = r"(## \[Unreleased\].*?\n\n)"
+          if re.search(unreleased_pattern, content, re.DOTALL):
+              content = re.sub(unreleased_pattern, r"\1" + changelog_entry, content, flags=re.DOTALL)
+          else:
+              # Insert at the beginning of versions
+              header_end = content.find('\n## [')
+              if header_end != -1:
+                  content = content[:header_end] + "\n\n" + changelog_entry + content[header_end:]
+
+          with open('CHANGELOG.md', 'w') as f:
+              f.write(content)
+
+          print(f"Added changelog entry for version {version}")
+          EOF
+        fi
+
+    - name: Sync all releases
+      if: github.event_name == 'workflow_dispatch' && github.event.inputs.sync_all == 'true'
+      run: |
+        echo "Syncing all releases to changelog..."
+        
+        # Get all releases
+        gh release list --limit 50 --json tagName,name,body,publishedAt | jq -r '.[] | "\(.tagName)|\(.publishedAt)|\(.body)"' > releases.txt
+        
+        # Process each release
+        while IFS='|' read -r tag_name published_at body; do
+          if [[ "$tag_name" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+            version=${tag_name#v}
+            release_date=$(date -d "$published_at" +"%Y-%m-%d" 2>/dev/null || date -u +"%Y-%m-%d")
+            
+            echo "Processing release $tag_name..."
+            
+            # Check if version exists in changelog
+            if ! grep -q "## \[$version\]" CHANGELOG.md; then
+              echo "Adding $version to changelog..."
+              
+              # Add basic entry (detailed sync will happen on next release event)
+               python3 << 'EOF'
+               import re
+               
+               version = "$version"
+               release_date = "$release_date"
+               
+               with open('CHANGELOG.md', 'r') as f:
+                   content = f.read()
+               
+               changelog_entry = f"## [{version}] - {release_date}\n\n### Changed\n- Release {version}\n\n"
+               
+               # Insert in chronological order
+               lines = content.split('\n')
+               new_lines = []
+               inserted = False
+
+               for line in lines:
+                   if line.startswith('## [') and not inserted and not line.startswith('## [Unreleased]'):
+                       # Check if we should insert before this version
+                       match = re.match(r'## \[([^\]]+)\]', line)
+                       if match:
+                           existing_version = match.group(1)
+                           # Simple version comparison (may need improvement for complex versions)
+                           if version > existing_version:
+                               new_lines.extend(changelog_entry.split('\n'))
+                               inserted = True
+                   new_lines.append(line)
+               
+               if not inserted:
+                   # Add at the end before any existing versions
+                   for i, line in enumerate(new_lines):
+                       if line.startswith('## [') and not line.startswith('## [Unreleased]'):
+                           new_lines.insert(i, '')
+                           new_lines.insert(i, changelog_entry.strip())
+                           break
+               
+               with open('CHANGELOG.md', 'w') as f:
+                   f.write('\n'.join(new_lines))
+               EOF
+            fi
+          fi
+        done < releases.txt
+        
+        rm -f releases.txt
+
+    - name: Commit changes
+      run: |
+        if ! git diff --quiet CHANGELOG.md; then
+          git add CHANGELOG.md
+          
+          if [ "${{ github.event_name }}" = "release" ]; then
+            git commit -m "docs: sync changelog with release ${{ github.event.release.tag_name }} [skip ci]"
+          else
+            git commit -m "docs: sync changelog with all releases [skip ci]"
+          fi
+          
+          git push
+          echo "✅ Changelog synchronized with releases!"
+        else
+          echo "ℹ️ No changes needed in changelog"
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  update-release-descriptions:
+    name: Update Release Descriptions
+    runs-on: ubuntu-latest
+    needs: sync-changelog
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.sync_all == 'true'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Update all release descriptions
+      run: |
+        echo "Updating all release descriptions with enhanced format..."
+        
+        # Get releases that might need updating
+        gh release list --limit 20 --json tagName,body | jq -r '.[] | select(.body | length < 500 or (contains("### 📦 Assets") | not)) | .tagName' > releases_to_update.txt
+        
+        while read -r tag_name; do
+          if [[ "$tag_name" =~ ^v[0-9]+\.[0-9]+\.[0-9]+.*$ ]]; then
+            echo "Triggering enhanced release workflow for $tag_name..."
+            
+            # Trigger the enhanced-release workflow
+            gh workflow run enhanced-release.yml -f tag="$tag_name"
+            
+            # Wait a bit to avoid rate limiting
+            sleep 5
+          fi
+        done < releases_to_update.txt
+        
+        rm -f releases_to_update.txt
+        echo "✅ Triggered enhanced release updates for outdated releases"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

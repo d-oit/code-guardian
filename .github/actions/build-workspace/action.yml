@@ -1,0 +1,28 @@
+name: 'Build Workspace'
+description: 'Build the entire Cargo workspace with configurable options'
+
+inputs:
+  release:
+    description: 'Build in release mode'
+    required: false
+    default: 'false'
+  features:
+    description: 'Features to enable'
+    required: false
+    default: '--all-features'
+  targets:
+    description: 'Targets to build'
+    required: false
+    default: '--all-targets'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build workspace
+      shell: bash
+      run: |
+        if [[ "${{ inputs.release }}" == "true" ]]; then
+          cargo build --release ${{ inputs.features }} ${{ inputs.targets }}
+        else
+          cargo build ${{ inputs.features }} ${{ inputs.targets }}
+        fi

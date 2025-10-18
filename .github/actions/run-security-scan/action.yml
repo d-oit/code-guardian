@@ -1,0 +1,75 @@
+name: 'Run Security Scan'
+description: 'Run comprehensive security scanning including audit, deny checks, and secrets detection'
+
+inputs:
+  audit:
+    description: 'Run cargo audit'
+    required: false
+    default: 'true'
+  deny:
+    description: 'Run cargo deny checks'
+    required: false
+    default: 'true'
+  gitleaks:
+    description: 'Run gitleaks secrets detection'
+    required: false
+    default: 'true'
+  clippy-security:
+    description: 'Run security-focused clippy checks'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install security tools
+      shell: bash
+      run: |
+        if [[ "${{ inputs.audit }}" == "true" ]]; then
+          cargo install cargo-audit
+        fi
+        if [[ "${{ inputs.deny }}" == "true" ]]; then
+          cargo install cargo-deny
+        fi
+
+    - name: Run cargo-audit
+      if: inputs.audit == 'true'
+      shell: bash
+      run: cargo audit --format json | tee audit-results.json
+
+    - name: Run cargo-deny checks
+      if: inputs.deny == 'true'
+      shell: bash
+      run: |
+        cargo deny check advisories
+        cargo deny check licenses
+        cargo deny check bans
+        cargo deny check sources
+
+    - name: Run security-focused clippy
+      if: inputs.clippy-security == 'true'
+      shell: bash
+      run: |
+        cargo clippy --all-targets --all-features -- \
+          -W clippy::pedantic \
+          -W clippy::nursery \
+          -W clippy::suspicious \
+          -W clippy::correctness \
+          -D clippy::unwrap_used \
+          -D clippy::expect_used \
+          -D clippy::panic \
+          -D clippy::unimplemented \
+          -D clippy::todo
+
+    - name: Secrets detection with gitleaks
+      if: inputs.gitleaks == 'true'
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload security reports
+      if: inputs.audit == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: audit-results.json

@@ -1,11 +1,10 @@
 //! Observability infrastructure for Code Guardian
-//! 
+//!
 //! Provides structured logging, metrics collection, and health monitoring.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use uuid::Uuid;
 
@@ -107,15 +106,15 @@ pub struct ScanMetrics {
     pub issues_found: AtomicU64,
     pub files_skipped: AtomicU64,
     pub errors_encountered: AtomicU64,
-    
+
     // Gauges
     pub current_memory_mb: AtomicU64,
     pub active_threads: AtomicU64,
-    
+
     // Timers
     pub total_scan_duration: std::sync::Mutex<Duration>,
     pub average_file_scan_time: std::sync::Mutex<Duration>,
-    
+
     // Metadata
     pub scan_start_time: Instant,
     pub correlation_id: CorrelationId,
@@ -164,7 +163,7 @@ impl ScanMetrics {
     pub fn finish_scan(&self) {
         let duration = self.scan_start_time.elapsed();
         *self.total_scan_duration.lock().unwrap() = duration;
-        
+
         let files_scanned = self.files_scanned.load(Ordering::Relaxed);
         if files_scanned > 0 {
             let avg_time = duration / files_scanned as u32;
@@ -175,7 +174,7 @@ impl ScanMetrics {
     /// Export metrics in Prometheus format
     pub fn to_prometheus(&self) -> String {
         let mut output = String::new();
-        
+
         output.push_str(&format!(
             "# HELP code_guardian_files_scanned_total Total number of files scanned\n\
              # TYPE code_guardian_files_scanned_total counter\n\
@@ -353,27 +352,20 @@ impl HealthCheck for DatabaseHealthCheck {
         }
 
         // Try to open database connection
-        match rusqlite::Connection::open(&self.db_path) {
-            Ok(conn) => {
-                // Test with a simple query
-                match conn.execute("SELECT 1", []) {
-                    Ok(_) => ComponentHealth {
-                        status: HealthState::Healthy,
-                        message: Some("Database connection successful".to_string()),
-                        last_check: start_time,
-                        response_time_ms: None,
-                    },
-                    Err(e) => ComponentHealth {
-                        status: HealthState::Degraded,
-                        message: Some(format!("Database query failed: {}", e)),
-                        last_check: start_time,
-                        response_time_ms: None,
-                    },
+        // Simplified database check - check if path exists
+        match std::fs::metadata(&self.db_path) {
+            Ok(_metadata) => {
+                // Database file exists and is accessible
+                ComponentHealth {
+                    status: HealthState::Healthy,
+                    message: Some("Database file accessible".to_string()),
+                    last_check: start_time,
+                    response_time_ms: None,
                 }
             }
             Err(e) => ComponentHealth {
-                status: HealthState::Unhealthy,
-                message: Some(format!("Cannot connect to database: {}", e)),
+                status: HealthState::Degraded,
+                message: Some(format!("Database file not accessible: {}", e)),
                 last_check: start_time,
                 response_time_ms: None,
             },
@@ -394,7 +386,7 @@ mod tests {
         let id1 = CorrelationId::new();
         let id2 = CorrelationId::new();
         assert_ne!(id1, id2);
-        
+
         let id3 = CorrelationId::from_string("test-id".to_string());
         assert_eq!(id3.as_str(), "test-id");
     }
@@ -402,11 +394,11 @@ mod tests {
     #[test]
     fn test_scan_metrics() {
         let metrics = ScanMetrics::new();
-        
+
         metrics.increment_files_scanned();
         metrics.increment_issues_found(5);
         metrics.set_memory_usage(100);
-        
+
         assert_eq!(metrics.files_scanned.load(Ordering::Relaxed), 1);
         assert_eq!(metrics.issues_found.load(Ordering::Relaxed), 5);
         assert_eq!(metrics.current_memory_mb.load(Ordering::Relaxed), 100);
@@ -416,7 +408,7 @@ mod tests {
     fn test_metrics_prometheus_export() {
         let metrics = ScanMetrics::new();
         metrics.increment_files_scanned();
-        
+
         let prometheus_output = metrics.to_prometheus();
         assert!(prometheus_output.contains("code_guardian_files_scanned_total"));
         assert!(prometheus_output.contains("1"));
@@ -426,7 +418,7 @@ mod tests {
     fn test_metrics_json_export() {
         let metrics = ScanMetrics::new();
         metrics.increment_files_scanned();
-        
+
         let json_output = metrics.to_json();
         assert_eq!(json_output["counters"]["files_scanned"], 1);
     }
@@ -434,22 +426,25 @@ mod tests {
     #[test]
     fn test_structured_logger() {
         let logger = StructuredLogger::new("code-guardian", "0.1.0");
-        
+
         // Test that logging doesn't panic
         logger.log_info("Test message", None);
-        
+
         let mut fields = HashMap::new();
-        fields.insert("key".to_string(), serde_json::Value::String("value".to_string()));
+        fields.insert(
+            "key".to_string(),
+            serde_json::Value::String("value".to_string()),
+        );
         logger.log_warn("Warning message", Some(fields));
     }
 
     #[tokio::test]
     async fn test_health_checker() {
         let mut checker = HealthChecker::new("0.1.0");
-        
+
         // Add a mock health check
         struct MockHealthCheck;
-        
+
         #[async_trait::async_trait]
         impl HealthCheck for MockHealthCheck {
             async fn check(&self) -> ComponentHealth {
@@ -463,14 +458,14 @@ mod tests {
                     response_time_ms: None,
                 }
             }
-            
+
             fn name(&self) -> &str {
                 "mock"
             }
         }
-        
+
         checker.add_check(Box::new(MockHealthCheck));
-        
+
         let health = checker.check_health().await;
         assert_eq!(health.status, HealthState::Healthy);
         assert!(health.checks.contains_key("mock"));

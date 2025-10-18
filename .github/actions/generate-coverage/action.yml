@@ -1,0 +1,68 @@
+name: 'Generate Coverage'
+description: 'Generate test coverage reports using cargo-llvm-cov'
+
+inputs:
+  format:
+    description: 'Output format (lcov, html, text)'
+    required: false
+    default: 'lcov'
+  output-path:
+    description: 'Output path for coverage data'
+    required: false
+    default: 'lcov.info'
+  output-dir:
+    description: 'Output directory for HTML reports'
+    required: false
+    default: 'coverage/html'
+  threshold:
+    description: 'Coverage threshold percentage (0-100)'
+    required: false
+    default: '82'
+  install-llvm-cov:
+    description: 'Install cargo-llvm-cov'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install cargo-llvm-cov
+      if: inputs.install-llvm-cov == 'true'
+      uses: taiki-e/install-action@cargo-llvm-cov
+
+    - name: Generate coverage report
+      shell: bash
+      run: |
+        if [[ "${{ inputs.format }}" == "html" ]]; then
+          cargo llvm-cov --all-features --workspace --${{ inputs.format }} --output-dir ${{ inputs.output-dir }}
+        else
+          cargo llvm-cov --all-features --workspace --${{ inputs.format }} --output-path ${{ inputs.output-path }}
+        fi
+
+    - name: Check coverage threshold
+      if: inputs.threshold != '0'
+      shell: bash
+      run: |
+        COVERAGE=$(cargo llvm-cov --all-features --workspace --summary-only | grep -oE '[0-9]+\.[0-9]+%' | head -1 | sed 's/%//')
+        THRESHOLD=${{ inputs.threshold }}
+
+        echo "Current coverage: ${COVERAGE}%"
+        echo "Required threshold: ${THRESHOLD}%"
+
+        if (( $(echo "$COVERAGE >= $THRESHOLD" | bc -l) )); then
+          echo "✅ Coverage threshold met"
+          echo "coverage_met=true" >> $GITHUB_OUTPUT
+        else
+          echo "❌ Coverage below threshold"
+          echo "Gap: $(echo "$THRESHOLD - $COVERAGE" | bc -l)%"
+          echo "coverage_met=false" >> $GITHUB_OUTPUT
+          exit 1
+        fi
+      id: coverage_check
+
+    - name: Coverage Summary
+      shell: bash
+      run: |
+        echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        cargo llvm-cov --all-features --workspace --summary-only >> $GITHUB_STEP_SUMMARY

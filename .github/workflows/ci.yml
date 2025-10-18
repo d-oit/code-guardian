@@ -1,5 +1,12 @@
 name: CI
 
+# Least privilege permissions
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  packages: read
+
 on:
   push:
     branches: [ main, develop ]
@@ -7,113 +14,295 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
 
 jobs:
-  testing-agent:
-    name: Testing Agent
+  # Pre-check job to determine what changed for incremental builds
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      cli: ${{ steps.changes.outputs.cli }}
+      core: ${{ steps.changes.outputs.core }}
+      output: ${{ steps.changes.outputs.output }}
+      storage: ${{ steps.changes.outputs.storage }}
+      ci: ${{ steps.changes.outputs.ci }}
+      docs: ${{ steps.changes.outputs.docs }}
+      scripts: ${{ steps.changes.outputs.scripts }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            cli:
+              - 'crates/cli/**'
+            core:
+              - 'crates/core/**'
+            output:
+              - 'crates/output/**'
+            storage:
+              - 'crates/storage/**'
+            ci:
+              - '.github/workflows/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'deny.toml'
+            docs:
+              - 'docs/**'
+              - 'README.md'
+            scripts:
+              - 'scripts/**'
+
+  # Fast quality checks with sccache
+  quality-checks:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+
+    - name: Check formatting
+      run: cargo fmt --all -- --check
+
+    - name: Run clippy
+      run: cargo clippy --all-targets --all-features -- -D warnings
+
+    - name: Check workspace
+      run: cargo check --workspace
+
+  # Parallel testing with cargo-nextest
+  test:
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
     runs-on: ${{ matrix.os }}
+    needs: changes
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        rust: [stable, beta]
-        exclude:
-          # Reduce CI load - only test beta on Ubuntu
-          - os: windows-latest
+        rust: [stable]
+        include:
+          - os: ubuntu-latest
             rust: beta
-          - os: macos-latest
-            rust: beta
-
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
         toolchain: ${{ matrix.rust }}
-        components: rustfmt, clippy
-    
+
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@cargo-nextest
+
     - name: Cache cargo registry
       uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
 
-    - name: Check formatting
-      run: cargo fmt --all -- --check
-      continue-on-error: true
-      id: fmt-check
+    - name: Cache target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-${{ matrix.rust }}-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.rust }}-target-
 
-    - name: Formatting feedback
-      if: steps.fmt-check.outcome == 'failure'
-      run: |
-        echo "::warning::Code formatting issues detected!"
-        echo "Please run 'cargo fmt --all' to fix formatting."
-        echo "Or add this to your pre-commit hook:"
-        echo "  cargo fmt --all"
-
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
-      continue-on-error: true
-      id: clippy-check
-
-    - name: Clippy feedback
-      if: steps.clippy-check.outcome == 'failure'
-      run: |
-        echo "::warning::Clippy issues detected!"
-        echo "Please run 'cargo clippy --all-targets --all-features --fix --allow-dirty' to fix issues."
-        echo "Or add this to your development workflow:"
-        echo "  cargo clippy --fix --allow-dirty"
-        echo "Or run './scripts/fix-code-quality.sh' to auto-fix both formatting and clippy issues."
-    
     - name: Build
-      run: cargo build --verbose
-    
-    - name: Run tests
-      run: cargo test --verbose
-    
-    - name: Run doc tests
-      run: cargo test --doc
+      run: cargo build --workspace
 
-  coverage:
-    name: Coverage
+    - name: Run tests with nextest
+      run: cargo nextest run --workspace --all-features
+
+    - name: Run doc tests
+      run: cargo test --doc --workspace
+
+  # Incremental testing per crate
+  test-cli:
+    name: Test CLI Crate
     runs-on: ubuntu-latest
+    needs: [changes, quality-checks]
+    if: needs.changes.outputs.cli == 'true' || needs.changes.outputs.ci == 'true'
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@cargo-nextest
+
+    - name: Cache target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ubuntu-latest-cli-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Test CLI crate
+      run: cargo nextest run -p code_guardian_cli --all-features
+
+  test-core:
+    name: Test Core Crate
+    runs-on: ubuntu-latest
+    needs: [changes, quality-checks]
+    if: needs.changes.outputs.core == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@cargo-nextest
+
+    - name: Cache target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ubuntu-latest-core-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Test Core crate
+      run: cargo nextest run -p code_guardian_core --all-features
+
+  test-output:
+    name: Test Output Crate
+    runs-on: ubuntu-latest
+    needs: [changes, quality-checks]
+    if: needs.changes.outputs.output == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@cargo-nextest
+
+    - name: Cache target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ubuntu-latest-output-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Test Output crate
+      run: cargo nextest run -p code_guardian_output --all-features
+
+  test-storage:
+    name: Test Storage Crate
+    runs-on: ubuntu-latest
+    needs: [changes, quality-checks]
+    if: needs.changes.outputs.storage == 'true' || needs.changes.outputs.ci == 'true'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@cargo-nextest
+
+    - name: Cache target
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ubuntu-latest-storage-target-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Test Storage crate
+      run: cargo nextest run -p code_guardian_storage --all-features
+
+  # Enhanced coverage reporting
+  coverage:
+    name: Coverage Report
+    runs-on: ubuntu-latest
+    needs: [test-cli, test-core, test-output, test-storage]
+    if: always() && (needs.test-cli.result == 'success' || needs.test-core.result == 'success' || needs.test-output.result == 'success' || needs.test-storage.result == 'success')
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
         components: llvm-tools-preview
-    
+
     - name: Install cargo-llvm-cov
       uses: taiki-e/install-action@cargo-llvm-cov
 
-    - name: Cache cargo registry
+    - name: Cache target
       uses: actions/cache@v4
       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-coverage-${{ hashFiles('**/Cargo.lock') }}
+        path: target
+        key: ubuntu-latest-coverage-target-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Generate code coverage
-      run: cargo llvm-cov --all-features --lcov --output-path lcov.info
-    
-    - name: Upload coverage report
+      run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+
+    - name: Generate HTML coverage report
+      run: cargo llvm-cov --all-features --workspace --html --output-dir coverage/html
+
+    - name: Upload coverage reports
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-report
-        path: lcov.info
+        name: coverage-reports
+        path: |
+          lcov.info
+          coverage/
 
+    - name: Coverage Summary
+      run: |
+        echo "## Coverage Summary" >> $GITHUB_STEP_SUMMARY
+        cargo llvm-cov --all-features --workspace --summary-only | tee -a $GITHUB_STEP_SUMMARY
 
-  code-review-agent:
-    name: Code Review Agent
+  # Code review agent for PRs
+  code-review:
+    name: Code Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     permissions:
@@ -121,6 +310,9 @@ jobs:
       contents: read
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
@@ -132,8 +324,46 @@ jobs:
 
     - name: Comment on PR if issues found
       if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '🚨 **Code Review Issues Detected**\n\n' +
+                  'Clippy found warnings or errors that need to be addressed:\n\n' +
+                  '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
+                  'Please fix these issues before merging. You can run:\n' +
+                  '```bash\ncargo clippy --fix --allow-dirty\n```'
+          })
+
+  # Final status check
+  ci-success:
+    name: CI Success
+    runs-on: ubuntu-latest
+    needs: [quality-checks, test, test-cli, test-core, test-output, test-storage, coverage]
+    if: always()
+    steps:
+    - name: Check all jobs
       run: |
-        gh pr comment $PR_NUMBER --body "Code review agent detected issues. Please address the clippy warnings."
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
+        if [[ "${{ needs.quality-checks.result }}" != "success" ]]; then
+          echo "❌ Quality checks failed"
+          exit 1
+        fi
+        if [[ "${{ needs.test.result }}" != "success" ]]; then
+          echo "❌ Cross-platform tests failed"
+          exit 1
+        fi
+        # Allow individual crate tests to be skipped if no changes
+        failed_tests=0
+        for test_result in "${{ needs.test-cli.result }}" "${{ needs.test-core.result }}" "${{ needs.test-output.result }}" "${{ needs.test-storage.result }}"; do
+          if [[ "$test_result" == "failure" ]]; then
+            failed_tests=$((failed_tests + 1))
+          fi
+        done
+        if [[ $failed_tests -gt 0 ]]; then
+          echo "❌ $failed_tests crate test(s) failed"
+          exit 1
+        fi
+        echo "✅ All CI checks passed!"

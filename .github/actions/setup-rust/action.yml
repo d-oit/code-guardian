@@ -1,0 +1,36 @@
+name: 'Setup Rust Toolchain'
+description: 'Install and configure Rust toolchain with optional components'
+
+inputs:
+  toolchain:
+    description: 'Rust toolchain version (stable, beta, nightly, or specific version)'
+    required: false
+    default: 'stable'
+  components:
+    description: 'Comma-separated list of components to install (rustfmt, clippy, llvm-tools-preview)'
+    required: false
+    default: ''
+  targets:
+    description: 'Comma-separated list of targets to add'
+    required: false
+    default: ''
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install sccache
+      uses: mozilla-actions/sccache-action@v0.0.4
+
+    - name: Setup Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ inputs.toolchain }}
+        components: ${{ inputs.components }}
+        targets: ${{ inputs.targets }}
+
+    - name: Configure sccache
+      shell: bash
+      run: |
+        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+        echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV

@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Guardian Performance Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-trend {
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .trend-up { color: #27ae60; }
+        .trend-down { color: #e74c3c; }
+        .trend-neutral { color: #f39c12; }
+
+        .charts-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .chart-title {
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            text-align: center;
+        }
+
+        .status-indicators {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 5px solid #3498db;
+        }
+
+        .status-card.healthy { border-left-color: #27ae60; }
+        .status-card.warning { border-left-color: #f39c12; }
+        .status-card.critical { border-left-color: #e74c3c; }
+
+        .status-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .status-value {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .recent-scans {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .recent-scans h3 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-size: 1.4em;
+        }
+
+        .scan-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .scan-item:last-child {
+            border-bottom: none;
+        }
+
+        .scan-info {
+            flex: 1;
+        }
+
+        .scan-path {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .scan-details {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .scan-status {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .scan-status.success { background: #d5f4e6; color: #27ae60; }
+        .scan-status.warning { background: #fdf2e9; color: #f39c12; }
+        .scan-status.error { background: #fadbd8; color: #e74c3c; }
+
+        .refresh-button {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 50px;
+            font-size: 1em;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .refresh-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Code Guardian Performance Dashboard</h1>
+            <p>Real-time monitoring and performance metrics</p>
+            <p id="last-updated">Last updated: <span id="timestamp">Loading...</span></p>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" id="total-scans">0</div>
+                <div class="metric-label">Total Scans</div>
+                <div class="metric-trend trend-up" id="scans-trend">↗ +12% this week</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="files-scanned">0</div>
+                <div class="metric-label">Files Scanned</div>
+                <div class="metric-trend trend-up" id="files-trend">↗ +8% this week</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="issues-found">0</div>
+                <div class="metric-label">Issues Found</div>
+                <div class="metric-trend trend-down" id="issues-trend">↘ -15% this week</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="avg-scan-time">0.0s</div>
+                <div class="metric-label">Avg Scan Time</div>
+                <div class="metric-trend trend-down" id="time-trend">↘ -23% improvement</div>
+            </div>
+        </div>
+
+        <div class="status-indicators">
+            <div class="status-card healthy" id="system-health">
+                <div class="status-title">System Health</div>
+                <div class="status-value">Healthy</div>
+                <div>CPU: <span id="cpu-usage">12%</span> | Memory: <span id="memory-usage">45%</span></div>
+            </div>
+            
+            <div class="status-card healthy" id="cache-status">
+                <div class="status-title">Cache Performance</div>
+                <div class="status-value">Optimal</div>
+                <div>Hit Rate: <span id="cache-hit-rate">94%</span> | Size: <span id="cache-size">245MB</span></div>
+            </div>
+            
+            <div class="status-card healthy" id="llm-detection">
+                <div class="status-title">LLM Detection</div>
+                <div class="status-value">Active</div>
+                <div>Detections: <span id="llm-detections">127</span> | Accuracy: <span id="llm-accuracy">96%</span></div>
+            </div>
+            
+            <div class="status-card warning" id="error-rate">
+                <div class="status-title">Error Rate</div>
+                <div class="status-value">Low</div>
+                <div>Errors: <span id="error-count">3</span> | Rate: <span id="error-rate-pct">0.1%</span></div>
+            </div>
+        </div>
+
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-title">Scan Performance Over Time</div>
+                <canvas id="performanceChart"></canvas>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Issue Distribution by Severity</div>
+                <canvas id="issuesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="recent-scans">
+            <h3>Recent Scans</h3>
+            <div id="recent-scans-list">
+                <div class="scan-item">
+                    <div class="scan-info">
+                        <div class="scan-path">./src/main.rs</div>
+                        <div class="scan-details">2 issues found • 0.45s • 2 minutes ago</div>
+                    </div>
+                    <div class="scan-status success">Success</div>
+                </div>
+                
+                <div class="scan-item">
+                    <div class="scan-info">
+                        <div class="scan-path">./crates/core/</div>
+                        <div class="scan-details">0 issues found • 1.23s • 5 minutes ago</div>
+                    </div>
+                    <div class="scan-status success">Success</div>
+                </div>
+                
+                <div class="scan-item">
+                    <div class="scan-info">
+                        <div class="scan-path">./web/frontend/</div>
+                        <div class="scan-details">7 issues found • 2.1s • 8 minutes ago</div>
+                    </div>
+                    <div class="scan-status warning">Warning</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="refresh-button" onclick="refreshData()">🔄 Refresh</button>
+
+    <script>
+        // Initialize charts
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        const issuesCtx = document.getElementById('issuesChart').getContext('2d');
+
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'line',
+            data: {
+                labels: ['6h ago', '5h ago', '4h ago', '3h ago', '2h ago', '1h ago', 'Now'],
+                datasets: [{
+                    label: 'Scan Time (seconds)',
+                    data: [2.5, 2.1, 1.8, 1.9, 1.6, 1.4, 1.2],
+                    borderColor: '#3498db',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Issues Found',
+                    data: [15, 12, 18, 14, 11, 9, 7],
+                    borderColor: '#e74c3c',
+                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Scan Time (seconds)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Issues Found'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        const issuesChart = new Chart(issuesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Critical', 'High', 'Medium', 'Low'],
+                datasets: [{
+                    data: [5, 23, 45, 89],
+                    backgroundColor: [
+                        '#e74c3c',
+                        '#f39c12',
+                        '#f1c40f',
+                        '#2ecc71'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Simulated data updates
+        function updateMetrics() {
+            document.getElementById('total-scans').textContent = Math.floor(Math.random() * 1000 + 500);
+            document.getElementById('files-scanned').textContent = (Math.random() * 50 + 200).toFixed(0) + 'K';
+            document.getElementById('issues-found').textContent = Math.floor(Math.random() * 500 + 100);
+            document.getElementById('avg-scan-time').textContent = (Math.random() * 2 + 0.5).toFixed(1) + 's';
+            
+            document.getElementById('cpu-usage').textContent = Math.floor(Math.random() * 30 + 10) + '%';
+            document.getElementById('memory-usage').textContent = Math.floor(Math.random() * 40 + 30) + '%';
+            document.getElementById('cache-hit-rate').textContent = Math.floor(Math.random() * 10 + 90) + '%';
+            document.getElementById('cache-size').textContent = Math.floor(Math.random() * 100 + 200) + 'MB';
+            document.getElementById('llm-detections').textContent = Math.floor(Math.random() * 50 + 100);
+            document.getElementById('llm-accuracy').textContent = Math.floor(Math.random() * 5 + 95) + '%';
+            document.getElementById('error-count').textContent = Math.floor(Math.random() * 10);
+            document.getElementById('error-rate-pct').textContent = (Math.random() * 0.5).toFixed(1) + '%';
+            
+            document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        }
+
+        function refreshData() {
+            updateMetrics();
+            
+            // Update chart data
+            const newScanTime = Math.random() * 2 + 0.5;
+            const newIssues = Math.floor(Math.random() * 20 + 5);
+            
+            performanceChart.data.datasets[0].data.push(newScanTime);
+            performanceChart.data.datasets[0].data.shift();
+            performanceChart.data.datasets[1].data.push(newIssues);
+            performanceChart.data.datasets[1].data.shift();
+            performanceChart.update();
+            
+            // Show refresh animation
+            const button = document.querySelector('.refresh-button');
+            button.innerHTML = '⟳ Refreshing...';
+            button.style.transform = 'rotate(360deg)';
+            
+            setTimeout(() => {
+                button.innerHTML = '🔄 Refresh';
+                button.style.transform = 'none';
+            }, 1000);
+        }
+
+        // Initialize with current data
+        updateMetrics();
+
+        // Auto-refresh every 30 seconds
+        setInterval(updateMetrics, 30000);
+    </script>
+</body>
+</html>

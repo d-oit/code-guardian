@@ -1,0 +1,39 @@
+name: Security Scan
+
+on:
+  workflow_call:
+    inputs:
+      audit:
+        description: 'Run cargo audit'
+        type: boolean
+        default: true
+      deny:
+        description: 'Run cargo deny checks'
+        type: boolean
+        default: true
+      gitleaks:
+        description: 'Run gitleaks secrets detection'
+        type: boolean
+        default: true
+      clippy-security:
+        description: 'Run security-focused clippy checks'
+        type: boolean
+        default: true
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-rust
+
+      - uses: ./.github/actions/setup-cache
+
+      - uses: ./.github/actions/run-security-scan
+        with:
+          audit: ${{ inputs.audit }}
+          deny: ${{ inputs.deny }}
+          gitleaks: ${{ inputs.gitleaks }}
+          clippy-security: ${{ inputs.clippy-security }}

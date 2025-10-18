@@ -1,9 +1,20 @@
 name: Monitor Workflows
 
+# Least privilege permissions for monitoring
+permissions:
+  issues: write
+  contents: read
+  actions: read
+  security-events: write
+
 on:
   schedule:
     - cron: '0 0 * * *'  # Daily at midnight UTC
   workflow_dispatch:  # Allow manual trigger for testing
+
+concurrency:
+  group: monitor
+  cancel-in-progress: false
 
 jobs:
   monitor:
@@ -12,6 +23,7 @@ jobs:
       issues: write
       contents: read
       actions: read
+      security-events: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

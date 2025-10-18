@@ -86,6 +86,15 @@ pub enum DetectorType {
     LLMPythonIssues,
     LLMGeneratedComments,
 
+    // Advanced LLM-specific patterns
+    LLMAIModelHallucination,
+    LLMIncorrectAsync,
+    LLMSecurityAntipattern,
+    LLMDBAntipattern,
+    LLMErrorHandlingMistake,
+    LLMPerformanceMistake,
+    LLMTypeMistake,
+
     // Comprehensive LLM detector
     LLMComprehensive,
 
@@ -142,6 +151,15 @@ impl Default for EnhancedScanConfig {
         severity_levels.insert("LLM_JS_ISSUES".to_string(), Severity::Medium);
         severity_levels.insert("LLM_PYTHON_ISSUES".to_string(), Severity::High);
         severity_levels.insert("LLM_GENERATED_COMMENT".to_string(), Severity::Info);
+
+        // Advanced LLM-specific patterns
+        severity_levels.insert("LLM_AI_MODEL_HALLUCINATION".to_string(), Severity::High);
+        severity_levels.insert("LLM_INCORRECT_ASYNC".to_string(), Severity::Medium);
+        severity_levels.insert("LLM_SECURITY_ANTIPATTERN".to_string(), Severity::Critical);
+        severity_levels.insert("LLM_DB_ANTIPATTERN".to_string(), Severity::High);
+        severity_levels.insert("LLM_ERROR_HANDLING_MISTAKE".to_string(), Severity::Medium);
+        severity_levels.insert("LLM_PERFORMANCE_MISTAKE".to_string(), Severity::Medium);
+        severity_levels.insert("LLM_TYPE_MISTAKE".to_string(), Severity::Low);
 
         Self {
             enabled_detectors: vec![DetectorType::Todo, DetectorType::Fixme],

@@ -1,125 +1,100 @@
-## [0.1.5] - 2025-10-16
+# Changelog
 
-### ⚙️ Miscellaneous Tasks
+All notable changes to this project will be documented in this file.
 
-- Bump version to 0.1.5 for patch release
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
 ## [0.1.6] - 2025-10-16
 
-### ⚙️ Miscellaneous Tasks
+### Fixed
+- Minor bug fixes and improvements
+- Updated release workflow and configuration
 
-- Bump version to 0.1.6 for patch release
+### Changed
+- Improved release automation
+
+## [0.1.5] - 2025-10-16
+
+### Added
+- Perplexity AI provider support (opencode)
+
+- Enhanced Perplexity AI agents with detailed descriptions and improved functionality (opencode)
+
+
+### Changed
+- Updated Perplexity agents to use frontmatter config with temperature (opencode)
+
+### Fixed
+- Preparation for v0.1.5 release
+
 ## [0.1.4] - 2025-10-16
 
-### 🚀 Features
+### Added
+- Enhanced release-please configuration for automatic changelog generation
+- GOAP Phase 1-2 Quality Check Optimizations
+- GOAP Phase 3 with long-term CI/CD optimizations
+- Phase 3 optimization files and documentation
 
-- GOAP Phase 1-2 Quality Check Optimization
-- GOAP Phase 3 Complete - Long-term CI/CD Optimizations
-- Enhance release-please configuration for automatic changelog generation
-- Complete Phase 1 & 2 implementation - Quality checks and comprehensive test coverage
-- Complete Phase 1 & 2 implementation - Quality checks and comprehensive test coverage
-- Add Phase 3 optimization files and documentation
+### Fixed
+- Changelog for v0.1.3 and release workflow YAML formatting
 
-### 🐛 Bug Fixes
+### Changed
+- Updated agent documentation with GOAP coordination learnings
 
-- Update changelog for v0.1.3 and fix release workflow YAML formatting
+### Removed
+- Temporary GOAP coordination files
 
-### 💼 Other
-
-- Remove temporary GOAP coordination files
-
-### 📚 Documentation
-
-- Update agent documentation with GOAP coordination learnings
 ## [0.1.3] - 2025-10-12
 
-### 🚀 Features
+### Added
+- Monitoring workflow to track recent workflow failures
+- Complete GitHub workflows and branch protection setup
 
-- Add monitoring workflow to track recent workflow failures
-- Complete GitHub workflows and branch protection
 ## [0.1.3-test] - 2025-10-10
 
-### 🚀 Features
+### Added
+- Comprehensive code quality automation
+- Optimized development workflow with enhanced tooling
+- Enhanced Makefile with additional development targets
 
-- Add comprehensive code quality automation
-- Optimize development workflow with comprehensive tooling
-- Enhance Makefile with comprehensive development targets
+### Fixed
+- Code formatting, CI workflow compatibility, and YAML indentation issues
+- Invalid coverage options and updated GitHub Actions workflows
 
-### 🐛 Bug Fixes
+### Changed
+- Optimized ci-agent.md with orchestration workflow and agent handoffs
 
-- Apply cargo fmt formatting
-- Apply formatting and improve CI workflow
-- Make CI workflow cross-platform compatible
-- Apply cargo fmt formatting to fix CI issues
-- Remove invalid --fail-under option from cargo llvm-cov
-- Update GitHub Actions workflows and code fixes
-- Correct YAML indentation in ci.yml
-- Correct indentation in coverage job
-
-### 📚 Documentation
-
-- Optimize ci-agent.md with orchestration workflow and agent handoffs
 ## [0.1.2] - 2025-10-09
 
-### 💼 Other
+### Changed
+- Version bump to 0.1.2
 
-- Bump version to 0.1.2
 ## [0.1.1] - 2025-10-09
 
-### 🚀 Features
+### Added
+- Enhanced CLI with advanced handlers and scan updates
+- Core modules for caching and monitoring
 
-- Enhance CLI with advanced handlers and scan updates
-- Add core modules for caching and monitoring
+### Changed
+- Version bump to 0.1.1
 
-### 💼 Other
-
-- Bump version to 0.1.1
-- Bump version to 0.1.1
-- Bump version to 0.1.1
-## [0.2.0] - 2025-10-09
-
-### 🚀 Features
-
-- Enhance text formatter test with header assertions and add dev container configuration
-- Add GitIntegration module for repository operations
-- Add Git CLI commands and refactor stack preset handler
-
-### 🐛 Bug Fixes
-
-- Resolve CI and release workflow issues for v0.1.1-alpha
-- Remove insta snapshot test and add context7 mcp agent
-- Remove border assertions from text formatter test for cross-platform compatibility
-- Remove enforce_styling from text formatter
-- Update test to check match data instead of headers
-- Change text formatter to simple text output for cross-platform compatibility
-
-### 💼 Other
-
-- Update ci-agent tools and add lib.rs cleanups
-- Bump version to 0.2.0
-
-### 📚 Documentation
-
-- Add git integration demo example
-- Update CHANGELOG.md
-- Add atomic-commit command documentation
 ## [0.1.1-alpha] - 2025-10-07
 
-### 🐛 Bug Fixes
+### Added
+- Enhanced release command documentation with best practices
 
-- Address clippy warnings for len_zero and unused_variables
-- Add Codecov token to resolve rate limit issue
+### Fixed
+- Clippy warnings and added Codecov token for rate limit resolution
 
-### 📚 Documentation
+### Changed
+- Updated changelog for v0.1.0
+- Updated workflow to use GitHub artifacts for coverage reporting
+- Prepared for v0.1.1-alpha release
 
-- Enhance release command documentation with branch sync, dry-run, and best practices
-
-### ⚙️ Miscellaneous Tasks
-
-- Update changelog for v0.1.0
-- Update workflow to use GitHub artifacts for coverage instead of external services
-- Prepare for release v0.1.1-alpha
 ## [0.1.0] - 2025-10-06
 
-### 🐛 Bug Fixes
-
-- Format code with cargo fmt
+### Fixed
+- Code formatting with cargo fmt
