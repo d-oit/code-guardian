@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Run Release Please
         id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: google-github-actions/release-please-action@a017ec70c7f1401744d60197f7577a0c51c8c1cf
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           config-file: .github/release-please-config.json

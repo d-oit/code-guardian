@@ -18,19 +18,20 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+    # sccache temporarily disabled due to service unavailability
+    # - name: Install sccache
+    #   uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Setup Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
       with:
         toolchain: ${{ inputs.toolchain }}
         components: ${{ inputs.components }}
         targets: ${{ inputs.targets }}
 
-    - name: Configure sccache
-      shell: bash
-      run: |
-        echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
-        echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
-        echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV
+    # - name: Configure sccache
+    #   shell: bash
+    #   run: |
+    #     echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+    #     echo "RUSTC_WRAPPER=sccache" >> $GITHUB_ENV
+    #     echo "CARGO_INCREMENTAL=0" >> $GITHUB_ENV

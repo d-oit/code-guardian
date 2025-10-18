@@ -22,36 +22,36 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
+  SCCACHE_GHA_ENABLED: "false"
+  # RUSTC_WRAPPER: "sccache"  # Disabled due to service unavailability
 
 jobs:
   security-audit:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-audit
-       uses: taiki-e/install-action@v2
-       with:
+    - name: Install cargo-audit
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
          tool: cargo-audit
 
-     - name: Run security audit
+    - name: Run security audit
       run: cargo audit --format json | tee audit-results.json
 
-     - name: Install cargo-deny
-       uses: taiki-e/install-action@v2
-       with:
+    - name: Install cargo-deny
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
          tool: cargo-deny
 
-     - name: Run cargo-deny checks
+    - name: Run cargo-deny checks
       run: |
         cargo deny check --format json | tee deny-results.json || echo "cargo-deny found issues"
         cargo deny check advisories
@@ -60,7 +60,7 @@ jobs:
         cargo deny check sources
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: security-audit-reports
         path: |
@@ -71,13 +71,13 @@ jobs:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Install cargo-audit with database update
       run: |
@@ -93,13 +93,13 @@ jobs:
     name: Dependency Analysis
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Install cargo-outdated
       run: cargo install cargo-outdated
@@ -118,7 +118,7 @@ jobs:
         cargo +nightly udeps --workspace --output json | tee udeps-results.json || echo "Unused dependencies check completed" >> $GITHUB_STEP_SUMMARY
 
     - name: Upload dependency reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: dependency-reports
         path: |
@@ -129,13 +129,13 @@ jobs:
     name: License Compliance
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Install cargo-license
       run: cargo install cargo-license
@@ -163,7 +163,7 @@ jobs:
         fi
 
     - name: Upload license reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: license-reports
         path: |
@@ -174,13 +174,13 @@ jobs:
     name: Code Security Scan
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
       with:
         components: clippy
 
@@ -208,7 +208,7 @@ jobs:
         fi
 
     - name: Upload security scan results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: code-security-reports
         path: clippy-security.log
@@ -217,15 +217,15 @@ jobs:
     name: Secrets Detection
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Scan for secrets
-      uses: gitleaks/gitleaks-action@v2
+      uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: TruffleHog scan
-      uses: trufflesecurity/trufflehog@main
+     - name: TruffleHog scan
+       uses: trufflesecurity/trufflehog@ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690
       with:
         path: ./
         base: main

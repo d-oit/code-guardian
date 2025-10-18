@@ -25,13 +25,13 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  SCCACHE_GHA_ENABLED: "true"
-  RUSTC_WRAPPER: "sccache"
+  SCCACHE_GHA_ENABLED: "false"
+  # RUSTC_WRAPPER: "sccache"  # Disabled due to service unavailability
   CARGO_INCREMENTAL: 0
 
 jobs:
   # Pre-flight checks and change detection
-  preflight:
+preflight:
     name: Preflight Checks
     runs-on: ubuntu-latest
     outputs:
@@ -44,14 +44,14 @@ jobs:
       scripts: ${{ steps.changes.outputs.scripts }}
       has_changes: ${{ steps.changes.outputs.has_changes }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
 
       - name: Install sccache
-        uses: mozilla-actions/sccache-action@v0.0.4
+        uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
         id: changes
         with:
           filters: |
@@ -93,18 +93,18 @@ jobs:
     name: Quality Gate
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
       with:
         components: rustfmt, clippy
 
     - name: Cache cargo registry
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: |
           ~/.cargo/registry
@@ -128,16 +128,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: quality-gate
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Cache cargo registry
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: |
           ~/.cargo/registry
@@ -147,7 +147,7 @@ jobs:
           ${{ runner.os }}-cargo-registry-
 
     - name: Cache target
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -170,21 +170,21 @@ jobs:
       matrix:
         partition: [1, 2, 3, 4]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-     - name: Install Rust
-       uses: dtolnay/rust-toolchain@stable
+   - name: Install Rust
+       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+   - name: Install cargo-nextest
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache target
-       uses: actions/cache@v4
+       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -202,21 +202,21 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.cli == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache target
-       uses: actions/cache@v4
+       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -230,21 +230,21 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.core == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache target
-       uses: actions/cache@v4
+       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -258,21 +258,21 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.output == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache target
-       uses: actions/cache@v4
+       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -286,21 +286,21 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.storage == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache target
-       uses: actions/cache@v4
+       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -318,18 +318,18 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-nextest
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest
 
      - name: Cache cargo registry
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: |
           ~/.cargo/registry
@@ -337,7 +337,7 @@ jobs:
         key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Cache target
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -352,23 +352,23 @@ jobs:
     needs: [test-parallel, test-cli, test-core, test-output, test-storage]
     if: always() && needs.preflight.outputs.has_changes == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
       with:
         components: llvm-tools-preview
 
      - name: Install cargo-llvm-cov
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-llvm-cov
 
      - name: Cache target
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -399,7 +399,7 @@ jobs:
       id: coverage_check
 
     - name: Upload coverage reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: coverage-reports
         path: |
@@ -419,19 +419,19 @@ jobs:
     needs: build
     if: needs.preflight.outputs.has_changes == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Install hyperfine
       run: cargo install hyperfine
 
     - name: Cache target
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
@@ -453,7 +453,7 @@ jobs:
         ls -lh target/release/ | head -5 >> $GITHUB_STEP_SUMMARY
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: benchmark-results
         path: build-bench.md
@@ -465,21 +465,21 @@ jobs:
     needs: build
     if: needs.preflight.outputs.has_changes == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
      - name: Install cargo-audit
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-audit
 
      - name: Install cargo-deny
-       uses: taiki-e/install-action@v2
+       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-deny
 
@@ -490,7 +490,7 @@ jobs:
       run: cargo deny check
 
     - name: Upload security reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: security-reports
         path: audit-results.json
@@ -502,16 +502,16 @@ jobs:
     needs: build
     if: needs.preflight.outputs.docs == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Install sccache
-      uses: mozilla-actions/sccache-action@v0.0.4
+      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@stable
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
     - name: Cache target
-      uses: actions/cache@v4
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}

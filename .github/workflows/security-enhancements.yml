@@ -9,7 +9,7 @@ permissions:
 
 on:
   schedule:
-    - cron: '0 4 * * 0'  # Weekly Sunday at 4 AM UTC
+  - cron: '0 4 * * 0'  # Weekly Sunday at 4 AM UTC
   workflow_dispatch:
   pull_request:
     branches: [ main, develop ]
@@ -28,12 +28,12 @@ jobs:
     name: Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
       - name: Install cargo-audit with vulnerability database
         run: |
@@ -57,7 +57,7 @@ jobs:
           fi
 
       - name: Upload SARIF report for GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@49144ccc36107322759661d92550d909ddb03d9e
         if: always()
         with:
           sarif_file: audit-results.json
@@ -67,27 +67,27 @@ jobs:
     name: Dependency Security Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-       - name: Install cargo-deny
-         uses: taiki-e/install-action@v2
-         with:
-           tool: cargo-deny
+    - name: Install cargo-deny
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-deny
 
-       - name: Run comprehensive cargo-deny checks
-        run: |
+    - name: Run comprehensive cargo-deny checks
+      run: |
           echo "## 📦 Dependency Security Analysis" >> $GITHUB_STEP_SUMMARY
           cargo deny check advisories --format json | tee deny-advisories.json
           cargo deny check licenses --format json | tee deny-licenses.json
           cargo deny check bans --format json | tee deny-bans.json
           cargo deny check sources --format json | tee deny-sources.json
 
-      - name: Check for problematic dependencies
-        id: dependency-check
-        run: |
+    - name: Check for problematic dependencies
+      id: dependency-check
+      run: |
           # Check for GPL licenses and other problematic dependencies
           if cargo deny check licenses > /dev/null 2>&1; then
             echo "License compliance check passed"
@@ -102,17 +102,17 @@ jobs:
     name: Secrets Detection
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
 
       - name: Gitleaks scan
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: TruffleHog scan
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690
         with:
           path: ./
           base: main
@@ -136,10 +136,10 @@ jobs:
     name: Code Security Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
         with:
           components: clippy
 
@@ -173,10 +173,10 @@ jobs:
     name: Software Bill of Materials
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
       - name: Install cargo-license
         run: cargo install cargo-license
@@ -189,7 +189,7 @@ jobs:
           echo "SBOM generated successfully" >> $GITHUB_STEP_SUMMARY
 
       - name: Upload SBOM artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sbom-reports
           path: |
@@ -245,7 +245,7 @@ jobs:
 
       - name: Create security issue if critical failures
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
             const issueTitle = `Security Scan Detected Critical Issues - ${new Date().toISOString().split('T')[0]}`;

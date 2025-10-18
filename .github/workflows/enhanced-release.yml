@@ -31,7 +31,7 @@ jobs:
       contents: write
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
       with:
         fetch-depth: 0
 
@@ -131,7 +131,7 @@ jobs:
           ### ⚠️ Note
           This is a $TYPE release for testing new features and improvements. Please report any issues you encounter.
           
-          EOF
+EOF
         fi
         
         # Add content sections based on what we found
