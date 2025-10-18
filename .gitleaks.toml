@@ -89,11 +89,6 @@ paths = [
 ]
 
 # Additional allowlist for specific findings
-[allowlist.files]
-# Allow specific files that contain intentional test data
-"crates/core/src/llm_detectors.rs" = "Contains test data for LLM detection validation"
-"examples/llm_detection_demo.md" = "Demo documentation with example API keys"
-"scripts/generate-docs.sh" = "Documentation generation script with placeholder URLs"
 
 # Allowlist for specific commits (if needed for historical data)
 [allowlist.commits]
