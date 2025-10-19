@@ -169,14 +169,34 @@ jobs:
     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Scan for secrets with Gitleaks
+      uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_CONFIG: .gitleaks.toml
+      continue-on-error: true
+      id: gitleaks
+      
+    - name: Fallback secret scanning (if Gitleaks fails)
+      if: steps.gitleaks.outcome == 'failure'
       run: |
-        echo "⚠️ Gitleaks temporarily disabled due to Git revision issues"
-        echo "Alternative: Using basic pattern matching for critical secrets"
-        # Basic secret pattern check
-        if grep -r -i "password\|secret\|token\|key" --include="*.rs" --include="*.toml" --include="*.yml" . | grep -v ".git" | grep -v "test" | head -5; then
-          echo "⚠️ Potential secrets found - manual review recommended"
+        echo "⚠️ Gitleaks failed, running fallback secret detection..."
+        
+        # Enhanced pattern matching for critical secrets
+        SECRET_PATTERNS="sk-[a-zA-Z0-9]{32,}|api[_-]?key|secret[_-]?key|password|token"
+        
+        echo "🔍 Scanning for potential secrets..."
+        if grep -r -E "$SECRET_PATTERNS" --include="*.rs" --include="*.toml" --include="*.yml" --include="*.json" . \
+           | grep -v ".git" \
+           | grep -v "/test" \
+           | grep -v "_test" \
+           | grep -v "/tests/" \
+           | grep -v "example" \
+           | grep -v "demo" \
+           | head -10; then
+          echo "⚠️ Potential secrets detected - requires manual review"
+          echo "This is a fallback scan - please investigate findings manually"
         else
-          echo "✅ No obvious secrets detected"
+          echo "✅ No obvious secrets detected in fallback scan"
         fi
 
     - name: TruffleHog OSS scan
