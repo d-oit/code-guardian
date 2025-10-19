@@ -57,6 +57,20 @@ regexes = [
     # Base64 test data that's obviously fake
     '''['"](dGVzdA==|ZGVtbw==|ZXhhbXBsZQ==)['"]''',
 ]
+stopwords = [
+    "test",
+    "demo",
+    "example",
+    "placeholder",
+    "dummy",
+    "fake",
+    "mock",
+    "sample",
+    "template",
+    "documentation",
+    "tutorial",
+    "guide"
+]
 
 # Specific rules to customize
 [[rules]]
@@ -96,18 +110,3 @@ paths = [
 # "95f65c37dda67ee497aceb3246c323458d946160" = "Initial test data setup"
 
 # Stop words that indicate test/demo content
-[allowlist.stopwords]
-stopwords = [
-    "test",
-    "demo", 
-    "example",
-    "placeholder",
-    "dummy",
-    "fake",
-    "mock",
-    "sample",
-    "template",
-    "documentation",
-    "tutorial",
-    "guide"
-]
