@@ -7,32 +7,23 @@ title = "Code Guardian Security Configuration"
 [extend]
 useDefault = true
 
-# Files and paths to ignore (test data, demos, examples)
-[allowlist]
-description = "Allow test data, demo content, and documentation examples"
+[[allowlists]]
+description = "Global allowlist for Code Guardian"
+regexTarget = "secret"
 paths = [
-    # Test files with intentional test data
     "crates/core/src/llm_detectors.rs",
     "**/*test*.rs",
-    "**/*_test.rs", 
+    "**/*_test.rs",
     "**/tests/**",
     "**/test/**",
-    
-    # Documentation and examples with demo data
     "examples/**",
     "docs/**",
     "*.md",
     "README*",
-    
-    # Scripts with placeholder references
     "scripts/**",
-    
-    # Configuration and build files
     "Cargo.toml",
     "Cargo.lock",
     ".github/**",
-    
-    # Coverage and generated files
     "coverage/**",
     "target/**",
     "*.log",
@@ -104,14 +95,4 @@ paths = [
 ]
 
 # Additional allowlist for specific findings
-[allowlist.files]
-# Allow specific files that contain intentional test data
-"crates/core/src/llm_detectors.rs" = "Contains test data for LLM detection validation"
-"examples/llm_detection_demo.md" = "Demo documentation with example API keys"
-"scripts/generate-docs.sh" = "Documentation generation script with placeholder URLs"
-
-# Allowlist for specific commits (if needed for historical data)
-[allowlist.commits]
-# Example: Allow specific commit that contains test data migration
-# "95f65c37dda67ee497aceb3246c323458d946160" = "Initial test data setup"
 
