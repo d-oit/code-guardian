@@ -16,6 +16,9 @@ Learn how to create and use custom pattern detectors for security, code quality,
 ### [Automation](tutorials/automation.md)
 Set up automated scanning with CI/CD, cron jobs, and monitoring.
 
+### [Branch Protection Setup](BRANCH_PROTECTION_SETUP.md)
+Learn how to set up branch protection rules for your repository.
+
 ## API Documentation
 
 The full API documentation is available at: [GitHub Pages](https://d-oit.github.io/code-guardian/)

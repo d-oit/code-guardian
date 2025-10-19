@@ -101,6 +101,16 @@ Example: `feat: add support for custom pattern detection`
 4. Request review from maintainers
 5. Address any feedback and make necessary changes
 
+## Branch Protection Requirements
+
+All pull requests must comply with the branch protection rules configured for the repository. This includes:
+
+- **2 Approvals**: At least two maintainer approvals are required before merging.
+- **Signed Commits**: All commits must be signed to verify authorship.
+- **Passing Status Checks**: All CI/CD pipelines, including tests, linting, and security scans, must pass.
+
+For detailed setup instructions and configuration, refer to [BRANCH_PROTECTION_SETUP.md](BRANCH_PROTECTION_SETUP.md).
+
 ## Reporting Issues
 
 When reporting bugs or requesting features:

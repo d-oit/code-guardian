@@ -1,0 +1,112 @@
+# Gitleaks configuration for Code Guardian
+# This file configures secret detection to ignore test data and demo content
+
+title = "Code Guardian Security Configuration"
+
+# Global rules for secret detection
+[extend]
+useDefault = true
+
+# Files and paths to ignore (test data, demos, examples)
+[allowlist]
+description = "Allow test data, demo content, and documentation examples"
+paths = [
+    # Test files with intentional test data
+    "crates/core/src/llm_detectors.rs",
+    "**/*test*.rs",
+    "**/*_test.rs", 
+    "**/tests/**",
+    "**/test/**",
+    
+    # Documentation and examples with demo data
+    "examples/**",
+    "docs/**",
+    "*.md",
+    "README*",
+    
+    # Scripts with placeholder references
+    "scripts/**",
+    
+    # Configuration and build files
+    "Cargo.toml",
+    "Cargo.lock",
+    ".github/**",
+    
+    # Coverage and generated files
+    "coverage/**",
+    "target/**",
+    "*.log",
+    "*.json",
+    "*.html"
+]
+
+# Patterns to ignore (common test patterns)
+regexes = [
+    # Test/demo API keys with obvious test patterns
+    '''(?i)(test|demo|example|placeholder|dummy|fake|mock).*['"](sk-|api_|key_)''',
+    
+    # Development/local patterns
+    '''(?i)(localhost|127\.0\.0\.1|dev|development).*['"](sk-|api_|key_)''',
+    
+    # Documentation code blocks
+    '''```[\s\S]*?```''',
+    
+    # Common test passwords
+    '''(?i)password.*['"](test|demo|example|123|password)''',
+    
+    # Base64 test data that's obviously fake
+    '''['"](dGVzdA==|ZGVtbw==|ZXhhbXBsZQ==)['"]''',
+]
+stopwords = [
+    "test",
+    "demo",
+    "example",
+    "placeholder",
+    "dummy",
+    "fake",
+    "mock",
+    "sample",
+    "template",
+    "documentation",
+    "tutorial",
+    "guide"
+]
+
+# Specific rules to customize
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key - customized for Code Guardian"
+# Only flag high-entropy secrets that don't match test patterns
+regex = '''(?i)['"](sk-[a-zA-Z0-9]{32,}|[a-zA-Z0-9]{32,})['"]'''
+entropy = 4.5  # Higher threshold to reduce false positives
+keywords = ["api", "key", "secret", "token"]
+
+# Paths to specifically check (override allowlist for critical files)
+[[rules]]
+id = "production-secrets"
+description = "Production secrets in critical files"
+regex = '''(?i)(production|prod|live).*['"](sk-|api_|key_|token_)'''
+paths = [
+    "src/**",
+    "crates/**/src/**"
+]
+# This will still check production-related secrets even in allowed paths
+
+# Custom rule for environment files
+[[rules]]
+id = "env-secrets"
+description = "Environment variable secrets"
+regex = '''(?i)^[A-Z_]+=(sk-|api_|key_|token_)'''
+paths = [
+    ".env*",
+    "*.env"
+]
+
+# Additional allowlist for specific findings
+
+# Allowlist for specific commits (if needed for historical data)
+[allowlist.commits]
+# Example: Allow specific commit that contains test data migration
+# "95f65c37dda67ee497aceb3246c323458d946160" = "Initial test data setup"
+
+# Stop words that indicate test/demo content

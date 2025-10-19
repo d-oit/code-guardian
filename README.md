@@ -16,6 +16,7 @@ A fast, modular CLI tool for scanning codebases to detect non-productive code.
 - [Development](#development)
 - [Documentation](#documentation)
 - [Contributing](#contributing)
+- [Branch Protection](#branch-protection)
 - [License](#license)
 
 ## Features
@@ -315,6 +316,12 @@ Quick checklist:
 2. Keep modules under 500 lines of code
 3. Maintain 82%+ test coverage
 4. Use conventional commit messages
+
+## Branch Protection
+
+To ensure code quality and security, this repository employs branch protection rules aligned with 2025 best practices. These include requiring 2 approvals for pull requests, signed commits, and passing all status checks (such as CI/CD, linting, and tests).
+
+For detailed setup instructions, refer to [BRANCH_PROTECTION_SETUP.md](BRANCH_PROTECTION_SETUP.md).
 
 ## License
 

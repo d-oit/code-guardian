@@ -1,10 +1,12 @@
 # Branch Protection Setup Guide
 
-This guide provides instructions for setting up branch protection rules to enforce the quality gates in the code-guardian project.
+This guide provides instructions for setting up GitHub Rulesets to enforce the quality gates in the code-guardian project.
+
+> **Note**: The configuration now uses the modern GitHub Rulesets API format, providing more flexible and powerful branch protection capabilities compared to the legacy branch protection rules.
 
 ## 🎯 Overview
 
-Branch protection rules ensure that all code changes go through proper quality gates before being merged into protected branches. This maintains code quality, security, and stability.
+GitHub Rulesets ensure that all code changes go through proper quality gates before being merged into protected branches. This maintains code quality, security, and stability by enforcing requirements such as required signatures, multiple approvals, and status checks.
 
 ## 🔧 Automated Setup
 
@@ -21,18 +23,37 @@ Branch protection rules ensure that all code changes go through proper quality g
 
 ## 📱 Manual Setup (GitHub Web Interface)
 
-If the automated script fails due to permissions, follow these manual steps:
+If the automated script fails due to permissions, follow these manual steps to create a Ruleset:
 
-### 1. Navigate to Branch Settings
+### 1. Navigate to Rulesets
 1. Go to your repository on GitHub
 2. Click **Settings** tab
-3. Click **Branches** in the left sidebar
+3. Click **Rules** in the left sidebar
+4. Click **Rulesets** tab
 
-### 2. Configure Main Branch Protection
+### 2. Create Main Branch Ruleset
 
-Click **Add rule** or edit existing rule for `main` branch:
+Click **New ruleset** and select **Branch ruleset**:
 
-#### Required Status Checks
+- **Name**: `main-protection`
+- **Enforcement status**: Active
+- **Target branches**: Include `main`
+
+#### Branch Rules
+- ✅ **Restrict deletions**: Prevent deletion of the branch
+- ✅ **Restrict non-fast-forward updates**: Prevent force pushes
+- ✅ **Require linear history**: Enforce merge commits or rebases
+- ✅ **Require signed commits**: All commits must be signed
+
+#### Pull Request Rules
+- ✅ **Require pull request before merging**
+- ✅ **Required approvals: 2**
+- ✅ **Dismiss stale reviews when new commits are pushed**
+- ✅ **Require approval of the most recent reviewable push**
+- ✅ **Require review from code owners**
+- ✅ **Require conversation resolution before merging**
+
+#### Status Checks
 - ✅ **Require status checks to pass before merging**
 - ✅ **Require branches to be up to date before merging**
 
@@ -48,32 +69,44 @@ Click **Add rule** or edit existing rule for `main` branch:
 - `Lint`
 - `Build`
 
-#### Pull Request Reviews
-- ✅ **Require a pull request before merging**
-- ✅ **Require approvals: 1**
+#### Bypass Permissions
+- Allow repository administrators to bypass rules for pull requests
+
+### 3. Create Develop Branch Ruleset (Optional)
+
+Create a separate ruleset for `develop` branch with relaxed requirements:
+
+- **Name**: `develop-protection`
+- **Enforcement status**: Active
+- **Target branches**: Include `develop`
+
+#### Branch Rules
+- ✅ **Restrict deletions**
+- ✅ **Restrict non-fast-forward updates**
+- ✅ **Require linear history**
+- ✅ **Require signed commits**
+
+#### Pull Request Rules
+- ✅ **Require pull request before merging**
+- ✅ **Required approvals: 2**
 - ✅ **Dismiss stale reviews when new commits are pushed**
+- ✅ **Require approval of the most recent reviewable push**
 - ✅ **Require review from code owners**
-
-#### Additional Settings
-- ✅ **Restrict pushes that create files**
 - ✅ **Require conversation resolution before merging**
-- ✅ **Include administrators**
-- ❌ **Allow force pushes**
-- ❌ **Allow deletions**
 
-### 3. Configure Develop Branch Protection
+#### Status Checks
+- ✅ **Require status checks to pass before merging**
+- ✅ **Require branches to be up to date before merging**
 
-Create a similar rule for `develop` branch with these differences:
-- Fewer required status checks (core quality gates only)
-- ❌ **Include administrators** (disabled for flexibility)
-- Same review requirements
-
-#### Required Status Checks for Develop
+**Required checks:**
 - `Test (ubuntu-latest, stable)`
 - `Coverage`
 - `Security Audit`
 - `Lint`
 - `Build`
+
+#### Bypass Permissions
+- Allow repository administrators to bypass rules for pull requests
 
 ## 🛡️ Quality Gates Enforced
 
@@ -93,14 +126,14 @@ Create a similar rule for `develop` branch with these differences:
 
 ## 🔍 Verification
 
-After setup, verify the protection rules:
+After setup, verify the rulesets:
 
 ```bash
-# Check current protection status
-gh api repos/:owner/:repo/branches/main/protection
+# List all rulesets
+gh api repos/:owner/:repo/rulesets
 
-# List required status checks
-gh api repos/:owner/:repo/branches/main/protection/required_status_checks
+# Check specific ruleset details
+gh api repos/:owner/:repo/rulesets/{ruleset_id}
 ```
 
 ## 🚫 Common Issues
@@ -121,7 +154,7 @@ gh api repos/:owner/:repo/branches/main/protection/required_status_checks
 
 ### Adding New Status Checks
 When adding new workflows:
-1. Update `.github/branch-protection-config.json`
+1. Update `.github/branch-protection-config.json` (now in Rulesets format)
 2. Run `./scripts/setup-branch-protection.sh` or update manually
 3. Test with a test PR
 
@@ -135,6 +168,26 @@ Edit the `CODEOWNERS` file in the repository root to modify review requirements.
 3. **Monitor impact** - Watch for blocked PRs and adjust as needed
 4. **Regular review** - Periodically review and update protection rules
 5. **Team communication** - Ensure all team members understand the quality gates
+
+## 🚀 2025 Best Practices
+
+As we move into 2025, several advanced features and practices are becoming essential for maintaining high-quality, secure, and efficient software development workflows:
+
+### Merge Queues
+- **Enable merge queues** on protected branches to automatically merge PRs that pass all checks
+- Reduces manual intervention and ensures continuous integration
+- Configure queue rules to require additional approvals for complex changes
+
+### Deployment Requirements
+- **Require deployment previews** for PRs affecting production systems
+- Implement **environment-specific protections** (e.g., stricter rules for production deployments)
+- Use **deployment gates** to ensure successful staging deployments before merging to main
+
+### Regular Audits
+- **Quarterly branch protection audits** to review and update rules based on team feedback and security best practices
+- **Access reviews** to ensure only authorized team members can bypass protections
+- **Compliance checks** to align with industry standards (e.g., SOC 2, ISO 27001)
+- Monitor and analyze **protection rule effectiveness** through GitHub Insights and custom dashboards
 
 ## 📞 Support
 
