@@ -191,7 +191,7 @@ jobs:
         GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
     - name: TruffleHog OSS scan
-      uses: trufflesecurity/trufflehog@ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690
+      uses: trufflesecurity/trufflehog@v3.90.11
       timeout-minutes: 5
       with:
         path: ./
