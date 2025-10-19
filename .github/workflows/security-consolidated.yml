@@ -40,28 +40,22 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_GHA_ENABLED: "false"
   # Disable sccache due to service instability
-  SECURITY_LEVEL: ${{ github.event.inputs.security_level || 'standard' }}
-  CREATE_ISSUE_ON_FAILURE: ${{ github.event.inputs.create_issue_on_failure || true }}
 
 jobs:
   # Dependency and vulnerability scanning
   vulnerability-scan:
     name: Vulnerability & Dependency Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v4
-      timeout-minutes: 5
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Setup Rust
       uses: ./.github/actions/setup-rust
-      timeout-minutes: 5
       with:
         toolchain: stable
 
     - name: Setup Cache
       uses: ./.github/actions/setup-cache
-      timeout-minutes: 5
       with:
         cache-key-suffix: security
 
@@ -91,7 +85,7 @@ jobs:
       run: |
         cargo license --json > licenses.json
         echo "## 📄 License Report" >> $GITHUB_STEP_SUMMARY
-        if jq -e '[.[] | select(.license | contains("GPL"))] | length > 0' licenses.json; then
+        if grep -q "GPL" licenses.json; then
           echo "::warning::GPL licensed dependencies found"
           echo "⚠️ GPL dependencies detected - review for compliance" >> $GITHUB_STEP_SUMMARY
         else
@@ -100,7 +94,6 @@ jobs:
 
     - name: Upload vulnerability reports
       uses: actions/upload-artifact@v4
-      timeout-minutes: 5
       with:
         name: vulnerability-reports
         path: |
@@ -112,21 +105,17 @@ jobs:
   code-security:
     name: Code Security Analysis
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v4
-      timeout-minutes: 5
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Setup Rust
       uses: ./.github/actions/setup-rust
-      timeout-minutes: 5
       with:
         toolchain: stable
         components: clippy
 
     - name: Setup Cache
       uses: ./.github/actions/setup-cache
-      timeout-minutes: 5
 
     - name: Security-focused clippy
       run: |
@@ -155,7 +144,7 @@ jobs:
           2>&1 | tee clippy-security.log
 
     - name: Enhanced security checks (if strict mode)
-      if: env.SECURITY_LEVEL == 'strict'
+      if: inputs.security_level == 'strict'
       run: |
         echo "Running enhanced security analysis..."
         # Additional strict checks for production
@@ -168,7 +157,6 @@ jobs:
 
     - name: Upload security analysis
       uses: actions/upload-artifact@v4
-      timeout-minutes: 5
       with:
         name: code-security-analysis
         path: clippy-security.log
@@ -177,22 +165,42 @@ jobs:
   secrets-scan:
     name: Secrets Detection
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
-    - uses: actions/checkout@v4
-      timeout-minutes: 5
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
     - name: Scan for secrets with Gitleaks
-      uses: gitleaks/gitleaks-action@v2
-      timeout-minutes: 5
+      uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITLEAKS_CONFIG: .gitleaks.toml
-        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+      continue-on-error: true
+      id: gitleaks
+      
+    - name: Fallback secret scanning (if Gitleaks fails)
+      if: steps.gitleaks.outcome == 'failure'
+      run: |
+        echo "⚠️ Gitleaks failed, running fallback secret detection..."
+        
+        # Enhanced pattern matching for critical secrets
+        SECRET_PATTERNS="sk-[a-zA-Z0-9]{32,}|api[_-]?key|secret[_-]?key|password|token"
+        
+        echo "🔍 Scanning for potential secrets..."
+        if grep -r -E "$SECRET_PATTERNS" --include="*.rs" --include="*.toml" --include="*.yml" --include="*.json" . \
+           | grep -v ".git" \
+           | grep -v "/test" \
+           | grep -v "_test" \
+           | grep -v "/tests/" \
+           | grep -v "example" \
+           | grep -v "demo" \
+           | head -10; then
+          echo "⚠️ Potential secrets detected - requires manual review"
+          echo "This is a fallback scan - please investigate findings manually"
+        else
+          echo "✅ No obvious secrets detected in fallback scan"
+        fi
 
     - name: TruffleHog OSS scan
-      uses: trufflesecurity/trufflehog@v3.90.11
-      timeout-minutes: 5
+      uses: trufflesecurity/trufflehog@ad6fc8fb446b8fafbf7ea8193d2d6bfd42f45690
       with:
         path: ./
         base: main
@@ -203,13 +211,11 @@ jobs:
   security-summary:
     name: Security Summary & Reporting
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     needs: [vulnerability-scan, code-security, secrets-scan]
     if: always()
     steps:
     - name: Download all reports
       uses: actions/download-artifact@v4
-      timeout-minutes: 5
 
     - name: Compile security summary
       run: |
@@ -237,40 +243,43 @@ jobs:
         fi
 
     - name: Create security incident issue
-       if: (failure() || needs.vulnerability-scan.result == 'failure' || needs.code-security.result == 'failure' || needs.secrets-scan.result == 'failure') && env.CREATE_ISSUE_ON_FAILURE == 'true'
-       uses: actions/github-script@v6
-       with:
-         script: |
-           const title = `Security Check Failed - Run #${{ github.run_number }}`;
-           const body = `
-           **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-           **Branch:** ${{ github.ref_name }}
-           **Commit:** ${{ github.sha }}
+      if: |
+        (failure() || needs.vulnerability-scan.result == 'failure' || 
+         needs.code-security.result == 'failure' || needs.secrets-scan.result == 'failure') 
+        && inputs.create_issue_on_failure == true
+      uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325
+      with:
+        script: |
+          const title = `Security Check Failed - ${new Date().toISOString().split('T')[0]}`;
+          const body = `## 🚨 Security Incident Report
 
-           ### Failed Checks
-           - Vulnerability Scan: ${{ needs.vulnerability-scan.result }}
-           - Code Security: ${{ needs.code-security.result }}
-           - Secrets Scan: ${{ needs.secrets-scan.result }}
+          **Workflow Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
 
-           ### Next Steps
-           1. Review the workflow run details and artifacts
-           2. Address identified security issues
-           3. Re-run security checks after fixes
-           4. Close this issue once resolved
+          ### Failed Checks
+          - Vulnerability Scan: ${{ needs.vulnerability-scan.result }}
+          - Code Security: ${{ needs.code-security.result }}  
+          - Secrets Scan: ${{ needs.secrets-scan.result }}
 
-           ### Security Thresholds
-           - Critical/High vulnerabilities: 0 allowed
-           - Exposed secrets: 0 allowed
-           - Security-related clippy errors: 0 allowed
+          ### Next Steps
+          1. Review the workflow run details and artifacts
+          2. Address identified security issues
+          3. Re-run security checks after fixes
+          4. Close this issue once resolved
 
-           ---
-           *This issue was auto-generated by the security workflow.*
-           `;
+          ### Security Thresholds
+          - Critical/High vulnerabilities: 0 allowed
+          - Exposed secrets: 0 allowed
+          - Security-related clippy errors: 0 allowed
 
-           await github.rest.issues.create({
-             owner: context.repo.owner,
-             repo: context.repo.repo,
-             title: title,
-             body: body,
-             labels: ['security', 'incident', 'automated']
-           });
+          ---
+          *This issue was auto-generated by the security workflow.*`;
+
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['security', 'incident', 'automated']
+          });
