@@ -236,7 +236,7 @@ jobs:
           echo "❌ Secrets Scan: FAILED" >> $GITHUB_STEP_SUMMARY
         fi
 
-     - name: Create security incident issue
+    - name: Create security incident issue
        if: (failure() || needs.vulnerability-scan.result == 'failure' || needs.code-security.result == 'failure' || needs.secrets-scan.result == 'failure') && env.CREATE_ISSUE_ON_FAILURE == 'true'
        uses: actions/github-script@v6
        with:
