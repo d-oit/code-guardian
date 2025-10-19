@@ -1,59 +1,96 @@
 {
-  "main": {
-    "required_status_checks": {
-      "strict": true,
-      "contexts": [
-        "Test (ubuntu-latest, stable)",
-        "Test (windows-latest, stable)", 
-        "Test (macos-latest, stable)",
-        "Coverage",
-        "Security Audit",
-        "Performance Benchmark",
-        "CodeQL / Analyze (rust)",
-        "CodeQL / Analyze (javascript)",
-        "Lint",
-        "Build"
-      ]
-    },
-    "enforce_admins": true,
-    "required_pull_request_reviews": {
-      "required_approving_review_count": 1,
-      "dismiss_stale_reviews": true,
-      "require_code_owner_reviews": true,
-      "require_last_push_approval": false
-    },
-    "restrictions": null,
-    "allow_force_pushes": false,
-    "allow_deletions": false,
-    "block_creations": false,
-    "required_conversation_resolution": true,
-    "lock_branch": false,
-    "allow_fork_syncing": true
+  "name": "main-protection",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main"],
+      "exclude": []
+    }
   },
-  "develop": {
-    "required_status_checks": {
-      "strict": true,
-      "contexts": [
-        "Test (ubuntu-latest, stable)",
-        "Coverage",
-        "Security Audit",
-        "Lint",
-        "Build"
-      ]
+  "rules": [
+    {
+      "type": "deletion"
     },
-    "enforce_admins": false,
-    "required_pull_request_reviews": {
-      "required_approving_review_count": 1,
-      "dismiss_stale_reviews": true,
-      "require_code_owner_reviews": false,
-      "require_last_push_approval": false
+    {
+      "type": "non_fast_forward"
     },
-    "restrictions": null,
-    "allow_force_pushes": false,
-    "allow_deletions": false,
-    "block_creations": false,
-    "required_conversation_resolution": true,
-    "lock_branch": false,
-    "allow_fork_syncing": true
-  }
+    {
+      "type": "required_linear_history"
+    },
+    {
+      "type": "required_signatures"
+    },
+    {
+      "type": "pull_request",
+      "parameters": {
+        "required_approving_review_count": 0,
+        "dismiss_stale_reviews_on_push": true,
+        "require_code_owner_review": true,
+        "require_last_push_approval": true,
+        "required_review_thread_resolution": true
+      }
+    },
+    {
+      "type": "required_status_checks",
+      "parameters": {
+        "strict_required_status_checks_policy": true,
+        "required_status_checks": [
+          {
+            "context": "Test (ubuntu-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Test (windows-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Test (macos-latest, stable)",
+            "integration_id": null
+          },
+          {
+            "context": "Coverage",
+            "integration_id": null
+          },
+          {
+            "context": "Security Audit",
+            "integration_id": null
+          },
+          {
+            "context": "Performance Benchmark",
+            "integration_id": null
+          },
+          {
+            "context": "CodeQL / Analyze (rust)",
+            "integration_id": null
+          },
+          {
+            "context": "CodeQL / Analyze (javascript)",
+            "integration_id": null
+          },
+          {
+            "context": "Lint",
+            "integration_id": null
+          },
+          {
+            "context": "Build",
+            "integration_id": null
+          }
+        ]
+      }
+    },
+    {
+      "type": "required_deployments",
+      "parameters": {
+        "required_deployment_environments": []
+      }
+    }
+  ],
+  "bypass_actors": [
+    {
+      "actor_id": 5,
+      "actor_type": "RepositoryRole",
+      "bypass_mode": "pull_request"
+    }
+  ]
 }
