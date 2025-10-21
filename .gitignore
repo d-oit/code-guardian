@@ -35,3 +35,6 @@ clippy_output.json
 
 # Development workflow logs
 dev-workflow.log
+opencodetmp/opencode
+opencodetmp/opencode-linux-x64.zip
+sccache-*-musl/

@@ -54,7 +54,26 @@ fn detect_pattern_with_context(
             // Extract more context around the match
             let context_start = mat.start().saturating_sub(10);
             let context_end = (mat.end() + 20).min(line.len());
-            let match_context = &line[context_start..context_end];
+
+            // Find char boundaries for safe slicing
+            let char_indices: Vec<(usize, char)> = line.char_indices().collect();
+            let start_idx = char_indices
+                .iter()
+                .position(|(i, _)| *i >= context_start)
+                .unwrap_or(0);
+            let end_idx = char_indices
+                .iter()
+                .position(|(i, _)| *i >= context_end)
+                .unwrap_or(char_indices.len());
+
+            let match_context = if start_idx < end_idx {
+                char_indices[start_idx..end_idx]
+                    .iter()
+                    .map(|(_, c)| c)
+                    .collect::<String>()
+            } else {
+                line[mat.start()..mat.end()].to_string()
+            };
 
             matches.push(Match {
                 file_path: file_path.to_string_lossy().to_string(),

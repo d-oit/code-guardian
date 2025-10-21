@@ -128,8 +128,8 @@ group_by = "severity"
 
 ```toml
 [storage]
-# Database URL (default: "./code-guardian.db")
-database_url = "./code-guardian.db"
+# Database URL (default: "data/code-guardian.db")
+database_url = "data/code-guardian.db"
 
 # Enable result caching (default: true)
 enable_caching = true

@@ -98,7 +98,7 @@ pub fn handle_custom_detectors(action: CustomDetectorAction) -> Result<()> {
 }
 
 pub fn handle_incremental(action: IncrementalAction) -> Result<()> {
-    let state_file = PathBuf::from("code-guardian.incremental");
+    let state_file = PathBuf::from("data/code-guardian.incremental");
 
     match action {
         IncrementalAction::Status => {

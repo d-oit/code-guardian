@@ -1,5 +1,9 @@
 # Code-Guardian
 
+[![CI](https://github.com/d-oit/code-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/d-oit/code-guardian/actions/workflows/ci.yml)
+[![Crates.io](https://img.shields.io/crates/v/code-guardian-cli.svg)](https://crates.io/crates/code-guardian-cli)
+[![License](https://img.shields.io/crates/l/code-guardian-cli.svg)](https://github.com/d-oit/code-guardian/blob/main/LICENSE)
+
 A fast, modular CLI tool for scanning codebases to detect non-productive code.
 
 ## Table of Contents
@@ -45,12 +49,12 @@ cd code-guardian
 cargo build --release
 ```
 
-The binary will be available at `target/release/code-guardian-cli`.
+The binary will be available at `target/release/code-guardian`.
 
 ### Using Cargo Install
 
 ```bash
-cargo install code-guardian-cli
+cargo install code-guardian
 ```
 
 This will download, compile, and install the binary to your Cargo bin directory (usually `~/.cargo/bin/`).
@@ -78,32 +82,32 @@ For detailed performance data and optimization recommendations, see [Performance
 ### Scan a Directory
 
 ```bash
-code-guardian-cli scan /path/to/your/project
+code-guardian scan /path/to/your/project
 ```
 
 ### View Scan History
 
 ```bash
-code-guardian-cli history
+code-guardian history
 ```
 
 ### Generate Reports
 
 ```bash
 # Text format (default)
-code-guardian-cli report 1
+code-guardian report 1
 
 # JSON format
-code-guardian-cli report 1 --format json
+code-guardian report 1 --format json
 
 # HTML format
-code-guardian-cli report 1 --format html
+code-guardian report 1 --format html
 ```
 
 ### Compare Scans
 
 ```bash
-code-guardian-cli compare 1 2 --format markdown
+code-guardian compare 1 2 --format markdown
 ```
 
 ## Advanced Usage
@@ -113,9 +117,9 @@ code-guardian-cli compare 1 2 --format markdown
 By default, scans are stored in `data/code-guardian.db`. You can specify a custom database path:
 
 ```bash
-code-guardian-cli scan /path/to/project --db /custom/path/my-scans.db
-code-guardian-cli history --db /custom/path/my-scans.db
-code-guardian-cli report 1 --db /custom/path/my-scans.db --format json
+code-guardian scan /path/to/project --db /custom/path/my-scans.db
+code-guardian history --db /custom/path/my-scans.db
+code-guardian report 1 --db /custom/path/my-scans.db --format json
 ```
 
 ### Piping and Redirecting Output
@@ -124,13 +128,13 @@ Redirect reports to files for further processing:
 
 ```bash
 # Save HTML report to file
-code-guardian-cli report 1 --format html > scan-report.html
+code-guardian report 1 --format html > scan-report.html
 
 # Pipe JSON output to jq for filtering
-code-guardian-cli report 1 --format json | jq '.matches[] | select(.pattern == "TODO")'
+code-guardian report 1 --format json | jq '.matches[] | select(.pattern == "TODO")'
 
 # Export CSV for spreadsheet analysis
-code-guardian-cli report 1 --format csv > scan-results.csv
+code-guardian report 1 --format csv > scan-results.csv
 ```
 
 ### Automating Scans with Scripts
@@ -144,12 +148,12 @@ PROJECT_DIR="/path/to/your/project"
 DB_PATH="$HOME/code-guardian-scans.db"
 
 echo "Running daily code scan..."
-code-guardian-cli scan "$PROJECT_DIR" --db "$DB_PATH"
-SCAN_ID=$(code-guardian-cli history --db "$DB_PATH" | tail -1 | awk '{print $2}' | tr -d ',')
+code-guardian scan "$PROJECT_DIR" --db "$DB_PATH"
+SCAN_ID=$(code-guardian history --db "$DB_PATH" | tail -1 | awk '{print $2}' | tr -d ',')
 
 echo "Generating reports..."
-code-guardian-cli report "$SCAN_ID" --db "$DB_PATH" --format html > "scan-$(date +%Y%m%d).html"
-code-guardian-cli report "$SCAN_ID" --db "$DB_PATH" --format json > "scan-$(date +%Y%m%d).json"
+code-guardian report "$SCAN_ID" --db "$DB_PATH" --format html > "scan-$(date +%Y%m%d).html"
+code-guardian report "$SCAN_ID" --db "$DB_PATH" --format json > "scan-$(date +%Y%m%d).json"
 
 echo "Scan complete. Reports saved."
 ```
@@ -160,10 +164,10 @@ Track progress by comparing scans:
 
 ```bash
 # Compare last two scans
-LATEST_ID=$(code-guardian-cli history | tail -1 | awk '{print $2}' | tr -d ',')
-PREVIOUS_ID=$(code-guardian-cli history | tail -2 | head -1 | awk '{print $2}' | tr -d ',')
+LATEST_ID=$(code-guardian history | tail -1 | awk '{print $2}' | tr -d ',')
+PREVIOUS_ID=$(code-guardian history | tail -2 | head -1 | awk '{print $2}' | tr -d ',')
 
-code-guardian-cli compare "$PREVIOUS_ID" "$LATEST_ID" --format markdown
+code-guardian compare "$PREVIOUS_ID" "$LATEST_ID" --format markdown
 ```
 
 ### Integrating with CI/CD
@@ -185,9 +189,9 @@ Example integration for scanning TODOs in CI:
 # .github/workflows/enhanced-ci.yml
 - name: Scan for TODOs
   run: |
-    ./code-guardian-cli scan . --db /tmp/scans.db
-    SCAN_ID=$(./code-guardian-cli history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
-    COUNT=$(./code-guardian-cli report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
+    ./code-guardian scan . --db /tmp/scans.db
+    SCAN_ID=$(./code-guardian history --db /tmp/scans.db | tail -1 | awk '{print $2}' | tr -d ',')
+    COUNT=$(./code-guardian report "$SCAN_ID" --db /tmp/scans.db --format json | jq '.matches | length')
     if [ "$COUNT" -gt 10 ]; then
       echo "Too many TODOs found: $COUNT"
       exit 1
@@ -199,7 +203,7 @@ Example integration for scanning TODOs in CI:
 Run performance benchmarks to assess scanning speed and receive optimization recommendations:
 
 ```bash
-code-guardian-cli benchmark --quick
+code-guardian benchmark --quick
 ```
 
 ### Production Readiness Checks
@@ -207,7 +211,7 @@ code-guardian-cli benchmark --quick
 Perform production readiness checks with configurable severity levels:
 
 ```bash
-code-guardian-cli production-check --severity high
+code-guardian production-check --severity high
 ```
 
 ### Incremental Scanning
@@ -215,7 +219,7 @@ code-guardian-cli production-check --severity high
 Efficiently rescan only changed files for faster subsequent scans:
 
 ```bash
-code-guardian-cli scan /path --incremental
+code-guardian scan /path --incremental
 ```
 
 ### Distributed Scanning
@@ -223,7 +227,7 @@ code-guardian-cli scan /path --incremental
 Distribute scanning across multiple processes for large codebases:
 
 ```bash
-code-guardian-cli scan /path --distributed
+code-guardian scan /path --distributed
 ```
 
 ## Supported Patterns
@@ -244,13 +248,13 @@ Code-Guardian supports custom pattern detectors for detecting project-specific i
 
 ```bash
 # Create example custom detectors
-code-guardian-cli custom-detectors create-examples
+code-guardian custom-detectors create-examples
 
 # Scan with custom detectors
-code-guardian-cli scan /path/to/project --custom-detectors custom_detectors.json
+code-guardian scan /path/to/project --custom-detectors custom_detectors.json
 
 # List available custom detectors
-code-guardian-cli custom-detectors list
+code-guardian custom-detectors list
 ```
 
 Custom detectors can detect security vulnerabilities, code quality issues, and more. See the [Custom Detectors Guide](docs/tutorials/custom-detectors.md) for details.

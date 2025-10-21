@@ -1,0 +1,53 @@
+[
+  {
+    "name": "HARDCODED_PASSWORD",
+    "description": "Detect hardcoded passwords and secrets",
+    "pattern": "(?i)(password|secret|key|token)\\s*[=:]\\s*[\"'][^\"']{8,}[\"']",
+    "file_extensions": [],
+    "case_sensitive": false,
+    "multiline": false,
+    "capture_groups": [],
+    "severity": "High",
+    "category": "Security",
+    "examples": [
+      "password = \"secretpassword123\""
+    ],
+    "enabled": true
+  },
+  {
+    "name": "SQL_INJECTION",
+    "description": "Detect potential SQL injection vulnerabilities",
+    "pattern": "(?i)(query|execute)\\s*\\(\\s*[\"']\\s*SELECT.*\\+.*[\"']\\s*\\)",
+    "file_extensions": [
+      "py",
+      "js",
+      "php"
+    ],
+    "case_sensitive": false,
+    "multiline": false,
+    "capture_groups": [],
+    "severity": "Critical",
+    "category": "Security",
+    "examples": [
+      "query(\"SELECT * FROM users WHERE id = \" + user_id)"
+    ],
+    "enabled": true
+  },
+  {
+    "name": "LARGE_FUNCTION",
+    "description": "Detect functions that might be too large",
+    "pattern": "fn\\s+\\w+[^{]*\\{(?:[^{}]*\\{[^{}]*\\})*[^{}]{500,}\\}",
+    "file_extensions": [
+      "rs"
+    ],
+    "case_sensitive": true,
+    "multiline": true,
+    "capture_groups": [],
+    "severity": "Medium",
+    "category": "CodeQuality",
+    "examples": [
+      "Functions with more than 500 characters in body"
+    ],
+    "enabled": true
+  }
+]

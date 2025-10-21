@@ -470,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "code_guardian_cli"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -487,8 +487,10 @@ dependencies = [
  "git2",
  "ignore",
  "indicatif",
+ "mockall",
  "num_cpus",
  "predicates",
+ "proptest",
  "rayon",
  "serde",
  "serde_json",

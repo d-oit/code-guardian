@@ -89,10 +89,45 @@ audit: ## Run security audit on dependencies
 	@echo "🔒 Running security audit..."
 	cargo audit
 
+security-audit: ## Comprehensive security audit with cargo-deny
+	@echo "🔒 Running comprehensive security audit..."
+	cargo deny check
+
+dependency-audit: ## Check for unused dependencies
+	@echo "📦 Checking for unused dependencies..."
+	cargo machete
+
+modernize-tools: ## Install modern Rust tools (2024-2025 best practices)
+	@echo "🔧 Installing modern Rust toolchain..."
+	cargo install cargo-nextest cargo-deny cargo-machete mdbook cargo-chef sccache
+
+setup-sccache: ## Configure sccache for distributed compilation
+	@echo "⚡ Setting up sccache..."
+	@mkdir -p ~/.cache/sccache
+	@echo "SCCACHE_DIR=~/.cache/sccache" >> .env
+	@echo "RUSTC_WRAPPER=sccache" >> .env
+	@echo "✅ sccache configured. Use 'export RUSTC_WRAPPER=sccache' to enable"
+
 # Documentation
 docs: ## Generate and open documentation
 	@echo "📚 Generating documentation..."
-	cargo doc --open --no-deps
+	cargo doc --open
+
+docs-serve: ## Serve documentation with mdbook
+	@echo "📚 Starting documentation server..."
+	@if command -v mdbook >/dev/null 2>&1; then \
+		cd docs && mdbook serve --open; \
+	else \
+		echo "❌ mdbook not installed. Run 'make modernize-tools' first"; \
+	fi
+
+docs-build: ## Build documentation with mdbook
+	@echo "📚 Building documentation..."
+	@if command -v mdbook >/dev/null 2>&1; then \
+		cd docs && mdbook build; \
+	else \
+		echo "❌ mdbook not installed. Run 'make modernize-tools' first"; \
+	fi
 
 docs-watch: ## Generate docs in watch mode
 	@echo "👀 Watching documentation..."
@@ -152,6 +187,8 @@ ci-simulate: ## Simulate CI pipeline locally
 	make test
 	make coverage-ci
 	make audit
+	make security-audit
+	make dependency-audit
 
 # Performance profiling
 bench: ## Run benchmarks
@@ -245,7 +282,7 @@ fast-check: ## Quick development check (no expensive clippy)
 	@echo "⚡ Fast quality check..."
 	@cargo fmt --all -- --check
 	@cargo check --workspace
-	@cargo test --lib --workspace
+	@cargo nextest run --lib --workspace
 
 fast-lint: ## Fast clippy with reduced lints
 	@echo "📎 Fast clippy..."

@@ -52,7 +52,7 @@ correlation_ids = true
 
 [database]
 # Database settings
-path = "./code_guardian.db"
+path = "./data/code_guardian.db"
 enable_migrations = true
 backup_before_migration = true
 
@@ -153,7 +153,7 @@ Database connection and migration settings.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `path` | string | "./code_guardian.db" | Database file path |
+| `path` | string | "./data/code_guardian.db" | Database file path |
 | `enable_migrations` | boolean | true | Run migrations automatically |
 | `backup_before_migration` | boolean | true | Backup before schema changes |
 
