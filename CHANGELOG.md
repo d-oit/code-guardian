@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2025-10-21
+### 🐛 Bug Fixes
+
+- Resolve GitHub Actions failures
+
+- Resolve security workflow issues
+
+- Final security workflow fixes
+
+- Final security workflow syntax and artifact issues
+
+- Add gitleaks configuration to handle test data (#21)
+
+- Resolve TruffleHog BASE/HEAD same commit issue (#24)
+
+
+### 🚀 Features
+
+- Consolidate workflows following GitHub Actions best practices
+
+
 ## [0.1.6] - 2025-10-16
 
 ### Fixed
