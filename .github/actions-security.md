@@ -35,10 +35,6 @@ This document outlines the security enhancements implemented for GitHub Actions 
 
 ## Workflow-Specific Security Configurations
 
-### CI Workflow (`ci.yml`)
-- **Permissions**: `contents: read`, `pull-requests: write`, `checks: write`, `packages: read`
-- **Security Features**: Code review agent, clippy security checks
-
 ### Release Workflow (`release.yml`)
 - **Permissions**: `contents: write`, `packages: read`
 - **Security Features**: Immutable releases, multi-platform builds
