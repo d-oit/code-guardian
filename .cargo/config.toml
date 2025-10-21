@@ -3,7 +3,7 @@
 # Use multiple CPU cores for compilation
 jobs = 4
 
-# Enable incremental compilation
+# Enable incremental compilation for dev builds only
 incremental = true
 
 # Use faster linker on Unix systems
@@ -25,3 +25,7 @@ incremental = true
 inherits = "dev"
 opt-level = 0
 debug = false
+# sccache configuration for faster builds
+[env]
+RUSTC_WRAPPER = "sccache"
+SCCACHE_DIR = { value = "/tmp/sccache", force = true }

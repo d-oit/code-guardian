@@ -1,0 +1,23 @@
+{
+    "monitoring": {
+        "enabled": true,
+        "interval_seconds": 1800,
+        "retention_days": 30
+    },
+    "thresholds": {
+        "build_time_seconds": 180,
+        "test_time_seconds": 120,
+        "coverage_percent": 82,
+        "memory_mb": 200
+    },
+    "dashboard": {
+        "port": 8080,
+        "auto_refresh_seconds": 30,
+        "trend_hours": 24
+    },
+    "alerting": {
+        "consecutive_failures_threshold": 3,
+        "email_enabled": false,
+        "webhook_enabled": false
+    }
+}

@@ -39,7 +39,6 @@ tools:
   todowrite: true
   todoread: true
   bash: false  
-  task: true
 ---
 ## Overview
 The Agent Coordinator is an AI agent that orchestrates straightforward multi-agent workflows for complex tasks that can be decomposed into manageable subtasks. It manages basic handoffs between agents, leveraging existing @.opencode/agent agents or dynamically created ones, without advanced swarm intelligence features.

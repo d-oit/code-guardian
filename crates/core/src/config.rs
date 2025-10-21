@@ -17,7 +17,7 @@ impl Default for Config {
         Self {
             scan_patterns: vec!["*.rs".to_string(), "*.toml".to_string()],
             output_formats: vec!["json".to_string()],
-            database_path: "code_guardian.db".to_string(),
+            database_path: "data/code-guardian.db".to_string(),
             max_threads: num_cpus::get(),
             cache_size: 50000,
             batch_size: 100,
@@ -32,7 +32,7 @@ pub fn load_config<P: AsRef<Path>>(path: Option<P>) -> anyhow::Result<Config> {
     // Add default values
     builder = builder.set_default("scan_patterns", vec!["*.rs", "*.toml"])?;
     builder = builder.set_default("output_formats", vec!["json"])?;
-    builder = builder.set_default("database_path", "code_guardian.db")?;
+    builder = builder.set_default("database_path", "data/code-guardian.db")?;
     builder = builder.set_default("max_threads", num_cpus::get() as i64)?;
     builder = builder.set_default("cache_size", 50000i64)?;
     builder = builder.set_default("batch_size", 100i64)?;

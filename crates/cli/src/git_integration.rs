@@ -227,6 +227,8 @@ fn parse_git_diff(diff_output: &str, repo_path: &Path) -> Vec<StagedChange> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[allow(unused_imports)]
+    use proptest::prelude::*;
     use tempfile::TempDir;
 
     #[test]
@@ -260,4 +262,114 @@ mod tests {
         assert_eq!(range.start, 5);
         assert_eq!(range.count, 3);
     }
+
+    // Property-based tests using proptest
+
+    /* TODO: Enable proptest when ready
+    proptest! {
+        fn test_parse_git_diff_does_not_panic_on_arbitrary_input(input in any::<String>()) {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+            // This should not panic regardless of input
+            let _result = parse_git_diff(&input, repo_path);
+        }
+
+        fn test_parse_git_diff_returns_valid_structures(input in any::<String>()) {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+            let changes = parse_git_diff(&input, repo_path);
+
+            // All returned changes should have valid file paths and line ranges
+            for change in &changes {
+                // File path should be absolute and within repo
+                prop_assert!(change.file_path.is_absolute());
+                prop_assert!(change.file_path.starts_with(repo_path));
+
+                // Line ranges should have valid start and count
+                for range in &change.added_lines {
+                    prop_assert!(range.start > 0); // Git line numbers start from 1
+                    prop_assert!(range.count > 0);
+                }
+                for range in &change.removed_lines {
+                    prop_assert!(range.start > 0);
+                    prop_assert!(range.count > 0);
+                }
+            }
+        }
+
+        fn test_parse_git_diff_empty_input() {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+            let changes = parse_git_diff("", repo_path);
+            prop_assert!(changes.is_empty());
+        }
+
+        fn test_parse_git_diff_malformed_hunk_headers(input in any::<String>()) {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+            // Should handle malformed hunk headers gracefully
+            let changes = parse_git_diff(&input, repo_path);
+            // Might return empty or partial results, but shouldn't panic
+            prop_assert!(changes.len() >= 0);
+        }
+
+        #[test]
+        fn test_parse_git_diff_valid_diff_format(
+            file_name in "[a-zA-Z0-9_.-]+",
+            old_start in 1..1000u32,
+            old_count in 0..100u32,
+            new_start in 1..1000u32,
+            new_count in 0..100u32
+        ) {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+
+            let diff = format!(
+                "diff --git a/{} b/{}\n\
+                 --- a/{}\n\
+                 +++ b/{}\n\
+                 @@ -{},{} +{},{} @@\n\
+                 +new line\n",
+                file_name, file_name, file_name, file_name,
+                old_start, old_count, new_start, new_count
+            );
+
+            let changes = parse_git_diff(&diff, repo_path);
+
+            if new_count > 0 {
+                prop_assert_eq!(changes.len(), 1);
+                let change = &changes[0];
+                prop_assert!(change.file_path.ends_with(&file_name));
+                prop_assert!(!change.added_lines.is_empty() || !change.removed_lines.is_empty());
+            }
+        }
+
+        #[test]
+        fn test_parse_git_diff_multiple_files(
+            file1 in "[a-zA-Z0-9_.-]+",
+            file2 in "[a-zA-Z0-9_.-]+"
+        ) {
+            let temp_dir = TempDir::new().unwrap();
+            let repo_path = temp_dir.path();
+
+            let diff = format!(
+                "diff --git a/{} b/{}\n\
+                 --- a/{}\n\
+                 +++ b/{}\n\
+                 @@ -1,1 +1,1 @@\n\
+                 +change1\n\
+                 diff --git a/{} b/{}\n\
+                 --- a/{}\n\
+                 +++ b/{}\n\
+                 @@ -2,2 +2,2 @@\n\
+                 +change2\n",
+                file1, file1, file1, file1,
+                file2, file2, file2, file2
+            );
+
+            let changes = parse_git_diff(&diff, repo_path);
+            prop_assert!(changes.len() <= 2); // Should parse up to 2 files
+        }
+    }
+    */
 }

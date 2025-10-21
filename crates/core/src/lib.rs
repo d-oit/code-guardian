@@ -73,7 +73,7 @@ impl Scanner {
     }
 
     /// Check if a file should be scanned based on size and type
-    fn should_scan_file(&self, path: &Path) -> bool {
+    fn should_scan_file(&self, path: &Path, metadata: &std::fs::Metadata) -> bool {
         // Skip files in common build/dependency directories
         if let Some(path_str) = path.to_str() {
             if path_str.contains("/target/")
@@ -89,25 +89,14 @@ impl Scanner {
         }
 
         // Check file size (skip files larger than 5MB)
-        if let Ok(metadata) = std::fs::metadata(path) {
-            if metadata.len() > 5 * 1024 * 1024 {
-                return false;
-            }
-        }
-
-        // Check if file is binary by trying to read first 1024 bytes as UTF-8
-        if let Ok(mut file) = File::open(path) {
-            let mut buffer = [0; 1024];
-            if let Ok(bytes_read) = file.read(&mut buffer) {
-                if bytes_read > 0 && std::str::from_utf8(&buffer[..bytes_read]).is_err() {
-                    return false;
-                }
-            }
+        if metadata.len() > 5 * 1024 * 1024 {
+            return false;
         }
 
         // Check file extension for known binary types (fallback)
         if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
-            match ext.to_lowercase().as_str() {
+            let ext_lower = ext.to_lowercase();
+            match ext_lower.as_str() {
                 // Skip binary files
                 "exe" | "dll" | "so" | "dylib" | "bin" | "obj" | "o" | "a" | "lib" => return false,
                 // Skip image files
@@ -116,7 +105,26 @@ impl Scanner {
                 "zip" | "tar" | "gz" | "rar" | "7z" | "bz2" | "xz" => return false,
                 // Skip media files
                 "mp3" | "mp4" | "avi" | "mov" | "wav" | "flac" => return false,
+                // Known text files, skip UTF-8 check
+                "rs" | "js" | "ts" | "py" | "java" | "c" | "cpp" | "h" | "hpp" | "cs" | "php"
+                | "rb" | "go" | "swift" | "kt" | "scala" | "clj" | "hs" | "ml" | "fs" | "elm"
+                | "dart" | "nim" | "zig" | "v" | "ex" | "exs" | "lua" | "pl" | "pm" | "tcl"
+                | "r" | "m" | "sh" | "bash" | "zsh" | "fish" | "ps1" | "bat" | "cmd" | "sql"
+                | "xml" | "json" | "yaml" | "yml" | "toml" | "ini" | "cfg" | "conf" | "md"
+                | "txt" | "html" | "htm" | "css" | "scss" | "sass" | "less" | "styl" => {
+                    return true
+                }
                 _ => {}
+            }
+        }
+
+        // Check if file is binary by trying to read first 1024 bytes as UTF-8 (for unknown extensions)
+        if let Ok(mut file) = File::open(path) {
+            let mut buffer = [0; 1024];
+            if let Ok(bytes_read) = file.read(&mut buffer) {
+                if bytes_read > 0 && std::str::from_utf8(&buffer[..bytes_read]).is_err() {
+                    return false;
+                }
             }
         }
 
@@ -141,68 +149,114 @@ impl Scanner {
 
     /// Scans the directory tree starting from the given root path.
     /// Returns all matches found by the detectors.
-    /// Uses parallel processing for performance with improved load balancing and caching.
+    /// Uses conditional parallelism for small scans to reduce overhead.
     pub fn scan(&self, root: &Path) -> Result<Vec<Match>> {
-        let matches: Vec<Match> = WalkBuilder::new(root)
-            .build()
-            .par_bridge()
-            .filter_map(|entry| {
-                let entry = entry.ok()?;
-                let file_type = entry.file_type()?;
+        // Collect all file paths first to determine if we should use parallelism
+        let mut file_paths = Vec::new();
+        for entry in WalkBuilder::new(root).build().flatten() {
+            if let Some(file_type) = entry.file_type() {
                 if file_type.is_file() {
-                    let path = entry.path();
-                    if !self.should_scan_file(path) {
+                    file_paths.push(entry.path().to_path_buf());
+                }
+            }
+        }
+
+        // Decide on parallelism based on file count
+        let use_parallel = file_paths.len() > 10;
+
+        let matches: Vec<Match> = if use_parallel {
+            // Parallel processing for many files
+            file_paths
+                .into_par_iter()
+                .filter_map(|path| {
+                    let metadata = std::fs::metadata(&path).ok()?;
+                    if !self.should_scan_file(&path, &metadata) {
                         return None;
                     }
                     let path_str = path.to_string_lossy().to_string();
-                    let metadata = std::fs::metadata(path).ok()?;
                     let mtime = metadata.modified().ok()?;
                     if let Some(cached) = self.cache.get(&path_str) {
                         let (cached_mtime, cached_matches) = &*cached;
                         if cached_mtime == &mtime {
                             Some(cached_matches.clone())
                         } else {
-                            let content = self.read_file_content(path).ok()?;
+                            let content = self.read_file_content(&path).ok()?;
                             let file_matches: Vec<Match> = if self.detectors.len() <= 3 {
                                 // For few detectors, sequential is faster (less overhead)
                                 self.detectors
                                     .iter()
-                                    .flat_map(|detector| detector.detect(&content, path))
+                                    .flat_map(|detector| detector.detect(&content, path.as_path()))
                                     .collect()
                             } else {
                                 // For many detectors, use parallel processing
                                 self.detectors
                                     .par_iter()
-                                    .flat_map(|detector| detector.detect(&content, path))
+                                    .flat_map(|detector| detector.detect(&content, path.as_path()))
                                     .collect()
                             };
                             self.cache.insert(path_str, (mtime, file_matches.clone()));
                             Some(file_matches)
                         }
                     } else {
-                        let content = self.read_file_content(path).ok()?;
+                        let content = self.read_file_content(&path).ok()?;
                         let file_matches: Vec<Match> = if self.detectors.len() <= 3 {
                             // For few detectors, sequential is faster (less overhead)
                             self.detectors
                                 .iter()
-                                .flat_map(|detector| detector.detect(&content, path))
+                                .flat_map(|detector| detector.detect(&content, path.as_path()))
                                 .collect()
                         } else {
                             // For many detectors, use parallel processing
                             self.detectors
                                 .par_iter()
-                                .flat_map(|detector| detector.detect(&content, path))
+                                .flat_map(|detector| detector.detect(&content, path.as_path()))
                                 .collect()
                         };
                         self.cache.insert(path_str, (mtime, file_matches.clone()));
                         Some(file_matches)
                     }
-                } else {
-                    None
-                }
-            })
-            .flatten()
-            .collect();
+                })
+                .flatten()
+                .collect()
+        } else {
+            // Sequential processing for few files
+            file_paths
+                .into_iter()
+                .filter_map(|path| {
+                    let metadata = std::fs::metadata(&path).ok()?;
+                    if !self.should_scan_file(&path, &metadata) {
+                        return None;
+                    }
+                    let path_str = path.to_string_lossy().to_string();
+                    let mtime = metadata.modified().ok()?;
+                    if let Some(cached) = self.cache.get(&path_str) {
+                        let (cached_mtime, cached_matches) = &*cached;
+                        if cached_mtime == &mtime {
+                            Some(cached_matches.clone())
+                        } else {
+                            let content = self.read_file_content(&path).ok()?;
+                            let file_matches: Vec<Match> = self
+                                .detectors
+                                .iter()
+                                .flat_map(|detector| detector.detect(&content, path.as_path()))
+                                .collect();
+                            self.cache.insert(path_str, (mtime, file_matches.clone()));
+                            Some(file_matches)
+                        }
+                    } else {
+                        let content = self.read_file_content(&path).ok()?;
+                        let file_matches: Vec<Match> = self
+                            .detectors
+                            .iter()
+                            .flat_map(|detector| detector.detect(&content, path.as_path()))
+                            .collect();
+                        self.cache.insert(path_str, (mtime, file_matches.clone()));
+                        Some(file_matches)
+                    }
+                })
+                .flatten()
+                .collect()
+        };
 
         Ok(matches)
     }

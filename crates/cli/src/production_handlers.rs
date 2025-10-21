@@ -547,6 +547,7 @@ fn generate_production_text_output(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use proptest::prelude::*;
 
     #[test]
     fn test_map_languages_to_extensions() {
@@ -615,6 +616,341 @@ mod tests {
                     lang,
                     expected_ext
                 );
+            }
+        }
+    }
+
+    #[test]
+    fn test_filter_by_severity() {
+        use code_guardian_core::Match;
+
+        let matches = vec![
+            Match {
+                file_path: "test1.rs".to_string(),
+                line_number: 1,
+                column: 1,
+                pattern: "DEBUGGER".to_string(),
+                message: "Debugger found".to_string(),
+            },
+            Match {
+                file_path: "test2.rs".to_string(),
+                line_number: 2,
+                column: 1,
+                pattern: "CONSOLE_LOG".to_string(),
+                message: "Console log found".to_string(),
+            },
+            Match {
+                file_path: "test3.rs".to_string(),
+                line_number: 3,
+                column: 1,
+                pattern: "PRINT".to_string(),
+                message: "Print statement found".to_string(),
+            },
+        ];
+
+        let critical_matches = filter_by_severity(matches.clone(), &["Critical".to_string()]);
+        assert_eq!(critical_matches.len(), 1);
+        assert_eq!(critical_matches[0].pattern, "DEBUGGER");
+
+        let high_matches = filter_by_severity(matches.clone(), &["High".to_string()]);
+        assert_eq!(high_matches.len(), 1);
+        assert_eq!(high_matches[0].pattern, "CONSOLE_LOG");
+
+        let medium_matches = filter_by_severity(matches.clone(), &["Medium".to_string()]);
+        assert_eq!(medium_matches.len(), 1);
+        assert_eq!(medium_matches[0].pattern, "PRINT");
+
+        let multiple_severities =
+            filter_by_severity(matches, &["Critical".to_string(), "High".to_string()]);
+        assert_eq!(multiple_severities.len(), 2);
+
+        let no_matches = filter_by_severity(vec![], &["Critical".to_string()]);
+        assert_eq!(no_matches.len(), 0);
+    }
+
+    #[test]
+    fn test_count_by_severity_comprehensive() {
+        use code_guardian_core::Match;
+
+        let matches = vec![
+            Match {
+                file_path: "test1.rs".to_string(),
+                line_number: 1,
+                column: 1,
+                pattern: "DEBUGGER".to_string(),
+                message: "Debugger found".to_string(),
+            },
+            Match {
+                file_path: "test2.rs".to_string(),
+                line_number: 2,
+                column: 1,
+                pattern: "DEV".to_string(),
+                message: "Dev marker found".to_string(),
+            },
+            Match {
+                file_path: "test3.rs".to_string(),
+                line_number: 3,
+                column: 1,
+                pattern: "CONSOLE_LOG".to_string(),
+                message: "Console log found".to_string(),
+            },
+            Match {
+                file_path: "test4.rs".to_string(),
+                line_number: 4,
+                column: 1,
+                pattern: "PRINT".to_string(),
+                message: "Print statement found".to_string(),
+            },
+            Match {
+                file_path: "test5.rs".to_string(),
+                line_number: 5,
+                column: 1,
+                pattern: "TODO".to_string(),
+                message: "Todo found".to_string(),
+            },
+        ];
+
+        let counts = count_by_severity(&matches);
+
+        assert_eq!(counts.get("Critical").unwrap_or(&0), &1);
+        assert_eq!(counts.get("High").unwrap_or(&0), &2); // DEV and CONSOLE_LOG
+        assert_eq!(counts.get("Medium").unwrap_or(&0), &1); // PRINT
+        assert_eq!(counts.get("Low").unwrap_or(&0), &1); // TODO
+    }
+
+    #[test]
+    fn test_get_severity_for_pattern_comprehensive() {
+        // Test all known patterns
+        assert_eq!(get_severity_for_pattern("DEBUGGER"), "Critical");
+
+        // High severity patterns
+        let high_patterns = ["DEV", "STAGING", "CONSOLE_LOG", "ALERT"];
+        for pattern in &high_patterns {
+            assert_eq!(get_severity_for_pattern(pattern), "High");
+        }
+
+        // Medium severity patterns
+        let medium_patterns = [
+            "DEBUG",
+            "TEST",
+            "PHASE",
+            "PRINT",
+            "DEAD_CODE",
+            "EXPERIMENTAL",
+            "FIXME",
+            "PANIC",
+            "UNWRAP",
+        ];
+        for pattern in &medium_patterns {
+            assert_eq!(get_severity_for_pattern(pattern), "Medium");
+        }
+
+        // Low severity (default)
+        let low_patterns = ["TODO", "UNKNOWN", "CUSTOM"];
+        for pattern in &low_patterns {
+            assert_eq!(get_severity_for_pattern(pattern), "Low");
+        }
+    }
+
+    #[test]
+    fn test_is_high_severity_comprehensive() {
+        assert!(is_high_severity("DEV"));
+        assert!(is_high_severity("STAGING"));
+        assert!(is_high_severity("CONSOLE_LOG"));
+        assert!(is_high_severity("ALERT"));
+
+        assert!(!is_high_severity("DEBUGGER"));
+        assert!(!is_high_severity("PRINT"));
+        assert!(!is_high_severity("TODO"));
+        assert!(!is_high_severity("UNKNOWN"));
+    }
+
+    #[test]
+    fn test_is_critical_severity_comprehensive() {
+        assert!(is_critical_severity("DEBUGGER"));
+
+        assert!(!is_critical_severity("DEV"));
+        assert!(!is_critical_severity("CONSOLE_LOG"));
+        assert!(!is_critical_severity("PRINT"));
+        assert!(!is_critical_severity("TODO"));
+        assert!(!is_critical_severity("UNKNOWN"));
+    }
+
+    #[test]
+    fn test_map_languages_to_extensions_all_languages() {
+        let test_cases = vec![
+            ("js", vec!["js", "jsx"]),
+            ("javascript", vec!["js", "jsx"]),
+            ("ts", vec!["ts", "tsx"]),
+            ("typescript", vec!["ts", "tsx"]),
+            ("py", vec!["py"]),
+            ("python", vec!["py"]),
+            ("rs", vec!["rs"]),
+            ("rust", vec!["rs"]),
+            ("go", vec!["go"]),
+            ("java", vec!["java"]),
+            ("cs", vec!["cs"]),
+            ("csharp", vec!["cs"]),
+            ("php", vec!["php"]),
+            ("rb", vec!["rb"]),
+            ("ruby", vec!["rb"]),
+            ("kt", vec!["kt"]),
+            ("kotlin", vec!["kt"]),
+            ("swift", vec!["swift"]),
+            ("dart", vec!["dart"]),
+            ("cpp", vec!["cpp", "cxx", "cc"]),
+            ("c++", vec!["cpp", "cxx", "cc"]),
+            ("c", vec!["c", "h"]),
+            ("vue", vec!["vue"]),
+            ("svelte", vec!["svelte"]),
+            ("unknown", vec!["unknown"]), // Pass through
+        ];
+
+        for (lang, expected_exts) in test_cases {
+            let languages = vec![lang.to_string()];
+            let extensions = map_languages_to_extensions(&languages);
+
+            for expected_ext in expected_exts {
+                assert!(
+                    extensions.contains(&expected_ext.to_string()),
+                    "Language '{}' should map to extension '{}'",
+                    lang,
+                    expected_ext
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_map_languages_to_extensions_multiple_languages() {
+        let languages = vec!["rs".to_string(), "py".to_string(), "js".to_string()];
+        let extensions = map_languages_to_extensions(&languages);
+
+        assert!(extensions.contains(&"rs".to_string()));
+        assert!(extensions.contains(&"py".to_string()));
+        assert!(extensions.contains(&"js".to_string()));
+        assert!(extensions.contains(&"jsx".to_string()));
+        assert_eq!(extensions.len(), 4); // rs, py, js, jsx
+    }
+
+    #[test]
+    fn test_map_languages_to_extensions_empty() {
+        let languages = vec![];
+        let extensions = map_languages_to_extensions(&languages);
+        assert!(extensions.is_empty());
+    }
+
+    // Property-based tests using proptest
+
+    proptest! {
+        fn test_get_severity_for_pattern_always_returns_valid_severity(pattern in "\\PC*") {
+            let severity = get_severity_for_pattern(&pattern);
+            prop_assert!(matches!(severity.as_str(), "Critical" | "High" | "Medium" | "Low"));
+        }
+
+        fn test_get_severity_for_pattern_known_patterns_have_correct_severity(pattern in prop_oneof![
+            Just("DEBUGGER".to_string()),
+            Just("DEV".to_string()),
+            Just("STAGING".to_string()),
+            Just("CONSOLE_LOG".to_string()),
+            Just("ALERT".to_string()),
+            Just("DEBUG".to_string()),
+            Just("TEST".to_string()),
+            Just("PHASE".to_string()),
+            Just("PRINT".to_string()),
+            Just("DEAD_CODE".to_string()),
+            Just("EXPERIMENTAL".to_string()),
+            Just("FIXME".to_string()),
+            Just("PANIC".to_string()),
+            Just("UNWRAP".to_string())
+        ]) {
+            let severity = get_severity_for_pattern(&pattern);
+            match pattern.as_str() {
+                "DEBUGGER" => prop_assert_eq!(severity, "Critical"),
+                "DEV" | "STAGING" | "CONSOLE_LOG" | "ALERT" => prop_assert_eq!(severity, "High"),
+                "DEBUG" | "TEST" | "PHASE" | "PRINT" | "DEAD_CODE" | "EXPERIMENTAL" | "FIXME" | "PANIC" | "UNWRAP" => prop_assert_eq!(severity, "Medium"),
+                _ => prop_assert_eq!(severity, "Low"),
+            }
+        }
+
+        fn test_map_languages_to_extensions_returns_valid_extensions(languages in prop::collection::vec("\\PC+", 0..10)) {
+            let extensions = map_languages_to_extensions(&languages);
+            // Extensions should be non-empty strings
+            for ext in &extensions {
+                prop_assert!(!ext.is_empty());
+                // Most extensions don't start with dot, but some might
+                prop_assert!(ext.chars().all(|c| c.is_alphanumeric() || c == '_' || c == '-' || c == '.'));
+            }
+            // Should not have duplicates
+            let mut sorted = extensions.clone();
+            sorted.sort();
+            sorted.dedup();
+            prop_assert_eq!(extensions.len(), sorted.len());
+        }
+
+        #[test]
+        fn test_map_languages_to_extensions_known_languages_have_expected_extensions(lang in prop_oneof![
+            Just("js".to_string()),
+            Just("javascript".to_string()),
+            Just("ts".to_string()),
+            Just("typescript".to_string()),
+            Just("py".to_string()),
+            Just("python".to_string()),
+            Just("rs".to_string()),
+            Just("rust".to_string()),
+            Just("go".to_string()),
+            Just("java".to_string()),
+            Just("cs".to_string()),
+            Just("csharp".to_string()),
+            Just("php".to_string()),
+            Just("rb".to_string()),
+            Just("ruby".to_string()),
+            Just("kt".to_string()),
+            Just("kotlin".to_string()),
+            Just("swift".to_string()),
+            Just("dart".to_string()),
+            Just("cpp".to_string()),
+            Just("c++".to_string()),
+            Just("c".to_string()),
+            Just("vue".to_string()),
+            Just("svelte".to_string())
+        ]) {
+            let languages = vec![lang.clone()];
+            let extensions = map_languages_to_extensions(&languages);
+
+            match lang.as_str() {
+                "js" | "javascript" => prop_assert!(extensions.contains(&"js".to_string()) && extensions.contains(&"jsx".to_string())),
+                "ts" | "typescript" => prop_assert!(extensions.contains(&"ts".to_string()) && extensions.contains(&"tsx".to_string())),
+                "py" | "python" => prop_assert!(extensions.contains(&"py".to_string())),
+                "rs" | "rust" => prop_assert!(extensions.contains(&"rs".to_string())),
+                "go" => prop_assert!(extensions.contains(&"go".to_string())),
+                "java" => prop_assert!(extensions.contains(&"java".to_string())),
+                "cs" | "csharp" => prop_assert!(extensions.contains(&"cs".to_string())),
+                "php" => prop_assert!(extensions.contains(&"php".to_string())),
+                "rb" | "ruby" => prop_assert!(extensions.contains(&"rb".to_string())),
+                "kt" | "kotlin" => prop_assert!(extensions.contains(&"kt".to_string())),
+                "swift" => prop_assert!(extensions.contains(&"swift".to_string())),
+                "dart" => prop_assert!(extensions.contains(&"dart".to_string())),
+                "cpp" | "c++" => prop_assert!(extensions.iter().any(|e| e == "cpp" || e == "cxx" || e == "cc")),
+                "c" => prop_assert!(extensions.iter().any(|e| e == "c" || e == "h")),
+                "vue" => prop_assert!(extensions.contains(&"vue".to_string())),
+                "svelte" => prop_assert!(extensions.contains(&"svelte".to_string())),
+                _ => {} // Unknown languages pass through
+            }
+        }
+
+        fn test_map_languages_to_extensions_empty_input(_dummy in 0..1) {
+            let languages: Vec<String> = vec![];
+            let extensions = map_languages_to_extensions(&languages);
+            prop_assert!(extensions.is_empty());
+        }
+
+        fn test_map_languages_to_extensions_unknown_language_passthrough(lang in "[a-zA-Z][a-zA-Z0-9_-]*") {
+            let languages = vec![lang.clone()];
+            let extensions = map_languages_to_extensions(&languages);
+            // Unknown languages should be passed through as-is
+            if !["js", "javascript", "ts", "typescript", "py", "python", "rs", "rust", "go", "java", "cs", "csharp", "php", "rb", "ruby", "kt", "kotlin", "swift", "dart", "cpp", "c++", "c", "vue", "svelte"].contains(&lang.as_str()) {
+                prop_assert!(extensions.contains(&lang));
             }
         }
     }
