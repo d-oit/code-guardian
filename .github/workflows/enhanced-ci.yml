@@ -142,7 +142,7 @@ jobs:
         id: clippy-check
         run: |
           echo "🔧 Running clippy..."
-          if ! cargo clippy --all-targets --all-features -- -W warnings; then
+          if ! cargo clippy --all-targets --all-features -- -D warnings; then
         echo "Clippy issues found, attempting fixes..."
         cargo clippy --all-targets --all-features --fix --allow-dirty
         echo "clippy_fixed=true" >> $GITHUB_OUTPUT
