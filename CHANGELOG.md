@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.9] - 2025-10-21
 
+### ⚙️ Miscellaneous Tasks
+
+- Update release-please manifest to v0.1.9
+
+### 📚 Documentation
+
+- Update CHANGELOG.md to remove v0.2.0 entry and correct v0.1.9 summary
+
 ### 🚀 Features
 
 - Add production-ready CI/CD, documentation, testing, and monitoring features
