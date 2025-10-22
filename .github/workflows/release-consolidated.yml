@@ -66,12 +66,15 @@ jobs:
     - name: Install git-cliff
       run: cargo install git-cliff
 
-    - name: Generate release notes
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
         
-        # Generate base changelog
-        git cliff --tag "$TAG" --strip header > base_notes.md
+        # Generate changelog for current tag
+        git cliff --tag $TAG > base_notes.md
+
+        
+        # Remove the version header line to match original format
+        sed -i '1d' base_notes.md
         
         # Create enhanced release notes
         cat > enhanced_notes.md << EOF
