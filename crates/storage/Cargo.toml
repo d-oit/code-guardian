@@ -3,6 +3,10 @@ name = "code-guardian-storage"
 version = "0.1.9"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/d-oit/code-guardian"
+keywords = ["security", "scanning", "storage"]
+categories = ["database", "development-tools"]
+include = ["migrations/"]
 
 [dependencies]
 rusqlite = { workspace = true }

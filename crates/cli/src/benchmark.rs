@@ -1,6 +1,7 @@
 use anyhow::Result;
 use code_guardian_core::{
-    DetectorFactory, DetectorProfile, OptimizedScanner, Scanner, StreamingScanner,
+    performance_optimized_scanner::PerformanceOptimizedScanner, DetectorFactory, DetectorProfile,
+    OptimizedScanner, Scanner, StreamingScanner,
 };
 use std::path::Path;
 use std::time::Instant;
@@ -76,6 +77,30 @@ pub fn run_benchmark(path: &Path) -> Result<()> {
     );
     println!();
 
+    // Test performance optimized scanner
+    println!("5️⃣ Performance Optimized Scanner (SIMD + Advanced Caching)");
+    let start = Instant::now();
+    let perf_scanner =
+        PerformanceOptimizedScanner::new(DetectorProfile::Comprehensive.get_detectors());
+    let (perf_matches, perf_metrics) = perf_scanner.scan_ultra_fast(path)?;
+    let perf_duration = start.elapsed();
+    println!("   ⏱️  Duration: {:?}", perf_duration);
+    println!("   📊 Matches found: {}", perf_matches.len());
+    println!("   📈 Files scanned: {}", perf_metrics.total_files_scanned);
+    println!(
+        "   📈 Lines processed: {}",
+        perf_metrics.total_lines_processed
+    );
+    println!("   🎯 Cache hits: {}", perf_metrics.cache_hits);
+    println!("   ⚡ SIMD matches: {}", perf_metrics.simd_matches);
+    println!("   🔍 Regex matches: {}", perf_metrics.regex_matches);
+    println!("   📖 File read time: {}ms", perf_metrics.file_read_time_ms);
+    println!(
+        "   🔎 Pattern search time: {}ms",
+        perf_metrics.pattern_search_time_ms
+    );
+    println!();
+
     // Performance comparison
     println!("📊 Performance Comparison");
     println!("========================");
@@ -88,30 +113,58 @@ pub fn run_benchmark(path: &Path) -> Result<()> {
         optimized_metrics.total_files_scanned as f64 / optimized_duration.as_secs_f64();
     let streaming_files_per_sec =
         streaming_metrics.total_files_scanned as f64 / streaming_duration.as_secs_f64();
+    let perf_files_per_sec = perf_metrics.total_files_scanned as f64 / perf_duration.as_secs_f64();
 
     println!("📈 Files per second:");
-    println!("   Basic:        {:.1}", basic_files_per_sec);
-    println!("   Comprehensive: {:.1}", comprehensive_files_per_sec);
-    println!("   Optimized:    {:.1}", optimized_files_per_sec);
-    println!("   Streaming:    {:.1}", streaming_files_per_sec);
+    println!("   Basic:          {:.1}", basic_files_per_sec);
+    println!("   Comprehensive:  {:.1}", comprehensive_files_per_sec);
+    println!("   Optimized:      {:.1}", optimized_files_per_sec);
+    println!("   Streaming:      {:.1}", streaming_files_per_sec);
+    println!("   Performance:    {:.1}", perf_files_per_sec);
     println!();
 
     println!("🎯 Speed improvements:");
     let optimized_speedup = optimized_files_per_sec / comprehensive_files_per_sec;
     let streaming_speedup = streaming_files_per_sec / comprehensive_files_per_sec;
-    println!("   Optimized vs Comprehensive: {:.2}x", optimized_speedup);
-    println!("   Streaming vs Comprehensive: {:.2}x", streaming_speedup);
+    let perf_speedup = perf_files_per_sec / comprehensive_files_per_sec;
+    println!(
+        "   Optimized vs Comprehensive:    {:.2}x",
+        optimized_speedup
+    );
+    println!(
+        "   Streaming vs Comprehensive:    {:.2}x",
+        streaming_speedup
+    );
+    println!("   Performance vs Comprehensive:  {:.2}x", perf_speedup);
+    println!(
+        "   Performance vs Optimized:      {:.2}x",
+        perf_files_per_sec / optimized_files_per_sec
+    );
     println!();
 
     println!("💡 Recommendations:");
-    if optimized_speedup > 1.2 {
+    if perf_speedup > 2.0 {
+        println!(
+            "   🚀 Use --ultra-fast flag for maximum performance ({}x faster)",
+            perf_speedup
+        );
+    } else if optimized_speedup > 1.2 {
         println!("   ✅ Use --optimize flag for better performance");
     }
     if streaming_speedup > 1.1 {
         println!("   ✅ Use --streaming flag for large codebases");
     }
-    if optimized_metrics.cache_hits > 0 {
-        println!("   ✅ Caching is effective for repeated scans");
+    if perf_metrics.cache_hits > 0 {
+        println!(
+            "   ✅ Caching is highly effective ({}% hit rate)",
+            perf_metrics.cache_hits * 100 / (perf_metrics.cache_hits + perf_metrics.cache_misses)
+        );
+    }
+    if perf_metrics.simd_matches > 0 {
+        println!(
+            "   ⚡ SIMD optimization found {} patterns ultra-fast",
+            perf_metrics.simd_matches
+        );
     }
 
     println!();

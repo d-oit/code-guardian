@@ -3,6 +3,9 @@ name = "code_guardian_cli"
 version = "0.1.9"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/d-oit/code-guardian"
+keywords = ["security", "scanning", "cli"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
 clap = { workspace = true, features = ["derive"] }

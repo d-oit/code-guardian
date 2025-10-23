@@ -11,11 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### ⚙️ Miscellaneous Tasks
 
-- Update release-please manifest to v0.1.9
-
-### 📚 Documentation
-
-- Update CHANGELOG.md to remove v0.2.0 entry and correct v0.1.9 summary
+• 82947f0 chore(release): prepare for v0.1.8
+• f537214 fix: resolve TruffleHog BASE/HEAD same commit issue (#24)
+• 2b92f55 Update Perplexity Agents (#22)
+• 95f65c3 fix: add gitleaks configuration to handle test data (#21)
+• 974c83d fix: final security workflow syntax and artifact issues
+• fd1ad5a fix: final security workflow fixes
+• 739d606 fix: resolve security workflow issues
+• 3335bae fix: resolve GitHub Actions failures
 
 ### 🚀 Features
 

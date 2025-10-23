@@ -1,26 +1,31 @@
 {
-    "timestamp": ""2025-10-20T10:57:36Z"",
+    "timestamp": ""2025-10-23T08:03:43Z"",
     "build_times": {
-        "full_build": [0;32m[2025-10-20 10:56:45] [INFO][0m 🔄 Running: Full Build
-[0;32m[2025-10-20 10:56:45] [INFO][0m Executing: Full Build
-[0;31m[2025-10-20 10:57:34] [ERROR][0m Failed to execute: Full Build
-[0;31m[2025-10-20 10:57:34] [ERROR][0m ❌ Full Build failed after s,
-        "test_compilation": [0;32m[2025-10-20 10:57:34] [INFO][0m 🔄 Running: Test Compilation
-[0;32m[2025-10-20 10:57:34] [INFO][0m Executing: Test Compilation
-[0;31m[2025-10-20 10:57:34] [ERROR][0m Failed to execute: Test Compilation
-[0;31m[2025-10-20 10:57:34] [ERROR][0m ❌ Test Compilation failed after s,
-        "clippy_analysis": [0;32m[2025-10-20 10:57:34] [INFO][0m 🔄 Running: Clippy Analysis
-[0;32m[2025-10-20 10:57:35] [INFO][0m Executing: Clippy Analysis
-[0;31m[2025-10-20 10:57:35] [ERROR][0m Failed to execute: Clippy Analysis
-[0;31m[2025-10-20 10:57:35] [ERROR][0m ❌ Clippy Analysis failed after s,
-        "check": [0;32m[2025-10-20 10:57:35] [INFO][0m 🔄 Running: Check
-[0;32m[2025-10-20 10:57:35] [INFO][0m Executing: Check
-[0;31m[2025-10-20 10:57:36] [ERROR][0m Failed to execute: Check
-[0;31m[2025-10-20 10:57:36] [ERROR][0m ❌ Check failed after s,
-        "incremental_build": [0;32m[2025-10-20 10:57:36] [INFO][0m 🔄 Running: Incremental Build
-[0;32m[2025-10-20 10:57:36] [INFO][0m Executing: Incremental Build
-[0;31m[2025-10-20 10:57:36] [ERROR][0m Failed to execute: Incremental Build
-[0;31m[2025-10-20 10:57:36] [ERROR][0m ❌ Incremental Build failed after s
+        "full_build": [0;32m[2025-10-23 07:58:11] [INFO][0m 🔄 Running: Full Build
+[0;32m[2025-10-23 07:58:11] [INFO][0m Executing: Full Build
+[0;31m[2025-10-23 08:00:49] [ERROR][0m Failed to execute: Full Build
+[0;31m[2025-10-23 08:00:49] [ERROR][0m ❌ Full Build failed after 158.671424993s
+158.671424993,
+        "test_compilation": [0;32m[2025-10-23 08:00:49] [INFO][0m 🔄 Running: Test Compilation
+[0;32m[2025-10-23 08:00:49] [INFO][0m Executing: Test Compilation
+[0;31m[2025-10-23 08:00:56] [ERROR][0m Failed to execute: Test Compilation
+[0;31m[2025-10-23 08:00:56] [ERROR][0m ❌ Test Compilation failed after 6.685781225s
+6.685781225,
+        "clippy_analysis": [0;32m[2025-10-23 08:00:56] [INFO][0m 🔄 Running: Clippy Analysis
+[0;32m[2025-10-23 08:00:56] [INFO][0m Executing: Clippy Analysis
+[0;32m[2025-10-23 08:02:22] [INFO][0m Successfully executed: Clippy Analysis
+[0;32m[2025-10-23 08:02:23] [INFO][0m ✅ Clippy Analysis completed in 86.357787667s
+86.357787667,
+        "check": [0;32m[2025-10-23 08:02:23] [INFO][0m 🔄 Running: Check
+[0;32m[2025-10-23 08:02:23] [INFO][0m Executing: Check
+[0;31m[2025-10-23 08:03:37] [ERROR][0m Failed to execute: Check
+[0;31m[2025-10-23 08:03:37] [ERROR][0m ❌ Check failed after 74.763932896s
+74.763932896,
+        "incremental_build": [0;32m[2025-10-23 08:03:37] [INFO][0m 🔄 Running: Incremental Build
+[0;32m[2025-10-23 08:03:37] [INFO][0m Executing: Incremental Build
+[0;31m[2025-10-23 08:03:43] [ERROR][0m Failed to execute: Incremental Build
+[0;31m[2025-10-23 08:03:43] [ERROR][0m ❌ Incremental Build failed after 5.544616950s
+5.544616950
     },
     "thresholds": {
         "build": 120,
@@ -28,8 +33,8 @@
         "clippy": 30
     },
     "status": {
-        "build": ,
-        "test": ,
-        "clippy": 
+        "build": \"fail\",
+        "test": \"fail\",
+        "clippy": \"fail\"
     }
 }

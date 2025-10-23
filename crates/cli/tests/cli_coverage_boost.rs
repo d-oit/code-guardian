@@ -63,25 +63,23 @@ mod cli_coverage_boost {
 
         let temp_dir = TempDir::new().unwrap();
 
-        // Test staged files action
+        // Test staged files action - should return error for non-git directory
         let result = command_handlers::handle_git(GitAction::Staged {
             path: temp_dir.path().to_path_buf(),
         });
-        // Should handle non-git directory gracefully
-        assert!(result.is_ok() || result.is_err());
+        assert!(result.is_err());
 
-        // Test install hook action
+        // Test install hook action - should return error for non-git directory
         let result = command_handlers::handle_git(GitAction::InstallHook {
             path: temp_dir.path().to_path_buf(),
         });
-        // Should exit with error for non-git directory, but we catch it
-        println!("Install hook result: {:?}", result);
+        assert!(result.is_err());
 
-        // Test uninstall hook action
+        // Test uninstall hook action - should return error for non-git directory
         let result = command_handlers::handle_git(GitAction::UninstallHook {
             path: temp_dir.path().to_path_buf(),
         });
-        println!("Uninstall hook result: {:?}", result);
+        assert!(result.is_err());
     }
 
     // Test report_handlers module
