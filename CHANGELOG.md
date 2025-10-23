@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.10] - 2025-10-23
 
+### 🚀 Features
+
+- Add real-world performance verification results
+- Add comprehensive performance documentation
+
+### ⚙️ Miscellaneous Tasks
+
+- 3c2281e Bump version to 0.2.1
+- 07d10a3 Update .gitignore to ignore generated documentation, coverage reports, performance logs, and macOS files
+- a179d66 Merge pull request #32 from d-oit/update-release-workflow
+- a232064 Update release workflow to extract only current version's changelog section and add commit summary
+- b4aebcd Merge pull request #31 from d-oit/fix-release-notes
+- 885158c Ensure release notes include only current version's changes
+- 012bf2d Merge pull request #30 from d-oit/changelog-update
+- 0fa52a1 docs: update CHANGELOG.md to remove v0.2.0 entry and correct v0.1.9 summary
+- 990fe5c chore(release): prepare for v0.2.0
+- e95ac9a chore: update release-please manifest to v0.1.9
+- 5671f96 feat: complete v0.1.10 release preparation with version updates and changelog
+
 ## [0.1.9] - 2025-10-21
 
 ### ⚙️ Miscellaneous Tasks
