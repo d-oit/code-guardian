@@ -1,8 +1,8 @@
 use code_guardian_core::{
     optimized_scanner::OptimizedScanner,
-    performance_optimized_scanner::PerformanceOptimizedScanner, DetectorFactory, DetectorProfile,
-    Scanner, PatternDetector, TodoDetector, FixmeDetector, HackDetector, 
-    ConsoleLogDetector, DebuggerDetector,
+    performance_optimized_scanner::PerformanceOptimizedScanner, ConsoleLogDetector,
+    DebuggerDetector, DetectorFactory, DetectorProfile, FixmeDetector, HackDetector,
+    PatternDetector, Scanner, TodoDetector,
 };
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::fs;
@@ -56,7 +56,7 @@ fn bench_small_codebase(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
     create_test_files(&temp_dir, 10, 100);
 
-    let detectors = DetectorProfile::Comprehensive.get_detectors();
+    let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("small_codebase");
 
@@ -108,7 +108,7 @@ fn bench_medium_codebase(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
     create_test_files(&temp_dir, 100, 500);
 
-    let detectors = DetectorProfile::Comprehensive.get_detectors();
+    let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("medium_codebase");
     group.sample_size(10); // Fewer samples for larger tests
@@ -160,7 +160,7 @@ fn bench_large_codebase(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
     create_test_files(&temp_dir, 500, 1000);
 
-    let detectors = DetectorProfile::Comprehensive.get_detectors();
+    let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("large_codebase");
     group.sample_size(5); // Even fewer samples for largest tests
@@ -201,7 +201,7 @@ fn bench_cache_performance(c: &mut Criterion) {
     let temp_dir = TempDir::new().unwrap();
     create_test_files(&temp_dir, 50, 200);
 
-    let detectors = DetectorProfile::Comprehensive.get_detectors();
+    let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("cache_performance");
 
