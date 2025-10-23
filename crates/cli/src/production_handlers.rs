@@ -6,7 +6,6 @@ use colored::*;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use std::process;
 
 /// Handle production readiness check command
 pub fn handle_production_check(
@@ -60,19 +59,17 @@ pub fn handle_production_check(
     let high_count = severity_counts.get("High").unwrap_or(&0);
 
     if fail_on_critical && *critical_count > 0 {
-        eprintln!(
+        return Err(anyhow::anyhow!(
             "❌ Production check FAILED: {} critical issues found",
             critical_count
-        );
-        process::exit(1);
+        ));
     }
 
     if fail_on_high && *high_count > 0 {
-        eprintln!(
+        return Err(anyhow::anyhow!(
             "⚠️  Production check FAILED: {} high severity issues found",
             high_count
-        );
-        process::exit(1);
+        ));
     }
 
     if *critical_count > 0 || *high_count > 0 {
@@ -161,7 +158,10 @@ pub fn handle_pre_commit(path: PathBuf, staged_only: bool, fast: bool) -> Result
         for m in matches.iter().filter(|m| is_critical_severity(&m.pattern)) {
             eprintln!("  {} [{}] {}", m.file_path, m.pattern.red(), m.message);
         }
-        process::exit(1);
+        return Err(anyhow::anyhow!(
+            "Pre-commit check failed: {} critical issues found",
+            critical_count
+        ));
     }
 
     if *high_count > 0 {
@@ -231,19 +231,19 @@ pub fn handle_ci_gate(
     println!("  High: {}/{}", high_count, max_high);
 
     if critical_count > max_critical {
-        eprintln!(
+        return Err(anyhow::anyhow!(
             "❌ CI Gate FAILED: Too many critical issues ({} > {})",
-            critical_count, max_critical
-        );
-        process::exit(1);
+            critical_count,
+            max_critical
+        ));
     }
 
     if high_count > max_high {
-        eprintln!(
+        return Err(anyhow::anyhow!(
             "❌ CI Gate FAILED: Too many high severity issues ({} > {})",
-            high_count, max_high
-        );
-        process::exit(1);
+            high_count,
+            max_high
+        ));
     }
 
     println!("✅ CI Gate PASSED");
