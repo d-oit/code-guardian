@@ -66,18 +66,33 @@ jobs:
     - name: Install git-cliff
       run: cargo install git-cliff
 
-    - name: Generate release notes
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
         
-        # Generate base changelog
-        git cliff --tag "$TAG" --strip header > base_notes.md
+        # Generate changelog for current tag and extract only current version section
+        TAG_NO_V=$(echo $TAG | sed 's/^v//')
+        git cliff --tag $TAG | awk "/^## \\[$TAG_NO_V\\]/ { found=1; print; next } /^##/ && found { exit } found { print }" > base_notes.md
+        
+        
+        # Remove the version header line to match original format
+        sed -i '1d' base_notes.md
+        # Get previous tag and commit summary
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        if [ -n "$PREV_TAG" ]; then
+          COMMIT_SUMMARY=$(git log --oneline $PREV_TAG..$TAG)
+        else
+          COMMIT_SUMMARY="Initial release - no previous commits to summarize."
+        fi
         
         # Create enhanced release notes
         cat > enhanced_notes.md << EOF
         ## Code Guardian $TAG 🛡️
         
         $(cat base_notes.md)
+        
+        ### 📝 Commit Summary
+        
+        $COMMIT_SUMMARY
         
         ### 📦 Installation
         

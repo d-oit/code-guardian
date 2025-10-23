@@ -24,12 +24,13 @@ pub fn handle_history(db: Option<PathBuf>) -> Result<()> {
 
     println!("Scan History:");
     for scan in scans {
+        let id = scan.id.ok_or_else(|| anyhow::anyhow!("Scan missing ID"))?;
+        let timestamp = chrono::DateTime::from_timestamp(scan.timestamp, 0)
+            .ok_or_else(|| anyhow::anyhow!("Invalid timestamp: {}", scan.timestamp))?;
         println!(
             "ID: {}, Timestamp: {}, Path: {}",
-            scan.id.unwrap(),
-            chrono::DateTime::from_timestamp(scan.timestamp, 0)
-                .unwrap()
-                .format("%Y-%m-%d %H:%M:%S"),
+            id,
+            timestamp.format("%Y-%m-%d %H:%M:%S"),
             scan.root_path
         );
     }
@@ -46,7 +47,19 @@ pub fn handle_completion(shell: Shell) -> Result<()> {
 
 /// Handle benchmark command
 pub fn handle_benchmark(path: Option<PathBuf>, quick: bool) -> Result<()> {
-    let benchmark_path = path.unwrap_or_else(|| std::env::current_dir().unwrap());
+    let benchmark_path = match path {
+        Some(p) => p,
+        None => std::env::current_dir()
+            .map_err(|e| anyhow::anyhow!("Failed to get current directory: {}", e))?,
+    };
+
+    // Validate that the path exists
+    if !benchmark_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Path does not exist: {}",
+            benchmark_path.display()
+        ));
+    }
 
     if quick {
         benchmark::quick_performance_test(&benchmark_path)
@@ -67,8 +80,10 @@ pub fn handle_git(action: GitAction) -> Result<()> {
             println!("🔧 Installing Code-Guardian pre-commit hook...");
 
             if !GitIntegration::is_git_repo(&path) {
-                eprintln!("❌ Error: {} is not a git repository", path.display());
-                std::process::exit(1);
+                return Err(anyhow::anyhow!(
+                    "❌ Error: {} is not a git repository",
+                    path.display()
+                ));
             }
 
             let repo_root = GitIntegration::get_repo_root(&path)?;
@@ -82,8 +97,10 @@ pub fn handle_git(action: GitAction) -> Result<()> {
             println!("🗑️  Uninstalling Code-Guardian pre-commit hook...");
 
             if !GitIntegration::is_git_repo(&path) {
-                eprintln!("❌ Error: {} is not a git repository", path.display());
-                std::process::exit(1);
+                return Err(anyhow::anyhow!(
+                    "❌ Error: {} is not a git repository",
+                    path.display()
+                ));
             }
 
             let repo_root = GitIntegration::get_repo_root(&path)?;
@@ -94,8 +111,10 @@ pub fn handle_git(action: GitAction) -> Result<()> {
             println!("📋 Listing staged files...");
 
             if !GitIntegration::is_git_repo(&path) {
-                eprintln!("❌ Error: {} is not a git repository", path.display());
-                std::process::exit(1);
+                return Err(anyhow::anyhow!(
+                    "❌ Error: {} is not a git repository",
+                    path.display()
+                ));
             }
 
             let repo_root = GitIntegration::get_repo_root(&path)?;

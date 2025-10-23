@@ -46,7 +46,7 @@ jobs:
           sleep 10
           
           # Trigger the enhanced release workflow
-          gh workflow run enhanced-release.yml -f tag="${{ needs.release-please.outputs.tag_name }}"
+          gh workflow run release-consolidated.yml -f tag="${{ needs.release-please.outputs.tag_name }}"
           
           echo "✅ Enhanced release workflow triggered for ${{ needs.release-please.outputs.tag_name }}"
         env:

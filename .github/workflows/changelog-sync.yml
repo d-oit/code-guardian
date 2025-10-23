@@ -86,7 +86,7 @@ jobs:
             # Map sections to changelog format
             section_mapping = {
                 'Added': 'Added',
-                'Fixed': 'Fixed', 
+                'Fixed': 'Fixed',
                 'Changed': 'Changed',
                 'Performance': 'Performance',
                 'Documentation': 'Documentation',
@@ -103,6 +103,22 @@ jobs:
                     for item in sections[section_name]:
                         changelog_entry += f"{item}\n"
                     changelog_entry += "\n"
+
+            # Extract '### 📝 Commit Summary' section content and append as '### Commits'
+            commit_summary_content = []
+            in_commit_summary = False
+            for line in lines:
+                stripped = line.strip()
+                if stripped.startswith('### ') and 'Commit Summary' in stripped:
+                    in_commit_summary = True
+                    continue
+                elif stripped.startswith('### ') and in_commit_summary:
+                    break
+                elif in_commit_summary and stripped:
+                    commit_summary_content.append(line)
+            if commit_summary_content:
+                changelog_entry += "### Commits\n"
+                changelog_entry += "\n".join(commit_summary_content) + "\n\n"
 
             # Find and replace the existing entry or add new one
             version_pattern = rf"## \[{re.escape(version)}\]..*?(?=## \[|\Z)"

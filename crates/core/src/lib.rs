@@ -23,6 +23,7 @@ pub mod monitoring;
 pub mod observability;
 pub mod optimized_scanner;
 pub mod performance;
+pub mod performance_optimized_scanner;
 
 /// Represents a detected pattern match in a file.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]

@@ -1,6 +1,6 @@
 # Code-Guardian
 
-[![CI](https://github.com/d-oit/code-guardian/actions/workflows/ci.yml/badge.svg)](https://github.com/d-oit/code-guardian/actions/workflows/ci.yml)
+[![CI](https://github.com/d-oit/code-guardian/actions/workflows/enhanced-ci.yml/badge.svg)](https://github.com/d-oit/code-guardian/actions/workflows/enhanced-ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/code-guardian-cli.svg)](https://crates.io/crates/code-guardian-cli)
 [![License](https://img.shields.io/crates/l/code-guardian-cli.svg)](https://github.com/d-oit/code-guardian/blob/main/LICENSE)
 
@@ -174,7 +174,7 @@ code-guardian compare "$PREVIOUS_ID" "$LATEST_ID" --format markdown
 
 The project includes an enhanced CI/CD pipeline that combines the best features from multiple workflows:
 
-- **Enhanced CI/CD Workflow** (`enhanced-ci.yml`): Combines features from `ci.yml`, `optimized-ci.yml`, `security.yml`, `performance.yml`, and `auto-fix.yml`
+- **Enhanced CI/CD Workflow** (`enhanced-ci.yml`): Combines features from `optimized-ci.yml`, `security.yml`, `performance.yml`, and `auto-fix.yml`
 - **Concurrency Controls**: Prevents overlapping runs
 - **Least Privilege Permissions**: Enhanced security
 - **Auto-fix Capabilities**: Automatically fixes formatting and clippy issues
