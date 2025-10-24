@@ -3,6 +3,9 @@ name = "code-guardian-output"
 version = "0.2.1"
 edition = "2021"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/d-oit/code-guardian"
+keywords = ["security", "scanning", "output"]
+categories = ["development-tools"]
 
 [dependencies]
 code-guardian-core = { path = "../core" }

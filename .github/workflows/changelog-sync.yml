@@ -133,15 +133,15 @@ jobs:
                 else:
                     # Insert after the header
                     header_end = content.find('\n## ')
-        if header_end != -1:
-            content = content[:header_end] + "\n\n" + changelog_entry + content[header_end:]
+                    if header_end != -1:
+                        content = content[:header_end] + "\n\n" + changelog_entry + content[header_end:]
 
-            # Write updated changelog
-            with open('CHANGELOG.md', 'w') as f:
-                f.write(content)
+                # Write updated changelog
+                with open('CHANGELOG.md', 'w') as f:
+                    f.write(content)
 
-            print(f"Updated changelog for version {version}")
-            EOF
+                print(f"Updated changelog for version {version}")
+                EOF
         else
           echo "Adding new version $VERSION to changelog..."
           
