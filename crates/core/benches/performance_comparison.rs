@@ -59,6 +59,8 @@ fn bench_small_codebase(c: &mut Criterion) {
     let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("small_codebase");
+    group.sample_size(20); // Good sample size for fast tests
+    group.measurement_time(std::time::Duration::from_secs(5)); // Quick measurement for small tests
 
     // Standard scanner
     group.bench_with_input(
@@ -111,7 +113,8 @@ fn bench_medium_codebase(c: &mut Criterion) {
     let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("medium_codebase");
-    group.sample_size(10); // Fewer samples for larger tests
+    group.sample_size(15); // Adequate samples for statistical analysis
+    group.measurement_time(std::time::Duration::from_secs(8)); // Reasonable measurement time
 
     // Standard scanner
     group.bench_with_input(
@@ -163,7 +166,8 @@ fn bench_large_codebase(c: &mut Criterion) {
     let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("large_codebase");
-    group.sample_size(5); // Even fewer samples for largest tests
+    group.sample_size(10); // Minimum required samples for statistical analysis
+    group.measurement_time(std::time::Duration::from_secs(15)); // Longer measurement time for stability
 
     // Skip standard scanner for large tests (too slow)
 
@@ -204,6 +208,8 @@ fn bench_cache_performance(c: &mut Criterion) {
     let _detectors = DetectorProfile::Comprehensive.get_detectors();
 
     let mut group = c.benchmark_group("cache_performance");
+    group.sample_size(15); // Good sample size for cache performance testing
+    group.measurement_time(std::time::Duration::from_secs(6)); // Reasonable time for cache tests
 
     // Optimized scanner with cache
     group.bench_with_input(
@@ -248,6 +254,8 @@ fn bench_pattern_detection_methods(c: &mut Criterion) {
         + &"regular code line\n".repeat(2000);
 
     let mut group = c.benchmark_group("pattern_detection_methods");
+    group.sample_size(25); // Higher sample size for micro-benchmarks
+    group.measurement_time(std::time::Duration::from_secs(4)); // Fast measurement for pattern detection
 
     // Pure regex approach
     group.bench_function("regex_only", |b| {

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-10-24
+
+### Fixed
+- Fixed YAML syntax error in enhanced-ci workflow preflight job
+- Resolved merge conflicts in Cargo files during release process
+- Fixed Criterion.rs benchmark sample size assertion failures in performance tests
+
+### Performance
+- Optimized Enhanced CI workflow with improved caching (84% complexity reduction)
+- Enabled sccache with RUSTC_WRAPPER for faster compilation
+- Consolidated 15+ duplicate cache configurations into 4 optimized strategies
+- Added hierarchical cache restore keys for better hit rates
+
+### Changed
+- Updated all crate versions from 0.2.0 to 0.2.1
+- Updated to latest GitHub Actions (actions/cache@v4, checkout@v4)
+- Improved benchmark configurations with proper sample sizes and measurement times
+
+### Commits
+- chore: bump version to 0.2.1
+- fix: correct indentation in changelog-sync workflow Python script
+- fix: resolve merge conflicts in Cargo files and fix changelog-sync workflow  
+- perf: optimize enhanced-ci workflow with improved caching and reduced duplication
+- fix: resolve Criterion.rs benchmark sample size assertion failures
+
 ## [0.1.10] - 2025-10-23
 
 ### 🚀 Features
