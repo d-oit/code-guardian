@@ -202,18 +202,18 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.cli == 'true' || needs.preflight.outputs.ci == 'true'
     steps:
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+        with:
+          tool: cargo-nextest
 
      - name: Cache target
        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830

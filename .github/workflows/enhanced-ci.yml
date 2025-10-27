@@ -129,7 +129,6 @@ jobs:
           if ! cargo fmt --all -- --check; then
             echo "Formatting issues found, applying fixes..."
             cargo fmt --all
-          fi
             echo "format_fixed=true" >> $GITHUB_OUTPUT
           else
             echo "✅ Formatting is correct"
@@ -143,7 +142,6 @@ jobs:
           if ! cargo clippy --all-targets --all-features -- -D warnings; then
             echo "Clippy issues found, attempting fixes..."
             cargo clippy --all-targets --all-features --fix --allow-dirty
-          fi
             echo "clippy_fixed=true" >> $GITHUB_OUTPUT
           else
             echo "✅ Clippy checks passed"
@@ -209,7 +207,7 @@ jobs:
 
       - name: Secrets detection
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
-          env:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload security reports
@@ -236,11 +234,11 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
-        ~/.cargo/registry
-        ~/.cargo/git
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-        ${{ runner.os }}-cargo-registry-
+            ${{ runner.os }}-cargo-registry-
 
       - name: Cache target
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
