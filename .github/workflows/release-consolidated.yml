@@ -46,7 +46,7 @@ jobs:
       id: tag
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
         else
           echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
         fi
@@ -55,7 +55,7 @@ jobs:
       id: release-type
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
-        if [[ "$TAG" == *"-"* ]] || [[ "${{ inputs.prerelease }}" == "true" ]]; then
+        if [[ "$TAG" == *"-"* ]] || [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
           echo "prerelease=true" >> $GITHUB_OUTPUT
           echo "🚧 Prerelease detected"
         else
@@ -66,6 +66,7 @@ jobs:
     - name: Install git-cliff
       run: cargo install git-cliff
 
+    - name: Generate release notes
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
         
@@ -154,18 +155,18 @@ jobs:
         # Check if release exists
         if gh release view "$TAG" >/dev/null 2>&1; then
           echo "📝 Release $TAG already exists, updating..."
-          gh release edit "$TAG" --notes "$RELEASE_NOTES"
+           gh release edit "$TAG" --title "$TAG" --notes "$RELEASE_NOTES"
         else
           echo "🎉 Creating new release $TAG..."
           if [[ "$PRERELEASE" == "true" ]]; then
-            gh release create "$TAG" \
-              --title "Code Guardian $TAG" \
-              --notes "$RELEASE_NOTES" \
-              --prerelease
+             gh release create "$TAG" \
+               --title "$TAG" \
+               --notes "$RELEASE_NOTES" \
+               --prerelease
           else
-            gh release create "$TAG" \
-              --title "Code Guardian $TAG" \
-              --notes "$RELEASE_NOTES"
+             gh release create "$TAG" \
+               --title "$TAG" \
+               --notes "$RELEASE_NOTES"
           fi
         fi
       env:
