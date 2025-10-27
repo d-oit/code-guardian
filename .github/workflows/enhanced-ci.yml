@@ -127,12 +127,13 @@ jobs:
         run: |
           echo "🔧 Checking formatting..."
           if ! cargo fmt --all -- --check; then
-        echo "Formatting issues found, applying fixes..."
-        cargo fmt --all
-        echo "format_fixed=true" >> $GITHUB_OUTPUT
+            echo "Formatting issues found, applying fixes..."
+            cargo fmt --all
+          fi
+            echo "format_fixed=true" >> $GITHUB_OUTPUT
           else
-        echo "✅ Formatting is correct"
-        echo "format_fixed=false" >> $GITHUB_OUTPUT
+            echo "✅ Formatting is correct"
+            echo "format_fixed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check and auto-fix clippy issues
