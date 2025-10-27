@@ -180,23 +180,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
-            binary: code_guardian_cli
-            archive: tar.gz
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            binary: code_guardian_cli.exe
-            archive: zip
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            binary: code_guardian_cli
-            archive: tar.gz
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            binary: code_guardian_cli
-            archive: tar.gz
+         include:
+           - os: ubuntu-latest
+             target: x86_64-unknown-linux-gnu
+             binary: code_guardian_cli
+             archive: tar.gz
+           - os: windows-latest
+             target: x86_64-pc-windows-msvc
+             binary: code_guardian_cli.exe
+             archive: zip
+           - os: macos-13
+             target: x86_64-apple-darwin
+             binary: code_guardian_cli
+             archive: tar.gz
+           - os: macos-latest
+             target: aarch64-apple-darwin
+             binary: code_guardian_cli
+             archive: tar.gz
 
     steps:
     - name: Checkout
@@ -219,7 +219,7 @@ jobs:
         echo "✅ Built binary for ${{ matrix.target }}"
 
     - name: Run tests (native targets only)
-      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-pc-windows-msvc' || (matrix.target == 'x86_64-apple-darwin' && runner.arch == 'X64')
+      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'
       run: cargo test --release --target ${{ matrix.target }}
 
     - name: Create release archive
@@ -329,7 +329,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Tag:** $TAG" >> $GITHUB_STEP_SUMMARY
         echo "**Type:** $([ "$PRERELEASE" = "true" ] && echo "Prerelease" || echo "Stable Release")" >> $GITHUB_STEP_SUMMARY
-        echo "**Builds:** ${{ strategy.job-total }} platforms" >> $GITHUB_STEP_SUMMARY
+        echo "**Builds:** 4 platforms" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Assets Built" >> $GITHUB_STEP_SUMMARY
         echo "- Linux (x86_64)" >> $GITHUB_STEP_SUMMARY

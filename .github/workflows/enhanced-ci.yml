@@ -10,10 +10,8 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    # Weekly on Sunday at 2 AM UTC for security scans
-      - cron: '0 2 * * 0'
-    # Weekly on Monday at 2 AM UTC for performance benchmarks
-      - cron: '0 2 * * 1'
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC for security scans
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC for performance benchmarks
   workflow_dispatch:
 
 # Concurrency controls to prevent overlapping runs
@@ -556,8 +554,8 @@ jobs:
       - name: Check documentation
         run: |
           if [ ! -d "target/doc" ]; then
-        echo "❌ Documentation build failed"
-        exit 1
+            echo "❌ Documentation build failed"
+            exit 1
           fi
           echo "✅ Documentation built successfully"
 
@@ -588,16 +586,16 @@ jobs:
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
-        github.rest.issues.createComment({
-          issue_number: context.issue.number,
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          body: '🚨 **Code Review Issues Detected**\n\n' +
-            'Clippy found warnings or errors that need to be addressed:\n\n' +
-            '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
-            'Please fix these issues before merging. You can run:\n' +
-            '```bash\ncargo clippy --fix --allow-dirty\n```'
-        })
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **Code Review Issues Detected**\n\n' +
+                'Clippy found warnings or errors that need to be addressed:\n\n' +
+                '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
+                'Please fix these issues before merging. You can run:\n' +
+                '```bash\ncargo clippy --fix --allow-dirty\n```'
+            })
 
   # Final CI status aggregation
   ci-complete:
