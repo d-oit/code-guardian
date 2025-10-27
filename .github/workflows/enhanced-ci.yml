@@ -246,7 +246,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-        ${{ runner.os }}-target-
+            ${{ runner.os }}-target-
 
       - name: Build workspace
         run: cargo build --workspace --all-targets --all-features
@@ -269,14 +269,13 @@ jobs:
           rust: beta
 
     steps:
-      -
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
       - name: Install Rust
-          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-          with:
-           toolchain: ${{ matrix.rust }}
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+        with:
+          toolchain: ${{ matrix.rust }}
 
       - name: Install cargo-nextest
           uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07

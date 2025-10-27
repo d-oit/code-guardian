@@ -221,8 +221,8 @@ jobs:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Test CLI crate
-      run: cargo nextest run -p code_guardian_cli --all-features --verbose
+      - name: Test CLI crate
+        run: cargo nextest run -p code_guardian_cli --all-features --verbose
 
   test-core:
     name: Test Core Crate
