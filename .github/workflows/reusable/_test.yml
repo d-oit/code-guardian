@@ -15,10 +15,7 @@ on:
         description: 'Rust version matrix'
         type: string
         default: '["stable"]'
-      include-beta:
-        description: 'Include beta Rust version'
-        type: boolean
-        default: true
+
       nextest:
         description: 'Use cargo-nextest'
         type: boolean
@@ -36,6 +33,9 @@ jobs:
   test:
     name: Test (${{ matrix.os }}, ${{ matrix.rust }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+      actions: write
     strategy:
       matrix:
         os: ${{ fromJSON(inputs.os) }}
@@ -44,7 +44,7 @@ jobs:
           - os: ubuntu-latest
             rust: beta
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493
 
       - uses: ./.github/actions/setup-rust
         with:
@@ -65,15 +65,15 @@ jobs:
       - name: Run doc tests
         run: cargo test --doc --workspace
 
-      - uses: ./.github/actions/generate-coverage
-        if: inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
-        with:
-          threshold: ${{ inputs.coverage-threshold }}
-          install-llvm-cov: true
+       - uses: ./.github/actions/generate-coverage
+         if: ${{ inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable' }}
+         with:
+           threshold: ${{ inputs.coverage-threshold }}
+           install-llvm-cov: true
 
-      - name: Upload coverage reports
-        if: inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+       - name: Upload coverage reports
+         if: ${{ inputs.coverage && matrix.os == 'ubuntu-latest' && matrix.rust == 'stable' }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: coverage-reports
           path: |

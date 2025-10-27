@@ -3,7 +3,6 @@ name: Auto-fix Code Quality Issues
 # Least privilege permissions for auto-fix
 permissions:
   contents: write
-  pull-requests: write
 
 on:
   push:
@@ -19,6 +18,7 @@ jobs:
   auto-fix:
     name: Auto-fix Formatting and Clippy Issues
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: ${{ !contains(github.event.head_commit.message, '[skip auto-fix]') }}
     
     steps:
@@ -28,7 +28,7 @@ jobs:
         fetch-depth: 0
     
     - name: Install Rust
-      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+      uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
       with:
         components: rustfmt, clippy
     
@@ -87,15 +87,13 @@ jobs:
           git add .
 
           # Create detailed commit message
-          FORMAT_NEEDED="${FORMAT_NEEDED_VAR}"
-          CLIPPY_NEEDED="${CLIPPY_NEEDED_VAR}"
           COMMIT_MSG="auto-fix: apply code quality fixes [skip auto-fix]"
-          if [ "$FORMAT_NEEDED" = "true" ]; then
+          if [ "$FORMAT_NEEDED_VAR" = "true" ]; then
             COMMIT_MSG="$COMMIT_MSG
 
         - Apply cargo fmt formatting"
           fi
-          if [ "$CLIPPY_NEEDED" = "true" ]; then
+          if [ "$CLIPPY_NEEDED_VAR" = "true" ]; then
             COMMIT_MSG="$COMMIT_MSG
 
         - Apply clippy suggestions"

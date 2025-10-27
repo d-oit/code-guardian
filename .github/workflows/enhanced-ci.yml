@@ -10,10 +10,8 @@ on:
   pull_request:
     branches: [main, develop]
   schedule:
-    # Weekly on Sunday at 2 AM UTC for security scans
-      - cron: '0 2 * * 0'
-    # Weekly on Monday at 2 AM UTC for performance benchmarks
-      - cron: '0 2 * * 1'
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC for security scans
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC for performance benchmarks
   workflow_dispatch:
 
 # Concurrency controls to prevent overlapping runs
@@ -127,12 +125,12 @@ jobs:
         run: |
           echo "🔧 Checking formatting..."
           if ! cargo fmt --all -- --check; then
-        echo "Formatting issues found, applying fixes..."
-        cargo fmt --all
-        echo "format_fixed=true" >> $GITHUB_OUTPUT
+            echo "Formatting issues found, applying fixes..."
+            cargo fmt --all
+            echo "format_fixed=true" >> $GITHUB_OUTPUT
           else
-        echo "✅ Formatting is correct"
-        echo "format_fixed=false" >> $GITHUB_OUTPUT
+            echo "✅ Formatting is correct"
+            echo "format_fixed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check and auto-fix clippy issues
@@ -140,40 +138,27 @@ jobs:
         run: |
           echo "🔧 Running clippy..."
           if ! cargo clippy --all-targets --all-features -- -D warnings; then
-        echo "Clippy issues found, attempting fixes..."
-        cargo clippy --all-targets --all-features --fix --allow-dirty
-        echo "clippy_fixed=true" >> $GITHUB_OUTPUT
+            echo "Clippy issues found, attempting fixes..."
+            cargo clippy --all-targets --all-features --fix --allow-dirty
+            echo "clippy_fixed=true" >> $GITHUB_OUTPUT
           else
-        echo "✅ Clippy checks passed"
-        echo "clippy_fixed=false" >> $GITHUB_OUTPUT
+            echo "✅ Clippy checks passed"
+            echo "clippy_fixed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check workspace integrity
         run: cargo check --workspace --all-targets
 
       - name: Commit fixes if applied
-          if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
+        if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-
-           if ! git diff --quiet; then
-         git add .
-
-          COMMIT_MSG="auto-fix: apply code quality fixes"
-         if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
-             COMMIT_MSG="$COMMIT_MSG
-            - Apply cargo fmt formatting"
-         fi
-         if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
-             COMMIT_MSG="$COMMIT_MSG
-            - Apply clippy suggestions"
-         fi
-
-         git commit -m "$COMMIT_MSG"
-         git push
-         echo "✅ Code quality fixes applied and pushed!"
-           fi
+          if [[ $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "chore: auto-fix formatting and clippy issues"
+            git push
+          fi
 
   # Security scanning (comprehensive)
   security-scan:
@@ -220,7 +205,7 @@ jobs:
 
       - name: Secrets detection
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
-          env:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload security reports
@@ -247,11 +232,11 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
-        ~/.cargo/registry
-        ~/.cargo/git
+            ~/.cargo/registry
+            ~/.cargo/git
           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-        ${{ runner.os }}-cargo-registry-
+            ${{ runner.os }}-cargo-registry-
 
       - name: Cache target
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
@@ -259,7 +244,7 @@ jobs:
           path: target
           key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
-        ${{ runner.os }}-target-
+            ${{ runner.os }}-target-
 
       - name: Build workspace
         run: cargo build --workspace --all-targets --all-features
@@ -282,14 +267,13 @@ jobs:
           rust: beta
 
     steps:
-      -
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
         with:
           fetch-depth: 0
       - name: Install Rust
-          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-          with:
-           toolchain: ${{ matrix.rust }}
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+        with:
+          toolchain: ${{ matrix.rust }}
 
       - name: Install cargo-nextest
           uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
@@ -570,8 +554,8 @@ jobs:
       - name: Check documentation
         run: |
           if [ ! -d "target/doc" ]; then
-        echo "❌ Documentation build failed"
-        exit 1
+            echo "❌ Documentation build failed"
+            exit 1
           fi
           echo "✅ Documentation built successfully"
 
@@ -602,16 +586,16 @@ jobs:
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
         with:
           script: |
-        github.rest.issues.createComment({
-          issue_number: context.issue.number,
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          body: '🚨 **Code Review Issues Detected**\n\n' +
-            'Clippy found warnings or errors that need to be addressed:\n\n' +
-            '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
-            'Please fix these issues before merging. You can run:\n' +
-            '```bash\ncargo clippy --fix --allow-dirty\n```'
-        })
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚨 **Code Review Issues Detected**\n\n' +
+                'Clippy found warnings or errors that need to be addressed:\n\n' +
+                '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
+                'Please fix these issues before merging. You can run:\n' +
+                '```bash\ncargo clippy --fix --allow-dirty\n```'
+            })
 
   # Final CI status aggregation
   ci-complete:

@@ -12,17 +12,19 @@ on:
         default: false
 
 concurrency:
-  group: changelog-sync-${{ github.ref || 'workflow-dispatch' }}
+  group: changelog-sync-${{ github.ref_name || github.event.repository.default_branch || 'main' }}
   cancel-in-progress: false
 
 permissions:
   contents: write
   pull-requests: write
+  actions: write
 
 jobs:
   sync-changelog:
     name: Sync Changelog with Releases
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
     - name: Checkout code
       uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
@@ -51,7 +53,7 @@ jobs:
           echo "Version $VERSION already exists in changelog, updating..."
           
             # Extract the current entry and replace it
-            python3 << 'EOF'
+          python3 << EOF
             import re
             import sys
             
@@ -146,7 +148,7 @@ jobs:
           echo "Adding new version $VERSION to changelog..."
           
           # Add new entry after [Unreleased] section
-          python3 << 'EOF'
+                python3 << EOF
           import re
           
           tag_name = "$TAG_NAME"
@@ -199,7 +201,7 @@ jobs:
               echo "Adding $version to changelog..."
               
               # Add basic entry (detailed sync will happen on next release event)
-               python3 << 'EOF'
+            python3 << EOF
                import re
                
                version = "$version"
@@ -267,6 +269,7 @@ jobs:
     name: Update Release Descriptions
     runs-on: ubuntu-latest
     needs: sync-changelog
+    timeout-minutes: 15
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.sync_all == 'true'
     steps:
     - name: Checkout code
