@@ -144,17 +144,17 @@ jobs:
             echo "Clippy issues found, attempting fixes..."
             cargo clippy --all-targets --all-features --fix --allow-dirty
           fi
-          echo "clippy_fixed=true" >> $GITHUB_OUTPUT
-        else
-          echo "✅ Clippy checks passed"
-          echo "clippy_fixed=false" >> $GITHUB_OUTPUT
-        fi
+            echo "clippy_fixed=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Clippy checks passed"
+            echo "clippy_fixed=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Check workspace integrity
         run: cargo check --workspace --all-targets
 
       - name: Commit fixes if applied
-          if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
+        if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"

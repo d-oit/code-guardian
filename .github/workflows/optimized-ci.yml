@@ -184,16 +184,16 @@ jobs:
           tool: cargo-nextest
 
       - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: target
+          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Run partitioned tests
-      run: |
-        cargo nextest run --workspace --all-features \
-          --partition count:${{ matrix.partition }}/4 \
-          --partition index:${{ matrix.partition }}
+      - name: Run partitioned tests
+        run: |
+          cargo nextest run --workspace --all-features \
+            --partition count:${{ matrix.partition }}/4 \
+            --partition index:${{ matrix.partition }}
 
   # Incremental crate testing
   test-cli:
