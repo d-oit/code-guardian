@@ -19,6 +19,7 @@
 - [CLI Commands](api/cli.md)
 - [Configuration Schema](configuration/schema.md)
 - [Detector API](api/detectors.md)
+- [Performance Metrics API](api/performance-metrics.md)
 
 # Architecture
 - [Overview](architecture/overview.md)
@@ -28,8 +29,10 @@
   - [ADR-003: Security Detection Framework](architecture/decisions/ADR-003-security-detection.md)
   - [ADR-004: LLM Integration](architecture/decisions/ADR-004-llm-integration.md)
 - [Performance](performance/overview.md)
-  - [Latest Benchmarks](performance/latest.md)
-  - [Optimization Guide](performance/optimization.md)
+  - [Performance Architecture](performance/architecture.md)
+  - [Optimization Guide](performance/optimization-guide.md)
+  - [Latest Benchmarks](performance/latest-benchmarks.md)
+  - [Performance Dashboard](performance/dashboard.md)
 
 # Integrations
 - [CI/CD Integration](integrations/ci-cd.md)

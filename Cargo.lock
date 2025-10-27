@@ -464,10 +464,6 @@ dependencies = [
 [[package]]
 name = "code-guardian-storage"
 version = "0.2.1"
-dependencies = [
- "anyhow",
- "chrono",
- "code-guardian-core",
  "proptest",
  "refinery",
  "rusqlite",

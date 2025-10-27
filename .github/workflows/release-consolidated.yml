@@ -66,7 +66,6 @@ jobs:
     - name: Install git-cliff
       run: cargo install git-cliff
 
-    - name: Generate release notes
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
         
