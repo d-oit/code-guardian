@@ -158,24 +158,11 @@ jobs:
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-
-           if ! git diff --quiet; then
-         git add .
-
-          COMMIT_MSG="auto-fix: apply code quality fixes"
-         if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
-             COMMIT_MSG="$COMMIT_MSG
-            - Apply cargo fmt formatting"
-         fi
-         if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
-             COMMIT_MSG="$COMMIT_MSG
-            - Apply clippy suggestions"
-         fi
-
-         git commit -m "$COMMIT_MSG"
-         git push
-         echo "✅ Code quality fixes applied and pushed!"
-           fi
+          if [[ $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "chore: auto-fix formatting and clippy issues"
+            git push
+          fi
 
   # Security scanning (comprehensive)
   security-scan:
