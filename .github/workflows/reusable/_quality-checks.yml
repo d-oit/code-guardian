@@ -62,10 +62,10 @@ jobs:
           if ! git diff --quiet; then
             git add .
             cat <<EOF > commit_msg.txt
-auto-fix: apply code quality fixes
+          auto-fix: apply code quality fixes
 
-- Applied cargo fmt formatting
-- Applied clippy suggestions
+          - Applied cargo fmt formatting
+          - Applied clippy suggestions
 EOF
             git commit -F commit_msg.txt
             git push
