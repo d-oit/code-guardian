@@ -61,9 +61,12 @@ jobs:
 
           if ! git diff --quiet; then
             git add .
-            git commit -m "auto-fix: apply code quality fixes
+            cat <<EOF > commit_msg.txt
+auto-fix: apply code quality fixes
 
 - Applied cargo fmt formatting
-- Applied clippy suggestions"
+- Applied clippy suggestions
+EOF
+            git commit -F commit_msg.txt
             git push
           fi
