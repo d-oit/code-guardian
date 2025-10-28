@@ -1,4 +1,5 @@
 # Enhanced CI/CD Pipeline
+# Trigger re-run
 # Combines features from optimized-ci.yml, security.yml, performance.yml, and auto-fix.yml
 # Features: concurrency controls, least privilege, reusable workflows, optimized caching, security scanning, performance benchmarking
 
