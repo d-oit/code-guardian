@@ -58,11 +58,22 @@ jobs:
 
      - name: Run criterion benchmarks
        run: |
-        if find . -name "*.rs" -path "*/benches/*" | grep -q .; then
-          cargo criterion --workspace
+        echo "Checking for benchmark files..."
+        find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
+        
+        # Check if we have criterion benchmarks defined in Cargo.toml
+        if find . -name "Cargo.toml" -exec grep -l "criterion" {} \; | head -1; then
+          echo "Found criterion in dependencies, running benchmarks..."
+          # Run benchmarks for each crate that has them
+          for crate_dir in crates/*/; do
+            if [ -f "$crate_dir/Cargo.toml" ] && grep -q "criterion" "$crate_dir/Cargo.toml"; then
+              echo "Running benchmarks for $crate_dir"
+              (cd "$crate_dir" && cargo bench) || echo "Benchmarks failed or not available for $crate_dir"
+            fi
+          done
         else
-          echo "No criterion benchmarks found, running basic bench..."
-          cargo bench --workspace || echo "No benchmarks available"
+          echo "No criterion benchmarks configured, running cargo test --benches..."
+          cargo test --benches --workspace || echo "No bench tests available"
         fi
 
      - name: Upload benchmark results

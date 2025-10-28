@@ -1,0 +1,334 @@
+name: Automated Version Management
+
+# Comprehensive version synchronization and management workflow
+# Integrates with existing release-please and CI/CD infrastructure
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'crates/*/Cargo.toml'
+      - '.github/.release-please-manifest.json'
+      - 'CHANGELOG.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/*/Cargo.toml'
+      - '.github/.release-please-manifest.json'
+  workflow_dispatch:
+    inputs:
+      target_version:
+        description: 'Target version to sync all crates to (e.g., 0.2.3)'
+        required: false
+        type: string
+      sync_type:
+        description: 'Type of version sync to perform'
+        required: true
+        type: choice
+        options:
+          - 'auto-detect'
+          - 'bump-patch'
+          - 'bump-minor'
+          - 'bump-major'
+          - 'manual'
+        default: 'auto-detect'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: version-sync-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  analyze-versions:
+    name: Analyze Current Version State
+    runs-on: ubuntu-latest
+    outputs:
+      versions_aligned: ${{ steps.check.outputs.versions_aligned }}
+      current_versions: ${{ steps.check.outputs.current_versions }}
+      target_version: ${{ steps.check.outputs.target_version }}
+      needs_sync: ${{ steps.check.outputs.needs_sync }}
+      sync_strategy: ${{ steps.check.outputs.sync_strategy }}
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          fetch-depth: 0
+
+      - name: Analyze version state
+        id: check
+        run: |
+          echo "## 🔍 Version Analysis Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Extract current versions from all crates
+          declare -A versions
+          versions[core]=$(grep '^version = ' crates/core/Cargo.toml | cut -d'"' -f2)
+          versions[cli]=$(grep '^version = ' crates/cli/Cargo.toml | cut -d'"' -f2)
+          versions[output]=$(grep '^version = ' crates/output/Cargo.toml | cut -d'"' -f2)
+          versions[storage]=$(grep '^version = ' crates/storage/Cargo.toml | cut -d'"' -f2)
+
+          # Get release-please manifest version
+          manifest_version=$(jq -r '."."' .github/.release-please-manifest.json)
+
+          # Display current state
+          echo "### Current Version State" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
+          for crate in core cli output storage; do
+            echo "| $crate | ${versions[$crate]} |" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "| release-please | $manifest_version |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check if all versions are aligned
+          unique_versions=($(printf '%s\n' "${versions[@]}" | sort -u))
+          versions_aligned="true"
+          if [ ${#unique_versions[@]} -gt 1 ]; then
+            versions_aligned="false"
+          fi
+
+          # Determine target version based on input or auto-detection
+          target_version="${{ github.event.inputs.target_version }}"
+          sync_type="${{ github.event.inputs.sync_type }}"
+          
+          if [ -z "$target_version" ] || [ "$sync_type" == "auto-detect" ]; then
+            # Auto-detect: use the highest version or manifest version
+            highest_version=$(printf '%s\n' "${versions[@]}" "$manifest_version" | sort -V | tail -1)
+            target_version="$highest_version"
+            
+            if [ "$versions_aligned" == "false" ]; then
+              sync_strategy="align-to-highest"
+            else
+              sync_strategy="no-sync-needed"
+            fi
+          else
+            case "$sync_type" in
+              "bump-patch")
+                # Extract major.minor and increment patch
+                base_version=$(echo "$target_version" | cut -d'.' -f1-2)
+                patch=$(echo "$target_version" | cut -d'.' -f3)
+                target_version="$base_version.$((patch + 1))"
+                sync_strategy="bump-patch"
+                ;;
+              "bump-minor")
+                # Extract major and increment minor, reset patch
+                major=$(echo "$target_version" | cut -d'.' -f1)
+                minor=$(echo "$target_version" | cut -d'.' -f2)
+                target_version="$major.$((minor + 1)).0"
+                sync_strategy="bump-minor"
+                ;;
+              "bump-major")
+                # Increment major, reset minor and patch
+                major=$(echo "$target_version" | cut -d'.' -f1)
+                target_version="$((major + 1)).0.0"
+                sync_strategy="bump-major"
+                ;;
+              "manual")
+                sync_strategy="manual-version"
+                ;;
+            esac
+          fi
+
+          # Determine if sync is needed
+          needs_sync="false"
+          if [ "$versions_aligned" == "false" ] || [ "$target_version" != "${versions[core]}" ]; then
+            needs_sync="true"
+          fi
+
+          # Output results
+          echo "versions_aligned=$versions_aligned" >> $GITHUB_OUTPUT
+          echo "current_versions=$(printf '%s,' "${versions[@]}" | sed 's/,$//')" >> $GITHUB_OUTPUT
+          echo "target_version=$target_version" >> $GITHUB_OUTPUT
+          echo "needs_sync=$needs_sync" >> $GITHUB_OUTPUT
+          echo "sync_strategy=$sync_strategy" >> $GITHUB_OUTPUT
+
+          # Summary
+          echo "### Analysis Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Versions Aligned**: $versions_aligned" >> $GITHUB_STEP_SUMMARY
+          echo "- **Target Version**: $target_version" >> $GITHUB_STEP_SUMMARY
+          echo "- **Needs Sync**: $needs_sync" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sync Strategy**: $sync_strategy" >> $GITHUB_STEP_SUMMARY
+
+  version-sync:
+    name: Synchronize Versions
+    runs-on: ubuntu-latest
+    needs: analyze-versions
+    if: needs.analyze-versions.outputs.needs_sync == 'true'
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-rust
+
+      - name: Apply version synchronization
+        id: sync
+        run: |
+          TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
+          SYNC_STRATEGY="${{ needs.analyze-versions.outputs.sync_strategy }}"
+          
+          echo "## 🔄 Version Synchronization" >> $GITHUB_STEP_SUMMARY
+          echo "Synchronizing all crates to version: **$TARGET_VERSION**" >> $GITHUB_STEP_SUMMARY
+          echo "Strategy: **$SYNC_STRATEGY**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Update all crate versions
+          crates=("core" "cli" "output" "storage")
+          updated_files=()
+
+          for crate in "${crates[@]}"; do
+            current_version=$(grep '^version = ' "crates/$crate/Cargo.toml" | cut -d'"' -f2)
+            if [ "$current_version" != "$TARGET_VERSION" ]; then
+              echo "Updating $crate: $current_version → $TARGET_VERSION"
+              sed -i "s/^version = \".*\"/version = \"$TARGET_VERSION\"/" "crates/$crate/Cargo.toml"
+              updated_files+=("crates/$crate/Cargo.toml")
+              echo "- ✅ **$crate**: $current_version → $TARGET_VERSION" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ⏭️ **$crate**: Already at $TARGET_VERSION" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          # Update release-please manifest
+          current_manifest=$(jq -r '."."' .github/.release-please-manifest.json)
+          if [ "$current_manifest" != "$TARGET_VERSION" ]; then
+            echo "Updating release-please manifest: $current_manifest → $TARGET_VERSION"
+            jq --arg version "$TARGET_VERSION" '."." = $version' .github/.release-please-manifest.json > tmp.json
+            mv tmp.json .github/.release-please-manifest.json
+            updated_files+=(".github/.release-please-manifest.json")
+            echo "- ✅ **release-please manifest**: $current_manifest → $TARGET_VERSION" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ⏭️ **release-please manifest**: Already at $TARGET_VERSION" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Set outputs
+          if [ ${#updated_files[@]} -gt 0 ]; then
+            echo "files_updated=true" >> $GITHUB_OUTPUT
+            echo "updated_files=$(printf '%s,' "${updated_files[@]}" | sed 's/,$//')" >> $GITHUB_OUTPUT
+          else
+            echo "files_updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate workspace after sync
+        if: steps.sync.outputs.files_updated == 'true'
+        run: |
+          echo "## 🧪 Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check workspace builds
+          if cargo check --workspace; then
+            echo "- ✅ Workspace builds successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Workspace build failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          # Verify version consistency
+          echo "### Final Version State" >> $GITHUB_STEP_SUMMARY
+          echo "| Crate | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|---------|" >> $GITHUB_STEP_SUMMARY
+          for crate in core cli output storage; do
+            version=$(grep '^version = ' "crates/$crate/Cargo.toml" | cut -d'"' -f2)
+            echo "| $crate | $version |" >> $GITHUB_STEP_SUMMARY
+          done
+          manifest_version=$(jq -r '."."' .github/.release-please-manifest.json)
+          echo "| release-please | $manifest_version |" >> $GITHUB_STEP_SUMMARY
+
+      - name: Update CHANGELOG with version sync
+        if: steps.sync.outputs.files_updated == 'true'
+        run: |
+          TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
+          
+          # Check if there's already an entry for this version
+          if ! grep -q "## \[$TARGET_VERSION\]" CHANGELOG.md; then
+            # Create new entry at the top
+            temp_file=$(mktemp)
+            
+            # Extract header
+            sed -n '1,/^## \[/p' CHANGELOG.md | head -n -1 > "$temp_file"
+            
+            # Add new version entry
+            echo "" >> "$temp_file"
+            echo "## [$TARGET_VERSION] - $(date +%Y-%m-%d)" >> "$temp_file"
+            echo "" >> "$temp_file"
+            echo "### 🔄 Version Management" >> "$temp_file"
+            echo "" >> "$temp_file"
+            echo "- Synchronized all workspace crates to version $TARGET_VERSION" >> "$temp_file"
+            echo "- Updated release-please manifest configuration" >> "$temp_file"
+            echo "- Applied automated version management workflow" >> "$temp_file"
+            echo "" >> "$temp_file"
+            
+            # Append rest of changelog
+            sed -n '/^## \[/,$p' CHANGELOG.md >> "$temp_file"
+            
+            mv "$temp_file" CHANGELOG.md
+            echo "✅ Added CHANGELOG entry for version $TARGET_VERSION"
+          else
+            echo "ℹ️ CHANGELOG entry for $TARGET_VERSION already exists"
+          fi
+
+      - name: Commit and push changes
+        if: steps.sync.outputs.files_updated == 'true'
+        run: |
+          TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
+          SYNC_STRATEGY="${{ needs.analyze-versions.outputs.sync_strategy }}"
+          
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if ! git diff --quiet; then
+            git add .
+            
+            # Create detailed commit message
+            commit_msg="chore: synchronize workspace versions to v$TARGET_VERSION
+
+Applied $SYNC_STRATEGY strategy and updated all crate versions to $TARGET_VERSION.
+Synchronized release-please manifest and updated CHANGELOG.md with version sync details.
+
+[skip ci] version sync only"
+
+            git commit -m "$commit_msg"
+            git push
+
+            echo "✅ Version synchronization changes pushed successfully!"
+            echo "🏷️ All workspace crates now at version **$TARGET_VERSION**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No changes to commit"
+          fi
+
+  notify-completion:
+    name: Notify Completion
+    runs-on: ubuntu-latest
+    needs: [analyze-versions, version-sync]
+    if: always()
+    steps:
+      - name: Create completion summary
+        run: |
+          echo "## 🎯 Version Management Workflow Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ needs.analyze-versions.outputs.needs_sync }}" == "true" ]]; then
+            if [[ "${{ needs.version-sync.result }}" == "success" ]]; then
+              echo "✅ **Status**: Version synchronization completed successfully" >> $GITHUB_STEP_SUMMARY
+              echo "🏷️ **Target Version**: ${{ needs.analyze-versions.outputs.target_version }}" >> $GITHUB_STEP_SUMMARY
+              echo "📋 **Strategy**: ${{ needs.analyze-versions.outputs.sync_strategy }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Status**: Version synchronization failed" >> $GITHUB_STEP_SUMMARY
+              echo "Please check the logs for errors and resolve manually" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "ℹ️ **Status**: No version synchronization needed" >> $GITHUB_STEP_SUMMARY
+            echo "All crates are already aligned to version ${{ needs.analyze-versions.outputs.target_version }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Version changes will trigger existing CI/CD workflows" >> $GITHUB_STEP_SUMMARY
+          echo "- Release-please will detect changes and prepare next release" >> $GITHUB_STEP_SUMMARY
+          echo "- Auto-fix workflow will apply any necessary code quality improvements" >> $GITHUB_STEP_SUMMARY

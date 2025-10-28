@@ -75,7 +75,7 @@ jobs:
 
     - name: Run cargo deny
       run: |
-        cargo deny check --format json | tee deny-results.json || echo "cargo-deny found issues"
+        cargo deny check | tee deny-results.txt || echo "cargo-deny found issues"
         cargo deny check advisories
         cargo deny check licenses  
         cargo deny check bans
