@@ -46,7 +46,7 @@ jobs:
       id: tag
       run: |
         if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+          echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
         else
           echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
         fi
@@ -55,7 +55,7 @@ jobs:
       id: release-type
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
-        if [[ "$TAG" == *"-"* ]] || [[ "${{ github.event.inputs.prerelease }}" == "true" ]]; then
+        if [[ "$TAG" == *"-"* ]] || [[ "${{ inputs.prerelease }}" == "true" ]]; then
           echo "prerelease=true" >> $GITHUB_OUTPUT
           echo "🚧 Prerelease detected"
         else
@@ -154,18 +154,18 @@ jobs:
         # Check if release exists
         if gh release view "$TAG" >/dev/null 2>&1; then
           echo "📝 Release $TAG already exists, updating..."
-           gh release edit "$TAG" --title "$TAG" --notes "$RELEASE_NOTES"
+          gh release edit "$TAG" --notes "$RELEASE_NOTES"
         else
           echo "🎉 Creating new release $TAG..."
           if [[ "$PRERELEASE" == "true" ]]; then
-             gh release create "$TAG" \
-               --title "$TAG" \
-               --notes "$RELEASE_NOTES" \
-               --prerelease
+            gh release create "$TAG" \
+              --title "Code Guardian $TAG" \
+              --notes "$RELEASE_NOTES" \
+              --prerelease
           else
-             gh release create "$TAG" \
-               --title "$TAG" \
-               --notes "$RELEASE_NOTES"
+            gh release create "$TAG" \
+              --title "Code Guardian $TAG" \
+              --notes "$RELEASE_NOTES"
           fi
         fi
       env:
@@ -179,23 +179,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-         include:
-           - os: ubuntu-latest
-             target: x86_64-unknown-linux-gnu
-             binary: code_guardian_cli
-             archive: tar.gz
-           - os: windows-latest
-             target: x86_64-pc-windows-msvc
-             binary: code_guardian_cli.exe
-             archive: zip
-           - os: macos-13
-             target: x86_64-apple-darwin
-             binary: code_guardian_cli
-             archive: tar.gz
-           - os: macos-latest
-             target: aarch64-apple-darwin
-             binary: code_guardian_cli
-             archive: tar.gz
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary: code_guardian_cli
+            archive: tar.gz
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary: code_guardian_cli.exe
+            archive: zip
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            binary: code_guardian_cli
+            archive: tar.gz
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            binary: code_guardian_cli
+            archive: tar.gz
 
     steps:
     - name: Checkout
@@ -218,7 +218,7 @@ jobs:
         echo "✅ Built binary for ${{ matrix.target }}"
 
     - name: Run tests (native targets only)
-      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'x86_64-apple-darwin' || matrix.target == 'aarch64-apple-darwin'
+      if: matrix.target == 'x86_64-unknown-linux-gnu' || matrix.target == 'x86_64-pc-windows-msvc' || (matrix.target == 'x86_64-apple-darwin' && runner.arch == 'X64')
       run: cargo test --release --target ${{ matrix.target }}
 
     - name: Create release archive
@@ -328,7 +328,7 @@ jobs:
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Tag:** $TAG" >> $GITHUB_STEP_SUMMARY
         echo "**Type:** $([ "$PRERELEASE" = "true" ] && echo "Prerelease" || echo "Stable Release")" >> $GITHUB_STEP_SUMMARY
-        echo "**Builds:** 4 platforms" >> $GITHUB_STEP_SUMMARY
+        echo "**Builds:** ${{ strategy.job-total }} platforms" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Assets Built" >> $GITHUB_STEP_SUMMARY
         echo "- Linux (x86_64)" >> $GITHUB_STEP_SUMMARY

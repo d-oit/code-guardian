@@ -17,22 +17,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-   monitor:
-     runs-on: ubuntu-latest
-     timeout-minutes: 10
-     permissions:
-       issues: write
-       contents: read
-       actions: read
-       security-events: write
-     steps:
-       - name: Checkout repository
-         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: read
+      actions: read
+      security-events: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-       - name: Install jq
-         run: sudo apt-get update && sudo apt-get install -y jq
-
-       - name: List recent workflow runs
+      - name: List recent workflow runs
         run: |
           # Calculate date 24 hours ago in ISO 8601 format
           since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
@@ -58,8 +54,8 @@ jobs:
 
       - name: Check for failures in monitored workflows
         run: |
-           # Define monitored workflows (without .yml extension)
-           workflows=("Auto-fix Code Quality Issues" "Enhanced CI/CD" "Deploy Docs" "Release Management")
+          # Define monitored workflows (without .yml extension)
+          workflows=("Auto-fix Code Quality Issues" "CI" "Deploy Docs" "Release Build")
           
           failures=()
           

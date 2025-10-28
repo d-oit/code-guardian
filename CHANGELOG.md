@@ -5,6 +5,115 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+
+
+
+
+
+
+## [1.0.3] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.3
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [1.0.2] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.2
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [1.0.1] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.1
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [1.0.0] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.0
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [0.3.0] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 0.3.0
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [0.2.4] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 0.2.4
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [0.2.3] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 0.2.3
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [0.2.2] - 2025-10-27
+
+### 🚀 Features
+
+- Complete release workflow improvements and GitHub Actions fixes
+- Enhanced CI/CD pipeline with comprehensive testing
+- Improved security scanning and vulnerability detection
+- Synchronized all crate versions to v0.2.2 for consistency
+
+### 🐛 Bug Fixes
+
+- Resolve GitHub Actions YAML syntax errors
+- Fix release workflow to extract only current version's changelog section
+- Correct release notes to include only current version's changes
+- Fixed license compliance issues in code-guardian-output crate
+- Resolved cargo-deny configuration issues
+- Fixed performance benchmark execution to run actual benchmarks
+
+### ⚙️ Miscellaneous Tasks
+
+- Update release-please manifest configurations
+- Improve documentation and changelog management
+- Enhanced workflow automation and reliability
+- Synchronized workspace crate versions (core: 0.1.10→0.2.2, cli: 0.1.10→0.2.2)
+- Updated release-please manifest from 0.1.9 to 0.2.2
+
+## [0.2.1] - 2025-10-24
+
+### 🚀 Features
+
+- Integrated release changes with comprehensive fixes
+- Enhanced workflow improvements and dependency updates
+- Production-ready CI/CD enhancements
+
+### 🐛 Bug Fixes
+
+- Resolve final GitHub Actions workflow issues
+- Complete major YAML syntax fixes
+- Improve conditional logic in enhanced-ci.yml
+
+### ⚙️ Miscellaneous Tasks
+
+- Merge release/v0.2.1 into main with all fixes applied
+- Update various components and configurations
+- Comprehensive testing and validation improvements
+
 ## [0.1.10] - 2025-10-23
 
 ### 🚀 Features

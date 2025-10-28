@@ -322,3 +322,44 @@ goap-monitor: ## Monitor performance improvements
 	@time cargo check --workspace --quiet 2>&1 | grep real || true
 	@echo "Test time:"
 	@time cargo test --workspace --quiet 2>&1 | grep real || true
+# Version Management Commands
+version-status: ## Show current version status across all crates
+	@echo '📊 Checking version status...'
+	@./scripts/version-manager.sh status
+
+version-check: ## Check version consistency across workspace
+	@echo '🔍 Checking version consistency...'
+	@./scripts/version-manager.sh check
+
+version-sync: ## Synchronize all crates to consistent version
+	@echo '🔄 Synchronizing versions...'
+	@./scripts/version-manager.sh sync $$(./scripts/version-manager.sh status | grep core | awk '{print $$2}')
+
+version-bump-patch: ## Bump patch version (0.2.2 → 0.2.3)
+	@echo '⬆️ Bumping patch version...'
+	@./scripts/version-manager.sh bump patch
+
+version-bump-minor: ## Bump minor version (0.2.2 → 0.3.0)
+	@echo '⬆️ Bumping minor version...'
+	@./scripts/version-manager.sh bump minor
+
+version-bump-major: ## Bump major version (0.2.2 → 1.0.0)
+	@echo '⬆️ Bumping major version...'
+	@./scripts/version-manager.sh bump major
+
+release-prepare: ## Prepare workspace for release with specific version (Usage: make release-prepare VERSION=0.3.0)
+	@if [ -z "$(VERSION)" ]; then \
+		echo '❌ VERSION parameter required. Usage: make release-prepare VERSION=0.3.0'; \
+		exit 1; \
+	fi
+	@echo '🚀 Preparing release $(VERSION)...'
+	@./scripts/version-manager.sh prepare-release $(VERSION)
+
+release-dry-run: ## Preview release preparation (Usage: make release-dry-run VERSION=0.3.0)
+	@if [ -z "$(VERSION)" ]; then \
+		echo '❌ VERSION parameter required. Usage: make release-dry-run VERSION=0.3.0'; \
+		exit 1; \
+	fi
+	@echo '🔍 Preview release preparation for $(VERSION)...'
+	@./scripts/version-manager.sh prepare-release $(VERSION) --dry-run
+
