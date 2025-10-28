@@ -29,45 +29,45 @@ jobs:
     name: Performance Benchmark
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
 
 
-    - name: Install Rust
-       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-    - name: Install cargo-criterion
-       run: cargo install cargo-criterion
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion
 
-    - name: Cache cargo registry
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-        path: target
-        key: ${{ runner.os }}-bench-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache target
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: target
+          key: ${{ runner.os }}-bench-target-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Run criterion benchmarks
-       run: |
-        echo "Checking for benchmark files..."
-        find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
-        
-        # Check if we have criterion benchmarks defined in Cargo.toml
-        if find . -name "Cargo.toml" -exec grep -l "criterion" {} \; | head -1; then
-          echo "Found criterion in dependencies, running benchmarks..."
-          # Run benchmarks for each crate that has them
-          for crate_dir in crates/*/; do
-            if [ -f "$crate_dir/Cargo.toml" ] && grep -q "criterion" "$crate_dir/Cargo.toml"; then
-              echo "Running benchmarks for $crate_dir"
-              (cd "$crate_dir" && cargo bench) || echo "Benchmarks failed or not available for $crate_dir"
-            fi
-          done
+      - name: Run criterion benchmarks
+        run: |
+          echo "Checking for benchmark files..."
+          find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
+
+          # Check if we have criterion benchmarks defined in Cargo.toml
+          if find . -name "Cargo.toml" -exec grep -l "criterion" {} \; | head -1; then
+            echo "Found criterion in dependencies, running benchmarks..."
+            # Run benchmarks for each crate that has them
+            for crate_dir in crates/*/; do
+              if [ -f "$crate_dir/Cargo.toml" ] && grep -q "criterion" "$crate_dir/Cargo.toml"; then
+                echo "Running benchmarks for $crate_dir"
+                (cd "$crate_dir" && cargo bench) || echo "Benchmarks failed or not available for $crate_dir"
+              fi
+            done
         else
           echo "No criterion benchmarks configured, running cargo test --benches..."
           cargo test --benches --workspace || echo "No bench tests available"

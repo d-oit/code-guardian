@@ -124,12 +124,12 @@ jobs:
         run: |
           echo "🔧 Checking formatting..."
           if ! cargo fmt --all -- --check; then
-        echo "Formatting issues found, applying fixes..."
-        cargo fmt --all
-        echo "format_fixed=true" >> $GITHUB_OUTPUT
+            echo "Formatting issues found, applying fixes..."
+            cargo fmt --all
+            echo "format_fixed=true" >> $GITHUB_OUTPUT
           else
-        echo "✅ Formatting is correct"
-        echo "format_fixed=false" >> $GITHUB_OUTPUT
+            echo "✅ Formatting is correct"
+            echo "format_fixed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check and auto-fix clippy issues
@@ -137,24 +137,26 @@ jobs:
         run: |
           echo "🔧 Running clippy..."
           if ! cargo clippy --all-targets --all-features -- -D warnings; then
-        echo "Clippy issues found, attempting fixes..."
-        cargo clippy --all-targets --all-features --fix --allow-dirty
-        echo "clippy_fixed=true" >> $GITHUB_OUTPUT
+            echo "Clippy issues found, attempting fixes..."
+            cargo clippy --all-targets --all-features --fix --allow-dirty
+            echo "clippy_fixed=true" >> $GITHUB_OUTPUT
           else
-        echo "✅ Clippy checks passed"
-        echo "clippy_fixed=false" >> $GITHUB_OUTPUT
+            echo "✅ Clippy checks passed"
+            echo "clippy_fixed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Check workspace integrity
         run: cargo check --workspace --all-targets
 
       - name: Commit fixes if applied
-          if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
+        if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
 
-           if ! git diff --quiet; then
+   
+
+          if ! git diff --quiet; then
          git add .
 
           COMMIT_MSG="auto-fix: apply code quality fixes"
