@@ -1,3 +1,4 @@
+---
 # Enhanced CI/CD Pipeline
 # Trigger re-run
 # Combines features from optimized-ci.yml, security.yml, performance.yml, and auto-fix.yml
@@ -12,9 +13,9 @@ on:
     branches: [main, develop]
   schedule:
     # Weekly on Sunday at 2 AM UTC for security scans
-      - cron: '0 2 * * 0'
+    - cron: '0 2 * * 0'
     # Weekly on Monday at 2 AM UTC for performance benchmarks
-      - cron: '0 2 * * 1'
+    - cron: '0 2 * * 1'
   workflow_dispatch:
 
 # Concurrency controls to prevent overlapping runs
@@ -100,71 +101,70 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+      with:
+        components: rustfmt, clippy
+    - name: Cache cargo registry
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+    - name: Check and auto-fix formatting
+      id: format-check
+      run: |
+        echo "🔧 Checking formatting..."
+        if ! cargo fmt --all -- --check; then
+          echo "Formatting issues found, applying fixes..."
+          cargo fmt --all
+          echo "format_fixed=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ Formatting is correct"
+          echo "format_fixed=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Check and auto-fix clippy issues
+      id: clippy-check
+      run: |
+        echo "🔧 Running clippy..."
+        if ! cargo clippy --all-targets --all-features -- -D warnings; then
+          echo "Clippy issues found, attempting fixes..."
+          cargo clippy --all-targets --all-features --fix --allow-dirty
+          echo "clippy_fixed=true" >> $GITHUB_OUTPUT
+        else
+          echo "✅ Clippy checks passed"
+          echo "clippy_fixed=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Check workspace integrity
+      run: cargo check --workspace --all-targets
+    - name: Commit fixes if applied
+      if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
+      run: |
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
 
+        if ! git diff --quiet; then
+        git add .
 
+        COMMIT_MSG="auto-fix: apply code quality fixes"
+        if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
+          COMMIT_MSG="$COMMIT_MSG
+        - Apply cargo fmt formatting"
+        fi
+        if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
+          COMMIT_MSG="$COMMIT_MSG
+        - Apply clippy suggestions"
+        fi
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache cargo registry
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-registry-
-
-      - name: Check and auto-fix formatting
-        id: format-check
-        run: |
-          echo "🔧 Checking formatting..."
-          if ! cargo fmt --all -- --check; then
-            echo "Formatting issues found, applying fixes..."
-            cargo fmt --all
-            echo "format_fixed=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Formatting is correct"
-            echo "format_fixed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check and auto-fix clippy issues
-        id: clippy-check
-        run: |
-          echo "🔧 Running clippy..."
-          if ! cargo clippy --all-targets --all-features -- -D warnings; then
-            echo "Clippy issues found, attempting fixes..."
-            cargo clippy --all-targets --all-features --fix --allow-dirty
-            echo "clippy_fixed=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ Clippy checks passed"
-            echo "clippy_fixed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Check workspace integrity
-        run: cargo check --workspace --all-targets
-
-      - name: Commit fixes if applied
-        if: steps.format-check.outputs.format_fixed == 'true' || steps.clippy-check.outputs.clippy_fixed == 'true'
-        run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-
-   
-
-          if ! git diff --quiet; then
-         git add .
-
-          COMMIT_MSG="auto-fix: apply code quality fixes"
-         if [[ "${{ steps.format-check.outputs.format_fixed }}" == "true" ]]; then
-             COMMIT_MSG="$COMMIT_MSG
-            - Apply cargo fmt formatting"
-         fi
+        git commit -m "$COMMIT_MSG"
+        git push
+        echo "✅ Code quality fixes applied and pushed!"
+        fi
          if [[ "${{ steps.clippy-check.outputs.clippy_fixed }}" == "true" ]]; then
              COMMIT_MSG="$COMMIT_MSG
             - Apply clippy suggestions"
@@ -181,139 +181,118 @@ jobs:
     runs-on: ubuntu-latest
     needs: preflight
     if: needs.preflight.outputs.has_changes == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Install security tools
-        run: |
-          cargo install cargo-audit
-          cargo install cargo-deny
-
-      - name: Run cargo-audit
-        run: cargo audit --format json | tee audit-results.json
-
-      - name: Run cargo-deny checks
-        run: |
-          cargo deny check advisories
-          cargo deny check licenses
-          cargo deny check bans
-          cargo deny check sources
-
-      - name: Run security-focused clippy
-        run: |
-          cargo clippy --all-targets --all-features -- \
-          -W clippy::pedantic \
-          -W clippy::nursery \
-          -W clippy::suspicious \
-          -W clippy::correctness \
-          -D clippy::unwrap_used \
-          -D clippy::expect_used \
-          -D clippy::panic \
-          -D clippy::unimplemented \
-          -D clippy::todo
-
-      - name: Secrets detection
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
-          env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload security reports
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: security-reports
-          path: audit-results.json
+     steps:
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Install security tools
+      run: |
+        cargo install cargo-audit
+        cargo install cargo-deny
+    - name: Run cargo-audit
+      run: cargo audit --format json | tee audit-results.json
+    - name: Run cargo-deny checks
+      run: |
+        cargo deny check advisories
+        cargo deny check licenses
+        cargo deny check bans
+        cargo deny check sources
+    - name: Run security-focused clippy
+      run: |
+        cargo clippy --all-targets --all-features -- \
+        -W clippy::pedantic \
+        -W clippy::nursery \
+        -W clippy::suspicious \
+        -W clippy::correctness \
+        -D clippy::unwrap_used \
+        -D clippy::expect_used \
+        -D clippy::panic \
+        -D clippy::unimplemented \
+        -D clippy::todo
+    - name: Secrets detection
+      uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload security reports
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      with:
+        name: security-reports
+        path: audit-results.json
 
   # Parallel build with sccache
   build:
     name: Build
     runs-on: ubuntu-latest
     needs: quality-gate
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+     steps:
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Cache cargo registry
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-registry-
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-target-
+    - name: Build workspace
+      run: cargo build --workspace --all-targets --all-features
+    - name: Build release
+      run: cargo build --release --workspace
 
+   # Cross-platform testing
+   test-cross-platform:
+     name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+     runs-on: ${{ matrix.os }}
+     needs: [preflight, build]
+     if: needs.preflight.outputs.has_changes == 'true'
+     strategy:
+       matrix:
+         os: [ubuntu-latest, windows-latest, macos-latest]
+         rust: [stable]
+         include:
+         - os: ubuntu-latest
+           rust: beta
 
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Cache cargo registry
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: |
-        ~/.cargo/registry
-        ~/.cargo/git
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-        ${{ runner.os }}-cargo-registry-
-
-      - name: Cache target
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: target
-          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-        ${{ runner.os }}-target-
-
-      - name: Build workspace
-        run: cargo build --workspace --all-targets --all-features
-
-      - name: Build release
-        run: cargo build --release --workspace
-
-  # Cross-platform testing
-  test-cross-platform:
-    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
-    runs-on: ${{ matrix.os }}
-    needs: [preflight, build]
-    if: needs.preflight.outputs.has_changes == 'true'
-    strategy:
-      matrix:
-          os: [ubuntu-latest, windows-latest, macos-latest]
-          rust: [stable]
-          include:
-          - os: ubuntu-latest
-          rust: beta
-
-    steps:
-      -
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with:
-          fetch-depth: 0
-      - name: Install Rust
-          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-          with:
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+         with:
+           fetch-depth: 0
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+         with:
            toolchain: ${{ matrix.rust }}
-
-      - name: Install cargo-nextest
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-nextest
-
-      - name: Cache cargo registry
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-      - name: Cache target
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: target
-          key: ${{ runner.os }}-${{ matrix.rust }}-target-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.rust }}-target-
-
-      - name: Run tests with nextest
-        run: cargo nextest run --workspace --all-features
-
-      - name: Run doc tests
-        run: cargo test --doc --workspace
+       - name: Cache cargo registry
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
+           path: |
+             ~/.cargo/registry
+             ~/.cargo/git
+           key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
+           path: target
+           key: ${{ runner.os }}-${{ matrix.rust }}-target-${{ hashFiles('**/Cargo.lock') }}
+           restore-keys: |
+             ${{ runner.os }}-${{ matrix.rust }}-target-
+       - name: Run tests with nextest
+         run: cargo nextest run --workspace --all-features
+       - name: Run doc tests
+         run: cargo test --doc --workspace
 
   # Incremental crate testing
   test-cli:
@@ -321,174 +300,139 @@ jobs:
     runs-on: ubuntu-latest
     needs: [preflight, build]
     if: needs.preflight.outputs.cli == 'true' || needs.preflight.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Install cargo-nextest
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-nextest
-
-      - name: Cache target
-          uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-          with:
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
            path: target
            key: ubuntu-latest-cli-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Test CLI crate
-        run: cargo nextest run -p code_guardian_cli --all-features
-
-  test-core:
-    name: Test Core Crate
-    runs-on: ubuntu-latest
-    needs: [preflight, build]
-    if: needs.preflight.outputs.core == 'true' || needs.preflight.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Install cargo-nextest
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+       - name: Test CLI crate
+         run: cargo nextest run -p code_guardian_cli --all-features
+   test-core:
+     name: Test Core Crate
+     runs-on: ubuntu-latest
+     needs: [preflight, build]
+     if: needs.preflight.outputs.core == 'true' || needs.preflight.outputs.ci == 'true'
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-nextest
-
-      - name: Cache target
-          uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-          with:
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
            path: target
            key: ubuntu-latest-core-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Test Core crate
+         run: cargo nextest run -p code_guardian_core --all-features
 
-      - name: Test Core crate
-        run: cargo nextest run -p code_guardian_core --all-features
-
-  test-output:
-    name: Test Output Crate
-    runs-on: ubuntu-latest
-    needs: [preflight, build]
-    if: needs.preflight.outputs.output == 'true' || needs.preflight.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Install cargo-nextest
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+   test-output:
+     name: Test Output Crate
+     runs-on: ubuntu-latest
+     needs: [preflight, build]
+     if: needs.preflight.outputs.output == 'true' || needs.preflight.outputs.ci == 'true'
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-nextest
-
-      - name: Cache target
-          uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-          with:
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
            path: target
            key: ubuntu-latest-output-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Test Output crate
+         run: cargo nextest run -p code_guardian_output --all-features
 
-      - name: Test Output crate
-        run: cargo nextest run -p code_guardian_output --all-features
-
-  test-storage:
-    name: Test Storage Crate
-    runs-on: ubuntu-latest
-    needs: [preflight, build]
-    if: needs.preflight.outputs.storage == 'true' || needs.preflight.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Install cargo-nextest
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+   test-storage:
+     name: Test Storage Crate
+     runs-on: ubuntu-latest
+     needs: [preflight, build]
+     if: needs.preflight.outputs.storage == 'true' || needs.preflight.outputs.ci == 'true'
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+       - name: Install cargo-nextest
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-nextest
-
-      - name: Cache target
-          uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-          with:
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
            path: target
            key: ubuntu-latest-storage-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Test Storage crate
+         run: cargo nextest run -p code_guardian_storage --all-features
 
-      - name: Test Storage crate
-        run: cargo nextest run -p code_guardian_storage --all-features
-
-  # Enhanced coverage with thresholds
-  coverage:
-    name: Coverage Analysis
-    runs-on: ubuntu-latest
-    needs: [test-cli, test-core, test-output, test-storage]
-    if: always() && (needs.test-cli.result == 'success' || needs.test-core.result == 'success' || needs.test-output.result == 'success' || needs.test-storage.result == 'success')
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-        with:
-          components: llvm-tools-preview
-
-      - name: Install cargo-llvm-cov
-          uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-          with:
+   # Enhanced coverage with thresholds
+   coverage:
+     name: Coverage Analysis
+     runs-on: ubuntu-latest
+     needs: [test-cli, test-core, test-output, test-storage]
+     if: always() && (needs.test-cli.result == 'success' || needs.test-core.result == 'success' || needs.test-output.result == 'success' || needs.test-storage.result == 'success')
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+         with:
+           components: llvm-tools-preview
+       - name: Install cargo-llvm-cov
+         uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+         with:
            tool: cargo-llvm-cov
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
+           path: target
+           key: ubuntu-latest-coverage-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Generate coverage
+         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
+       - name: Generate HTML report
+         run: cargo llvm-cov --all-features --workspace --html --output-dir coverage/html
+       - name: Check coverage threshold
+         id: coverage_check
+         run: |
+           COVERAGE=$(cargo llvm-cov --all-features --workspace --summary-only | grep -oE '[0-9]+\.[0-9]+%' | head -1 | sed 's/%//')
+           THRESHOLD=82
 
-      - name: Cache target
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: target
-          key: ubuntu-latest-coverage-target-${{ hashFiles('**/Cargo.lock') }}
+           echo "Current coverage: ${COVERAGE}%"
+           echo "Required threshold: ${THRESHOLD}%"
 
-      - name: Generate coverage
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
-
-      - name: Generate HTML report
-        run: cargo llvm-cov --all-features --workspace --html --output-dir coverage/html
-
-      - name: Check coverage threshold
-        id: coverage_check
-        run: |
-          COVERAGE=$(cargo llvm-cov --all-features --workspace --summary-only | grep -oE '[0-9]+\.[0-9]+%' | head -1 | sed 's/%//')
-          THRESHOLD=82
-
-          echo "Current coverage: ${COVERAGE}%"
-          echo "Required threshold: ${THRESHOLD}%"
-
-          if (( $(echo "$COVERAGE >= $THRESHOLD" | bc -l) )); then
-            echo "✅ Coverage threshold met"
-            echo "coverage_met=true" >> $GITHUB_OUTPUT
-          else
-            echo "❌ Coverage below threshold"
-            echo "Gap: $(echo "$THRESHOLD - $COVERAGE" | bc -l)%"
-            echo "coverage_met=false" >> $GITHUB_OUTPUT
-            exit 1
-          fi
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: coverage-reports
-          path: |
-        lcov.info
-        coverage/
-
-      - name: Coverage Summary
-        run: |
-          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          cargo llvm-cov --all-features --workspace --summary-only >> $GITHUB_STEP_SUMMARY
+           if (( $(echo "$COVERAGE >= $THRESHOLD" | bc -l) )); then
+             echo "✅ Coverage threshold met"
+             echo "coverage_met=true" >> $GITHUB_OUTPUT
+           else
+             echo "❌ Coverage below threshold"
+             echo "Gap: $(echo "$THRESHOLD - $COVERAGE" | bc -l)%"
+             echo "coverage_met=false" >> $GITHUB_OUTPUT
+             exit 1
+           fi
+       - name: Upload coverage reports
+         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+         with:
+           name: coverage-reports
+           path: |
+             lcov.info
+             coverage/
+       - name: Coverage Summary
+         run: |
+           echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+           echo "" >> $GITHUB_STEP_SUMMARY
+           cargo llvm-cov --all-features --workspace --summary-only >> $GITHUB_STEP_SUMMARY
 
   # Performance benchmarking
   benchmark:
@@ -541,31 +485,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: needs.preflight.outputs.docs == 'true' || needs.preflight.outputs.ci == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-
-      - name: Cache target
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-        with:
-          path: target
-          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Build documentation
-        run: cargo doc --workspace --all-features --no-deps
-
-      - name: Check documentation
-        run: |
-          if [ ! -d "target/doc" ]; then
-        echo "❌ Documentation build failed"
-        exit 1
-          fi
-          echo "✅ Documentation built successfully"
-
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+       - name: Cache target
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+         with:
+           path: target
+           key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+       - name: Build documentation
+         run: cargo doc --workspace --all-features --no-deps
+       - name: Check documentation
+         run: |
+           if [ ! -d "target/doc" ]; then
+             echo "❌ Documentation build failed"
+             exit 1
+           fi
+           echo "✅ Documentation built successfully"
   # Code review agent for PRs
   code-review:
     name: Code Review
@@ -574,44 +511,38 @@ jobs:
     permissions:
       pull-requests: write
       contents: read
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-
-
-
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-        with:
-          components: clippy
-
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      - name: Comment on PR if issues found
-          if: failure()
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
-        with:
-          script: |
-        github.rest.issues.createComment({
-          issue_number: context.issue.number,
-          owner: context.repo.owner,
-          repo: context.repo.repo,
-          body: '🚨 **Code Review Issues Detected**\n\n' +
-            'Clippy found warnings or errors that need to be addressed:\n\n' +
-            '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
-            'Please fix these issues before merging. You can run:\n' +
-            '```bash\ncargo clippy --fix --allow-dirty\n```'
-        })
-
+     steps:
+       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+       - name: Install Rust
+         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+         with:
+           components: clippy
+       - name: Run clippy
+         run: cargo clippy --all-targets --all-features -- -D warnings
+       - name: Comment on PR if issues found
+         if: failure()
+         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+         with:
+           script: |
+             github.rest.issues.createComment({
+               issue_number: context.issue.number,
+               owner: context.repo.owner,
+               repo: context.repo.repo,
+               body: '🚨 **Code Review Issues Detected**\n\n' +
+                 'Clippy found warnings or errors that need to be addressed:\n\n' +
+                 '```bash\ncargo clippy --all-targets --all-features -- -D warnings\n```\n\n' +
+                 'Please fix these issues before merging. You can run:\n' +
+                 '```bash\ncargo clippy --fix --allow-dirty\n```'
+             })
   # Final CI status aggregation
   ci-complete:
     name: CI Complete
     runs-on: ubuntu-latest
     needs: [quality-gate, security-scan, build, test-cross-platform, test-cli, test-core, test-output, test-storage, coverage, benchmark, docs, code-review]
     if: always()
-    steps:
-      - name: CI Status Summary
-          run: |
+     steps:
+    - name: CI Status Summary
+      run: |
            echo "## 🎯 Enhanced CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
            echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -619,133 +550,133 @@ jobs:
 
            # Check quality-gate
            if [[ "${{ needs.quality-gate.result }}" == "success" ]]; then
-          echo "✅ quality-gate: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ quality-gate: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.quality-gate.result }}" == "skipped" ]]; then
-          echo "⏭️  quality-gate: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  quality-gate: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ quality-gate: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("quality-gate")
+             echo "❌ quality-gate: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("quality-gate")
            fi
 
            # Check security-scan
            if [[ "${{ needs.security-scan.result }}" == "success" ]]; then
-          echo "✅ security-scan: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ security-scan: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.security-scan.result }}" == "skipped" ]]; then
-          echo "⏭️  security-scan: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  security-scan: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ security-scan: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("security-scan")
+             echo "❌ security-scan: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("security-scan")
            fi
 
            # Check build
            if [[ "${{ needs.build.result }}" == "success" ]]; then
-          echo "✅ build: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ build: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.build.result }}" == "skipped" ]]; then
-          echo "⏭️  build: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  build: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ build: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("build")
+             echo "❌ build: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("build")
            fi
 
            # Check test-cross-platform
            if [[ "${{ needs.test-cross-platform.result }}" == "success" ]]; then
-          echo "✅ test-cross-platform: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ test-cross-platform: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.test-cross-platform.result }}" == "skipped" ]]; then
-          echo "⏭️  test-cross-platform: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  test-cross-platform: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ test-cross-platform: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("test-cross-platform")
+             echo "❌ test-cross-platform: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-cross-platform")
            fi
 
            # Check coverage
            if [[ "${{ needs.coverage.result }}" == "success" ]]; then
-          echo "✅ coverage: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ coverage: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.coverage.result }}" == "skipped" ]]; then
-          echo "⏭️  coverage: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  coverage: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ coverage: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("coverage")
+             echo "❌ coverage: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("coverage")
            fi
 
            # Check benchmark
            if [[ "${{ needs.benchmark.result }}" == "success" ]]; then
-          echo "✅ benchmark: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ benchmark: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.benchmark.result }}" == "skipped" ]]; then
-          echo "⏭️  benchmark: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  benchmark: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ benchmark: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("benchmark")
+             echo "❌ benchmark: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("benchmark")
            fi
 
            # Check docs
            if [[ "${{ needs.docs.result }}" == "success" ]]; then
-          echo "✅ docs: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ docs: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.docs.result }}" == "skipped" ]]; then
-          echo "⏭️  docs: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  docs: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ docs: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("docs")
+             echo "❌ docs: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("docs")
            fi
 
            # Check code-review
            if [[ "${{ needs.code-review.result }}" == "success" ]]; then
-          echo "✅ code-review: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ code-review: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.code-review.result }}" == "skipped" ]]; then
-          echo "⏭️  code-review: SKIPPED" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  code-review: SKIPPED" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ code-review: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("code-review")
+             echo "❌ code-review: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("code-review")
            fi
 
            # Check incremental tests
            # test-cli
            if [[ "${{ needs.test-cli.result }}" == "success" ]]; then
-          echo "✅ test-cli: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ test-cli: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.test-cli.result }}" == "skipped" ]]; then
-          echo "⏭️  test-cli: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  test-cli: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ test-cli: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("test-cli")
+             echo "❌ test-cli: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-cli")
            fi
 
            # test-core
            if [[ "${{ needs.test-core.result }}" == "success" ]]; then
-          echo "✅ test-core: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ test-core: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.test-core.result }}" == "skipped" ]]; then
-          echo "⏭️  test-core: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  test-core: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ test-core: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("test-core")
+             echo "❌ test-core: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-core")
            fi
 
            # test-output
            if [[ "${{ needs.test-output.result }}" == "success" ]]; then
-          echo "✅ test-output: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ test-output: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.test-output.result }}" == "skipped" ]]; then
-          echo "⏭️  test-output: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  test-output: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ test-output: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("test-output")
+             echo "❌ test-output: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-output")
            fi
 
            # test-storage
            if [[ "${{ needs.test-storage.result }}" == "success" ]]; then
-          echo "✅ test-storage: PASSED" >> $GITHUB_STEP_SUMMARY
+             echo "✅ test-storage: PASSED" >> $GITHUB_STEP_SUMMARY
            elif [[ "${{ needs.test-storage.result }}" == "skipped" ]]; then
-          echo "⏭️  test-storage: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
+             echo "⏭️  test-storage: SKIPPED (no changes)" >> $GITHUB_STEP_SUMMARY
            else
-          echo "❌ test-storage: FAILED" >> $GITHUB_STEP_SUMMARY
-         failed_jobs+=("test-storage")
+             echo "❌ test-storage: FAILED" >> $GITHUB_STEP_SUMMARY
+             failed_jobs+=("test-storage")
            fi
 
            echo "" >> $GITHUB_STEP_SUMMARY
            if [[ ${#failed_jobs[@]} -eq 0 ]]; then
-         echo "### ✅ All CI Checks Passed!" >> $GITHUB_STEP_SUMMARY
-         echo "🚀 Ready for deployment" >> $GITHUB_STEP_SUMMARY
+             echo "### ✅ All CI Checks Passed!" >> $GITHUB_STEP_SUMMARY
+             echo "🚀 Ready for deployment" >> $GITHUB_STEP_SUMMARY
            else
-         echo "### ❌ CI Pipeline Failed" >> $GITHUB_STEP_SUMMARY
-          echo "Failed jobs: ${failed_jobs[*]}" >> $GITHUB_STEP_SUMMARY
-         exit 1
+             echo "### ❌ CI Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+             echo "Failed jobs: ${failed_jobs[*]}" >> $GITHUB_STEP_SUMMARY
+             exit 1
            fi
 
            echo "" >> $GITHUB_STEP_SUMMARY
