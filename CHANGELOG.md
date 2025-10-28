@@ -10,6 +10,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+
+
+## [1.0.3] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.3
+- Updated release-please manifest configuration
+- Applied automated version management
+
+## [1.0.2] - 2025-10-28
+
+### 🔄 Version Management
+
+- Synchronized all workspace crates to version 1.0.2
+- Updated release-please manifest configuration
+- Applied automated version management
+
 ## [1.0.1] - 2025-10-28
 
 ### 🔄 Version Management
