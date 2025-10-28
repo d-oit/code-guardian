@@ -40,8 +40,6 @@ env:
   CARGO_TERM_COLOR: always
   SCCACHE_GHA_ENABLED: "false"
   # Disable sccache due to service instability
-  SECURITY_LEVEL: ${{ github.event.inputs.security_level || 'standard' }}
-  CREATE_ISSUE_ON_FAILURE: ${{ github.event.inputs.create_issue_on_failure || 'true' }}
 
 jobs:
   # Dependency and vulnerability scanning
@@ -146,7 +144,7 @@ jobs:
           2>&1 | tee clippy-security.log
 
     - name: Enhanced security checks (if strict mode)
-      if: env.SECURITY_LEVEL == 'strict'
+      if: inputs.security_level == 'strict'
       run: |
         echo "Running enhanced security analysis..."
         # Additional strict checks for production
@@ -208,6 +206,29 @@ jobs:
         extra_args: --debug --only-verified --no-verification
       continue-on-error: true
       id: trufflehog
+      
+    - name: Fallback secret scanning (if TruffleHog fails)
+      if: steps.trufflehog.outcome == 'failure'
+      run: |
+        echo "⚠️ TruffleHog failed, running fallback secret detection..."
+        
+        # Enhanced pattern matching for critical secrets
+        SECRET_PATTERNS="sk-[a-zA-Z0-9]{32,}|api[_-]?key|secret[_-]?key|password|token"
+        
+        echo "🔍 Scanning for potential secrets..."
+        if grep -r -E "$SECRET_PATTERNS" --include="*.rs" --include="*.toml" --include="*.yml" --include="*.json" . \
+           | grep -v ".git" \
+           | grep -v "/test" \
+           | grep -v "_test" \
+           | grep -v "/tests/" \
+           | grep -v "example" \
+           | grep -v "demo" \
+           | head -10; then
+          echo "⚠️ Potential secrets detected - requires manual review"
+          echo "This is a fallback scan - please investigate findings manually"
+        else
+          echo "✅ No obvious secrets detected in fallback scan"
+        fi
 
   # Security report compilation and issue creation
   security-summary:
@@ -246,9 +267,9 @@ jobs:
 
     - name: Create security incident issue
       if: |
-        (failure() || needs.vulnerability-scan.result == 'failure' ||
-         needs.code-security.result == 'failure' || needs.secrets-scan.result == 'failure')
-        && env.CREATE_ISSUE_ON_FAILURE == 'true'
+        (failure() || needs.vulnerability-scan.result == 'failure' || 
+         needs.code-security.result == 'failure' || needs.secrets-scan.result == 'failure') 
+        && inputs.create_issue_on_failure == true
       uses: actions/github-script@00f12e3e20659f42342b1c0226afda7f7c042325
       with:
         script: |
