@@ -21,13 +21,13 @@ jobs:
       tag_name: ${{ steps.release.outputs.tag_name }}
       version: ${{ steps.release.outputs.version }}
     steps:
-      - name: Run Release Please
-        id: release
-        uses: google-github-actions/release-please-action@a017ec70c7f1401744d60197f7577a0c51c8c1cf
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          config-file: .github/release-please-config.json
-          manifest-file: .github/.release-please-manifest.json
+    - name: Run Release Please
+      id: release
+      uses: google-github-actions/release-please-action@a017ec70c7f1401744d60197f7577a0c51c8c1cf
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        config-file: .github/release-please-config.json
+        manifest-file: .github/.release-please-manifest.json
 
   enhance-release:
     name: Enhance Release Description
@@ -37,17 +37,17 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Trigger Enhanced Release Workflow
-        run: |
-          echo "Release created: ${{ needs.release-please.outputs.tag_name }}"
-          echo "Triggering enhanced release workflow..."
-          
-          # Wait a moment for the release to be fully created
-          sleep 10
-          
-          # Trigger the enhanced release workflow
-          gh workflow run release-consolidated.yml -f tag="${{ needs.release-please.outputs.tag_name }}"
-          
-          echo "✅ Enhanced release workflow triggered for ${{ needs.release-please.outputs.tag_name }}"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Trigger Enhanced Release Workflow
+      run: |
+        echo "Release created: ${{ needs.release-please.outputs.tag_name }}"
+        echo "Triggering enhanced release workflow..."
+        
+        # Wait a moment for the release to be fully created
+        sleep 10
+        
+        # Trigger the enhanced release workflow
+        gh workflow run release-consolidated.yml -f tag="${{ needs.release-please.outputs.tag_name }}"
+        
+        echo "✅ Enhanced release workflow triggered for ${{ needs.release-please.outputs.tag_name }}"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

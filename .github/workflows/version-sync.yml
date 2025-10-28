@@ -155,21 +155,25 @@ jobs:
           echo "- **Needs Sync**: $needs_sync" >> $GITHUB_STEP_SUMMARY
           echo "- **Sync Strategy**: $sync_strategy" >> $GITHUB_STEP_SUMMARY
 
-  version-sync:
-    name: Synchronize Versions
-    runs-on: ubuntu-latest
-    needs: analyze-versions
-    if: needs.analyze-versions.outputs.needs_sync == 'true'
-    steps:
-      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
 
-      - uses: ./.github/actions/setup-rust
 
-      - name: Apply version synchronization
+version-sync:
+  name: Synchronize Versions
+  runs-on: ubuntu-latest
+  needs: analyze-versions
+  if: needs.analyze-versions.outputs.needs_sync == 'true'
+  steps:
+    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - uses: ./.github/actions/setup-rust
+
+    - name: Apply version synchronization
         id: sync
+        env:
+          TARGET_VERSION: ${{ needs.analyze-versions.outputs.target_version }}
         run: |
           TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
           SYNC_STRATEGY="${{ needs.analyze-versions.outputs.sync_strategy }}"

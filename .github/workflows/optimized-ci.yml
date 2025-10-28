@@ -25,8 +25,6 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  SCCACHE_GHA_ENABLED: "false"
-  # RUSTC_WRAPPER: "sccache"  # Disabled due to service unavailability
   CARGO_INCREMENTAL: 0
 
 jobs:
@@ -48,10 +46,9 @@ preflight:
         with:
           fetch-depth: 0
 
-      - name: Install sccache
-        uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+
+    - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
         id: changes
         with:
           filters: |
