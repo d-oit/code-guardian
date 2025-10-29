@@ -256,14 +256,14 @@ jobs:
     needs: [preflight, build]
     if: needs.preflight.outputs.has_changes == 'true'
     strategy:
-       matrix:
-         os: [ubuntu-latest, windows-latest, macos-latest]
-         rust: [stable]
-         include:
-         - os: ubuntu-latest
-           rust: beta
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable]
+        include:
+        - os: ubuntu-latest
+          rust: beta
 
-     steps:
+    steps:
        - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
          with:
            fetch-depth: 0
