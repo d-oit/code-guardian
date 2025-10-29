@@ -97,12 +97,12 @@ preflight:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
-      with:
-        components: rustfmt, clippy
+        with:
+          components: rustfmt, clippy
 
-    - name: Cache cargo registry
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-      with:
+      - name: Cache cargo registry
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
         path: |
           ~/.cargo/registry
           ~/.cargo/git
@@ -110,14 +110,14 @@ preflight:
         restore-keys: |
           ${{ runner.os }}-cargo-registry-
 
-    - name: Check formatting
-      run: cargo fmt --all -- --check
+      - name: Check formatting
+        run: cargo fmt --all -- --check
 
-    - name: Run clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
 
-    - name: Check workspace integrity
-      run: cargo check --workspace --all-targets
+      - name: Check workspace integrity
+        run: cargo check --workspace --all-targets
 
   # Parallel build with sccache
   build:

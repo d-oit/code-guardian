@@ -170,11 +170,11 @@ jobs:
 
     - uses: ./.github/actions/setup-rust
 
-     - name: Apply version synchronization
-       id: sync
-       env:
-         TARGET_VERSION: ${{ needs.analyze-versions.outputs.target_version }}
-       run: |
+    - name: Apply version synchronization
+      id: sync
+      env:
+        TARGET_VERSION: ${{ needs.analyze-versions.outputs.target_version }}
+      run: |
          TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
          SYNC_STRATEGY="${{ needs.analyze-versions.outputs.sync_strategy }}"
           

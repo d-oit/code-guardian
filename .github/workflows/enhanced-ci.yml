@@ -249,13 +249,13 @@ jobs:
     - name: Build release
       run: cargo build --release --workspace
 
-   # Cross-platform testing
-   test-cross-platform:
-     name: Test (${{ matrix.os }}, ${{ matrix.rust }})
-     runs-on: ${{ matrix.os }}
-     needs: [preflight, build]
-     if: needs.preflight.outputs.has_changes == 'true'
-     strategy:
+  # Cross-platform testing
+  test-cross-platform:
+    name: Test (${{ matrix.os }}, ${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    needs: [preflight, build]
+    if: needs.preflight.outputs.has_changes == 'true'
+    strategy:
        matrix:
          os: [ubuntu-latest, windows-latest, macos-latest]
          rust: [stable]

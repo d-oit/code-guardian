@@ -70,11 +70,11 @@ jobs:
              cargo test --benches --workspace || echo "No bench tests available"
            fi
 
-    - name: Upload benchmark results
-       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-       with:
-        name: benchmark-results
-        path: target/criterion/
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: benchmark-results
+          path: target/criterion/
 
   performance-regression:
     name: Performance Regression Check
