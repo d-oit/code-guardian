@@ -541,10 +541,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [quality-gate, security-scan, build, test-cross-platform, test-cli, test-core, test-output, test-storage, coverage, benchmark, docs, code-review]
     if: always()
-     steps:
-    - name: CI Status Summary
-      run: |
-           echo "## 🎯 Enhanced CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+    steps:
+      - name: CI Status Summary
+        run: |
+          echo "## 🎯 Enhanced CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
            echo "" >> $GITHUB_STEP_SUMMARY
 
            failed_jobs=()

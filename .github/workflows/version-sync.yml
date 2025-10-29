@@ -290,12 +290,10 @@ jobs:
             git add .
             
             # Create detailed commit message
-            git commit -m "chore: synchronize workspace versions to v$TARGET_VERSION
-
-Applied $SYNC_STRATEGY strategy and updated all crate versions to $TARGET_VERSION.
-Synchronized release-please manifest and updated CHANGELOG.md with version sync details.
-
-[skip ci] version sync only"
+            git commit -m "chore: synchronize workspace versions to v$TARGET_VERSION" \
+                       -m "Applied $SYNC_STRATEGY strategy and updated all crate versions to $TARGET_VERSION." \
+                       -m "Synchronized release-please manifest and updated CHANGELOG.md with version sync details." \
+                       -m "[skip ci] version sync only"
             git push
 
             echo "✅ Version synchronization changes pushed successfully!"
