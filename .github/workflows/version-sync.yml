@@ -219,9 +219,9 @@ jobs:
             echo "files_updated=false" >> $GITHUB_OUTPUT
           fi
 
-     - name: Validate workspace after sync
-       if: steps.sync.outputs.files_updated == 'true'
-       run: |
+      - name: Validate workspace after sync
+        if: steps.sync.outputs.files_updated == 'true'
+        run: |
           echo "## 🧪 Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
