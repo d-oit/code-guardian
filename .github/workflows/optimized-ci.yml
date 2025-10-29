@@ -28,8 +28,8 @@ env:
   CARGO_INCREMENTAL: 0
 
 jobs:
-  # Pre-flight checks and change detection
-preflight:
+  # Pre-flight checks and change detection  
+  preflight:
     name: Preflight Checks
     runs-on: ubuntu-latest
     outputs:
@@ -173,10 +173,10 @@ preflight:
     - name: Install sccache
       uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-   - name: Install Rust
-       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-   - name: Install cargo-nextest
+    - name: Install cargo-nextest
        uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
        with:
          tool: cargo-nextest

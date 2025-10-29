@@ -219,9 +219,9 @@ jobs:
             echo "files_updated=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Validate workspace after sync
-        if: steps.sync.outputs.files_updated == 'true'
-        run: |
+    - name: Validate workspace after sync
+      if: steps.sync.outputs.files_updated == 'true'
+      run: |
           echo "## 🧪 Validation Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -244,9 +244,9 @@ jobs:
           manifest_version=$(jq -r '."."' .github/.release-please-manifest.json)
           echo "| release-please | $manifest_version |" >> $GITHUB_STEP_SUMMARY
 
-     - name: Update CHANGELOG with version sync
-       if: steps.sync.outputs.files_updated == 'true'
-       run: |
+   - name: Update CHANGELOG with version sync
+     if: steps.sync.outputs.files_updated == 'true'
+     run: |
           TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
           
           # Check if there's already an entry for this version
