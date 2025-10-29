@@ -120,6 +120,17 @@ jobs:
       - name: Check workspace integrity
         run: cargo check --workspace --all-targets
 
+  # Workflow linting to catch YAML/schema problems early
+  workflow-lint:
+    name: Workflow Lint
+    runs-on: ubuntu-latest
+    needs: preflight
+    steps:
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Lint workflow YAML with yamllint (docker)
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workdir cytopia/yamllint yamllint -f parsable .github/workflows/optimized-ci.yml
+
   # Parallel build with sccache
   build:
     name: Build
@@ -185,9 +196,9 @@ jobs:
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Run partitioned tests
+    - name: Run partitioned tests
       run: |
         cargo nextest run --workspace --all-features \
           --partition count:${{ matrix.partition }}/4 \
@@ -208,18 +219,18 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-nextest
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Test CLI crate
+    - name: Test CLI crate
       run: cargo nextest run -p code_guardian_cli --all-features --verbose
 
   test-core:
@@ -235,19 +246,18 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-nextest
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-
-     - name: Test Core crate
+    - name: Test Core crate
       run: cargo nextest run -p code_guardian_core --all-features --verbose
 
   test-output:
@@ -263,19 +273,18 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-nextest
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-
-     - name: Test Output crate
+    - name: Test Output crate
       run: cargo nextest run -p code_guardian_output --all-features --verbose
 
   test-storage:
@@ -291,19 +300,18 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-nextest
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+      with:
+        path: target
+        key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-         path: target
-         key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
-
-     - name: Test Storage crate
+    - name: Test Storage crate
       run: cargo nextest run -p code_guardian_storage --all-features --verbose
 
   # Cross-platform testing
@@ -321,12 +329,12 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-nextest
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-nextest
+    - name: Install cargo-nextest
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-nextest
 
-     - name: Cache cargo registry
+    - name: Cache cargo registry
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: |
@@ -360,12 +368,12 @@ jobs:
       with:
         components: llvm-tools-preview
 
-     - name: Install cargo-llvm-cov
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-llvm-cov
+    - name: Install cargo-llvm-cov
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-llvm-cov
 
-     - name: Cache target
+    - name: Cache target
       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
       with:
         path: target
@@ -471,17 +479,17 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-audit
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-audit
+    - name: Install cargo-audit
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-audit
 
-     - name: Install cargo-deny
-       uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
-       with:
-         tool: cargo-deny
+    - name: Install cargo-deny
+      uses: taiki-e/install-action@fa0639a7132933c4081764bded317e92c04e5c07
+      with:
+        tool: cargo-deny
 
-     - name: Run security audit
+    - name: Run security audit
       run: cargo audit --format json | tee audit-results.json
 
     - name: Run cargo-deny
