@@ -90,13 +90,13 @@ preflight:
     name: Quality Gate
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-    - name: Install sccache
-      uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
+      - name: Install sccache
+        uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-    - name: Install Rust
-      uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
       with:
         components: rustfmt, clippy
 

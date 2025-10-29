@@ -60,9 +60,9 @@ jobs:
         with:
           fetch-depth: 0
 
-     - name: Analyze version state
-       id: check
-       run: |
+      - name: Analyze version state
+        id: check
+        run: |
           echo "## 🔍 Version Analysis Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 

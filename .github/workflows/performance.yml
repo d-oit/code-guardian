@@ -51,8 +51,8 @@ jobs:
           path: target
           key: ${{ runner.os }}-bench-target-${{ hashFiles('**/Cargo.lock') }}
 
-       - name: Run criterion benchmarks
-         run: |
+      - name: Run criterion benchmarks
+        run: |
            echo "Checking for benchmark files..."
            find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
            # Check if we have criterion benchmarks defined in Cargo.toml
