@@ -181,8 +181,8 @@ jobs:
       with:
         tool: cargo-nextest
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+    - name: Cache target
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
        with:
          path: target
          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}

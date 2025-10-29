@@ -385,7 +385,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-cli, test-core, test-output, test-storage]
     if: always() && (needs.test-cli.result == 'success' || needs.test-core.result == 'success' || needs.test-output.result == 'success' || needs.test-storage.result == 'success')
-     steps:
+    steps:
        - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
        - name: Install Rust
          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
@@ -486,7 +486,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     if: needs.preflight.outputs.docs == 'true' || needs.preflight.outputs.ci == 'true'
-     steps:
+    steps:
        - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
        - name: Install Rust
          uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
