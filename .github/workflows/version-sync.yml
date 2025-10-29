@@ -244,9 +244,9 @@ jobs:
           manifest_version=$(jq -r '."."' .github/.release-please-manifest.json)
           echo "| release-please | $manifest_version |" >> $GITHUB_STEP_SUMMARY
 
-   - name: Update CHANGELOG with version sync
-     if: steps.sync.outputs.files_updated == 'true'
-     run: |
+    - name: Update CHANGELOG with version sync
+      if: steps.sync.outputs.files_updated == 'true'
+      run: |
           TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
           
           # Check if there's already an entry for this version
@@ -277,9 +277,9 @@ jobs:
             echo "ℹ️ CHANGELOG entry for $TARGET_VERSION already exists"
           fi
 
-     - name: Commit and push changes
-       if: steps.sync.outputs.files_updated == 'true'
-       run: |
+    - name: Commit and push changes
+      if: steps.sync.outputs.files_updated == 'true'
+      run: |
           TARGET_VERSION="${{ needs.analyze-versions.outputs.target_version }}"
           SYNC_STRATEGY="${{ needs.analyze-versions.outputs.sync_strategy }}"
           
