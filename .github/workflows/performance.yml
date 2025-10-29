@@ -11,11 +11,9 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main ]
+  # Run weekly performance benchmarks
   schedule:
-    # Run weekly performance benchmarks
     - cron: '0 2 * * 1'
-  workflow_dispatch:
-
 concurrency:
   group: performance-${{ github.ref }}
   cancel-in-progress: true
@@ -23,64 +21,60 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  SCCACHE_GHA_ENABLED: "false"
-  # RUSTC_WRAPPER: "sccache"  # Disabled due to service unavailability
 
 jobs:
   benchmark:
     name: Performance Benchmark
     runs-on: ubuntu-latest
     steps:
-     - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-     - name: Install sccache
-       uses: mozilla-actions/sccache-action@2e7f9ec7921547d4b46598398ca573513895d0bd
 
-     - name: Install Rust
-       uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Install cargo-criterion
-       run: cargo install cargo-criterion
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@5d458579430fc14a04a08a1e7d3694f545e91ce6
 
-     - name: Cache cargo registry
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion
 
-     - name: Cache target
-       uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
-       with:
-        path: target
-        key: ${{ runner.os }}-bench-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Run criterion benchmarks
-       run: |
-        echo "Checking for benchmark files..."
-        find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
-        
-        # Check if we have criterion benchmarks defined in Cargo.toml
-        if find . -name "Cargo.toml" -exec grep -l "criterion" {} \; | head -1; then
-          echo "Found criterion in dependencies, running benchmarks..."
-          # Run benchmarks for each crate that has them
-          for crate_dir in crates/*/; do
-            if [ -f "$crate_dir/Cargo.toml" ] && grep -q "criterion" "$crate_dir/Cargo.toml"; then
-              echo "Running benchmarks for $crate_dir"
-              (cd "$crate_dir" && cargo bench) || echo "Benchmarks failed or not available for $crate_dir"
-            fi
-          done
-        else
-          echo "No criterion benchmarks configured, running cargo test --benches..."
-          cargo test --benches --workspace || echo "No bench tests available"
-        fi
+      - name: Cache target
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: target
+          key: ${{ runner.os }}-bench-target-${{ hashFiles('**/Cargo.lock') }}
 
-     - name: Upload benchmark results
-       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-       with:
-        name: benchmark-results
-        path: target/criterion/
+      - name: Run criterion benchmarks
+        run: |
+           echo "Checking for benchmark files..."
+           find . -name "*.rs" -path "*/benches/*" -ls || echo "No benchmark files found in benches/"
+           # Check if we have criterion benchmarks defined in Cargo.toml
+           if find . -name "Cargo.toml" -exec grep -l "criterion" {} \; | head -1; then
+             echo "Found criterion in dependencies, running benchmarks..."
+             # Run benchmarks for each crate that has them
+             for crate_dir in crates/*/; do
+               if [ -f "$crate_dir/Cargo.toml" ] && grep -q "criterion" "$crate_dir/Cargo.toml"; then
+                 echo "Running benchmarks for $crate_dir"
+                 (cd "$crate_dir" && cargo bench) || echo "Benchmarks failed or not available for $crate_dir"
+               fi
+             done
+           else
+             echo "No criterion benchmarks configured, running cargo test --benches..."
+             cargo test --benches --workspace || echo "No bench tests available"
+           fi
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: benchmark-results
+          path: target/criterion/
 
   performance-regression:
     name: Performance Regression Check
@@ -111,14 +105,12 @@ jobs:
     - name: Performance timing tests
       run: |
         echo "## Performance Timing Results" >> $GITHUB_STEP_SUMMARY
-
         # Time basic scan operation (if applicable)
         if [ -f "target/release/code-guardian" ]; then
           echo "### Binary Performance" >> $GITHUB_STEP_SUMMARY
           hyperfine --warmup 3 'target/release/code-guardian --help' --export-markdown perf-results.md
           cat perf-results.md >> $GITHUB_STEP_SUMMARY
         fi
-
         # Time compilation
         echo "### Compilation Performance" >> $GITHUB_STEP_SUMMARY
         hyperfine --warmup 1 'cargo check --workspace' --export-markdown compile-results.md
@@ -134,7 +126,6 @@ jobs:
         echo "### Binary Sizes" >> $GITHUB_STEP_SUMMARY
         echo "| Crate | Size |" >> $GITHUB_STEP_SUMMARY
         echo "|------|------|" >> $GITHUB_STEP_SUMMARY
-
         for crate in cli core output storage; do
           if [ -f "target/release/code-guardian" ]; then
             size=$(ls -lh target/release/code-guardian | awk '{print $5}')
@@ -174,10 +165,8 @@ jobs:
     - name: Run load tests
       run: |
         echo "## Load Testing Results" >> $GITHUB_STEP_SUMMARY
-
         # Test with different input sizes if applicable
         echo "### Concurrent Operations Test" >> $GITHUB_STEP_SUMMARY
-
         # Simple concurrency test
         timeout 30s bash -c '
         for i in {1..10}; do
@@ -197,25 +186,21 @@ jobs:
       run: |
         echo "## 🚀 Performance Testing Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-
         if [[ "${{ needs.benchmark.result }}" == "success" ]]; then
           echo "✅ Benchmarks completed successfully" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ Benchmark execution failed" >> $GITHUB_STEP_SUMMARY
         fi
-
         if [[ "${{ needs.performance-regression.result }}" == "success" ]]; then
           echo "✅ Performance regression checks passed" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ Performance regression detected" >> $GITHUB_STEP_SUMMARY
         fi
-
         if [[ "${{ needs.load-testing.result }}" == "success" ]]; then
           echo "✅ Load testing completed" >> $GITHUB_STEP_SUMMARY
         else
           echo "❌ Load testing failed" >> $GITHUB_STEP_SUMMARY
         fi
-
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
         echo "- Monitor benchmark results for performance regressions" >> $GITHUB_STEP_SUMMARY

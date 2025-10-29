@@ -23,73 +23,73 @@ jobs:
       issues: write
       contents: read
       actions: read
-      security-events: write
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+    - name: Checkout repository
+      uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
 
-      - name: List recent workflow runs
-        run: |
-          # Calculate date 24 hours ago in ISO 8601 format
-          since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
-          echo "Fetching runs since: $since"
-          
-          # Fetch recent runs with retry logic to handle rate limits
-          max_retries=3
-          retry_count=0
-          while [ $retry_count -lt $max_retries ]; do
-            if gh run list --created ">=$since" --limit 1000 --json number,status,conclusion,workflowName,createdAt,updatedAt > runs.json 2>/dev/null; then
-              break
-            else
-              retry_count=$((retry_count + 1))
-              echo "Retry $retry_count/$max_retries due to potential rate limit or error"
-              sleep 60
-            fi
-          done
-          
-          if [ $retry_count -eq $max_retries ]; then
-            echo "Failed to fetch runs after $max_retries retries"
-            exit 1
-          fi
-
-      - name: Check for failures in monitored workflows
-        run: |
-          # Define monitored workflows (without .yml extension)
-          workflows=("Auto-fix Code Quality Issues" "CI" "Deploy Docs" "Release Build")
-          
-          failures=()
-          
-          for wf in "${workflows[@]}"; do
-            # Find failed runs for this workflow
-            failed_runs=$(jq -r ".[] | select(.workflowName == \"$wf\" and .conclusion == \"failure\") | \"Run #\\(.number) (\\(.createdAt))\"" runs.json 2>/dev/null || echo "")
-            
-            if [ -n "$failed_runs" ] && [ "$failed_runs" != "null" ]; then
-              failures+=("$wf workflow failures:")
-              while IFS= read -r run; do
-                failures+=("  - $run")
-              done <<< "$failed_runs"
-              failures+=("")  # Empty line for separation
-            fi
-          done
-          
-          if [ ${#failures[@]} -gt 0 ]; then
-            echo "Failures detected:"
-            printf '%s\n' "${failures[@]}"
-            
-            # Prepare notification content
-            title="Workflow Failures Detected - $(date -u +%Y-%m-%d)"
-            body="The following workflows have failed in the last 24 hours:\n\n$(printf '%s\n' "${failures[@]}")\n\nPlease investigate the failed runs in the Actions tab."
-            
-            # Check for existing open issue with similar title
-            existing_issue=$(gh issue list --label "workflow-failure" --state open --json number,title --limit 10 | jq -r ".[] | select(.title | startswith(\"Workflow Failures Detected\")) | .number" | head -1)
-            
-            if [ -z "$existing_issue" ]; then
-              echo "Creating new issue for workflow failures"
-              gh issue create --title "$title" --body "$body" --label "workflow-failure,bug"
-            else
-              echo "Commenting on existing issue #$existing_issue"
-              gh issue comment "$existing_issue" --body "New failures detected:\n\n$body"
-            fi
+    - name: List recent workflow runs
+      run: |
+        # Calculate date 24 hours ago in ISO 8601 format
+        since=$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+        echo "Fetching runs since: $since"
+        
+        # Fetch recent runs with retry logic to handle rate limits
+        max_retries=3
+        retry_count=0
+        while [ $retry_count -lt $max_retries ]; do
+          if gh run list --created ">=$since" --limit 1000 --json number,status,conclusion,workflowName,createdAt,updatedAt > runs.json 2>/dev/null; then
+            break
           else
-            echo "No workflow failures detected in the last 24 hours."
+            retry_count=$((retry_count + 1))
+            echo "Retry $retry_count/$max_retries due to potential rate limit or error"
+            sleep 60
           fi
+        done
+        
+        if [ $retry_count -eq $max_retries ]; then
+          echo "Failed to fetch runs after $max_retries retries"
+          exit 1
+        fi
+
+    - name: Check for failures in monitored workflows
+      run: |
+        # Define monitored workflows (without .yml extension)
+        workflows=("Auto-fix Code Quality Issues" "CI" "Deploy Docs" "Release Build")
+        
+        failures=()
+        
+        for wf in "${workflows[@]}"; do
+          # Find failed runs for this workflow
+          failed_runs=$(jq -r ".[] | select(.workflowName == \"$wf\" and .conclusion == \"failure\") | \"Run #\\(.number) (\\(.createdAt))\"" runs.json 2>/dev/null || echo "")
+          
+          if [ -n "$failed_runs" ] && [ "$failed_runs" != "null" ]; then
+            failures+=("$wf workflow failures:")
+            while IFS= read -r run; do
+              failures+=("  - $run")
+            done <<< "$failed_runs"
+            failures+=("")  # Empty line for separation
+          fi
+        done
+        
+        if [ ${#failures[@]} -gt 0 ]; then
+          echo "Failures detected:"
+          printf '%s\n' "${failures[@]}"
+          
+          # Prepare notification content
+          title="Workflow Failures Detected - $(date -u +%Y-%m-%d)"
+          body="The following workflows have failed in the last 24 hours:\n\n$(printf '%s\n' "${failures[@]}")\n\nPlease investigate the failed runs in the Actions tab."
+          
+          # Check for existing open issue with similar title
+          existing_issue=$(gh issue list --label "workflow-failure" --state open --json number,title --limit 10 | jq -r ".[] | select(.title | startswith(\"Workflow Failures Detected\")) | .number" | head -1)
+          
+          if [ -z "$existing_issue" ]; then
+            echo "Creating new issue for workflow failures"
+            gh issue create --title "$title" --body "$body" --label "workflow-failure,bug"
+          else
+            echo "Commenting on existing issue #$existing_issue"
+            gh issue comment "$existing_issue" --body "New failures detected:\n\n$body"
+          fi
+        else
+          echo "No workflow failures detected in the last 24 hours."
+        fi

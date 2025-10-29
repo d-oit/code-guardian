@@ -38,8 +38,6 @@ concurrency:
 
 env:
   CARGO_TERM_COLOR: always
-  SCCACHE_GHA_ENABLED: "false"
-  # Disable sccache due to service instability
 
 jobs:
   # Dependency and vulnerability scanning
@@ -93,7 +91,7 @@ jobs:
         fi
 
     - name: Upload vulnerability reports
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: vulnerability-reports
         path: |
@@ -156,7 +154,7 @@ jobs:
           2>&1 | tee -a clippy-security.log
 
     - name: Upload security analysis
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
       with:
         name: code-security-analysis
         path: clippy-security.log

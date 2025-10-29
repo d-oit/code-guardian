@@ -50,14 +50,14 @@ jobs:
           FORMAT_NEEDED=true
           echo "format_needed=true" >> $GITHUB_OUTPUT
         fi
-        
+
         echo "Running clippy check..."
         CLIPPY_NEEDED=false
         if ! cargo clippy --all-targets --all-features -- -D warnings; then
           CLIPPY_NEEDED=true
           echo "clippy_needed=true" >> $GITHUB_OUTPUT
         fi
-        
+
         if [ "$FORMAT_NEEDED" = true ] || [ "$CLIPPY_NEEDED" = true ]; then
           echo "fixes_needed=true" >> $GITHUB_OUTPUT
         else
